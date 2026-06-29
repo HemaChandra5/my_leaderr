@@ -16,6 +16,7 @@ class AppRoutes {
 void main() {
   runApp(const MyLeaderApp());
 }
+
 class MyLeaderApp extends StatelessWidget {
   const MyLeaderApp({super.key});
 
