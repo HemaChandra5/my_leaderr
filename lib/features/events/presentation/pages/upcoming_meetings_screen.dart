@@ -68,7 +68,7 @@ class _UpcomingMeetingsScreenState extends State<UpcomingMeetingsScreen>
   MeetingsFilter _selectedFilter = MeetingsFilter.upcoming;
   bool _isRsvpGoing = false;
 
-  List<MeetingModel> _meetings = <MeetingModel>[
+  final List<MeetingModel> _meetings = <MeetingModel>[
     MeetingModel(
       title: 'Constituency Development Meeting',
       date: DateTime(2026, 5, 20, 10, 30),
