@@ -119,8 +119,8 @@ class _PostCardState extends State<PostCard> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
       decoration: BoxDecoration(
-        color: const Color(0xff15171A),
-        border: Border.all(color: const Color(0xff25272B)),
+        color: const Color(0xff161616),
+        border: Border.all(color: const Color(0xff2C2C2C)),
         borderRadius: BorderRadius.circular(18),
         boxShadow: const [
           BoxShadow(
@@ -180,9 +180,8 @@ class _PostCardState extends State<PostCard> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xff101214),
+              color: const Color(0xff161616),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xff222429)),
             ),
             child: Row(
               children: [

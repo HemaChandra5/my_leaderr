@@ -1,33 +1,38 @@
 import 'package:flutter/material.dart';
 
 class HomeHeader extends StatelessWidget {
-  const HomeHeader({super.key, required this.onNotificationTap});
+  const HomeHeader({
+    super.key,
+    required this.onNotificationTap,
+    required this.onLogoTap,
+  });
 
   final VoidCallback onNotificationTap;
+  final VoidCallback onLogoTap;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Container(
-        height: 62,
+        height: 72,
         padding: const EdgeInsets.symmetric(horizontal: 4),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: const Color(0xff24262A).withValues(alpha: 0.6),
-            ),
-          ),
-        ),
         child: Stack(
           alignment: Alignment.center,
           children: [
-            const Align(
+            Align(
               alignment: Alignment.center,
-              child: Image(
-                image: AssetImage('assets/images/my_logo.jpg'),
-                height: 58,
-                fit: BoxFit.contain,
+              child: InkWell(
+                onTap: onLogoTap,
+                borderRadius: BorderRadius.circular(10),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  child: Image(
+                    image: AssetImage('assets/images/my_logo.jpg'),
+                    height: 66,
+                    fit: BoxFit.contain,
+                  ),
+                ),
               ),
             ),
             const Align(

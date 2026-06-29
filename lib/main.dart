@@ -9,7 +9,6 @@ class AppRoutes {
   static const String home = '/';
   static const String createMenu = '/create-menu';
   static const String events = '/events';
-  static const String home = '/home';
   static const String upcomingMeetings = '/events/upcoming';
   static const String track = '/track';
 }
@@ -58,7 +57,6 @@ class MyLeaderApp extends StatelessWidget {
         AppRoutes.home: (_) => const HomePage(),
         AppRoutes.createMenu: (_) => const CreateMenuOverlay(),
         AppRoutes.events: (_) => const EventsScreen(),
-        AppRoutes.home: (_) => const EventsScreen(),
         AppRoutes.upcomingMeetings: (_) => const UpcomingMeetingsScreen(),
         AppRoutes.track: (_) => const TrackIssueScreen(),
       },

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 const double _kGrid = 8;
+const String _homeRoute = '/';
 const String _eventsRoute = '/events';
 const String _trackRoute = '/track';
 const String _createMenuRoute = '/create-menu';
@@ -110,6 +111,11 @@ class _TrackIssueScreenState extends State<TrackIssueScreen>
       return;
     }
 
+    if (route == _homeRoute || route == '/home') {
+      Navigator.of(context).pushReplacementNamed(_homeRoute);
+      return;
+    }
+
     if (route == _createMenuRoute) {
       Navigator.of(context).pushNamed(_createMenuRoute);
       return;
@@ -147,15 +153,33 @@ class _TrackIssueScreenState extends State<TrackIssueScreen>
             elevation: 0,
             surfaceTintColor: Colors.transparent,
             centerTitle: true,
-            title: const _LeaderLogo(),
-            actions: [
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.notifications_none_rounded),
-                color: _textPrimary,
-                tooltip: 'Notifications',
-              ),
-            ],
+            toolbarHeight: 72,
+            title: Stack(
+              alignment: Alignment.center,
+              children: [
+                const Align(alignment: Alignment.center, child: _LeaderLogo()),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: SizedBox(width: 40),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Material(
+                    color: const Color(0xff17191C),
+                    shape: const CircleBorder(),
+                    child: IconButton(
+                      onPressed: _showNotificationSnackbar,
+                      splashRadius: 22,
+                      icon: const Icon(
+                        Icons.notifications_none_rounded,
+                        size: 22,
+                        color: Color(0xffFFFFFF),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           body: SafeArea(
             child: Padding(
@@ -547,7 +571,7 @@ class BottomNavBar extends StatelessWidget {
               ),
               _NavItem(
                 icon: Icons.track_changes_rounded,
-                label: 'Track',
+                label: 'Issues',
                 active: true,
                 onTap: () => onTap(_trackRoute),
               ),
@@ -721,25 +745,10 @@ class _LeaderLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: const [
-        Icon(
-          Icons.workspace_premium_rounded,
-          color: Color(0xFFF5A623),
-          size: 22,
-        ),
-        SizedBox(width: _kGrid),
-        Text(
-          'MY LEADER',
-          style: TextStyle(
-            color: Color(0xFFF5A623),
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.6,
-          ),
-        ),
-      ],
+    return const Image(
+      image: AssetImage('assets/images/my_logo.jpg'),
+      height: 66,
+      fit: BoxFit.contain,
     );
   }
 }

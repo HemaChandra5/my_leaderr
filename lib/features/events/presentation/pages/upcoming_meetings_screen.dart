@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 const double _kGrid = 8;
 const String _fontFamily = 'Inter';
+const String _homeRoute = '/';
 
 const String _eventsRoute = '/events';
 const String _upcomingMeetingsRoute = '/events/upcoming';
@@ -176,6 +177,11 @@ class _UpcomingMeetingsScreenState extends State<UpcomingMeetingsScreen>
       return;
     }
 
+    if (route == _homeRoute || route == '/home') {
+      Navigator.of(context).pushReplacementNamed(_homeRoute);
+      return;
+    }
+
     if (route == _createMenuRoute) {
       Navigator.of(context).pushNamed(_createMenuRoute);
       return;
@@ -221,6 +227,17 @@ class _UpcomingMeetingsScreenState extends State<UpcomingMeetingsScreen>
     return '${dateTime.day} ${months[dateTime.month - 1]} ${dateTime.year} • ${hour.toString().padLeft(2, '0')}:$minute $amPm';
   }
 
+  void _showNotificationSnackbar() {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          behavior: SnackBarBehavior.floating,
+          content: Text('Notifications enabled'),
+        ),
+      );
+  }
+
   @override
   Widget build(BuildContext context) {
     final List<MeetingModel> meetings = _filteredMeetings;
@@ -241,7 +258,33 @@ class _UpcomingMeetingsScreenState extends State<UpcomingMeetingsScreen>
             elevation: 0,
             surfaceTintColor: Colors.transparent,
             centerTitle: true,
-            title: const _LeaderLogo(),
+            toolbarHeight: 72,
+            title: Stack(
+              alignment: Alignment.center,
+              children: [
+                const Align(alignment: Alignment.center, child: _LeaderLogo()),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: SizedBox(width: 40),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Material(
+                    color: const Color(0xff17191C),
+                    shape: const CircleBorder(),
+                    child: IconButton(
+                      onPressed: _showNotificationSnackbar,
+                      splashRadius: 22,
+                      icon: const Icon(
+                        Icons.notifications_none_rounded,
+                        size: 22,
+                        color: Color(0xffFFFFFF),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           body: SafeArea(
             child: ListView(
@@ -891,7 +934,7 @@ class BottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFF161B22),
+      color: const Color(0xFF0D1117),
       child: SafeArea(
         top: false,
         child: Padding(
@@ -910,7 +953,7 @@ class BottomNavBar extends StatelessWidget {
               ),
               _NavItem(
                 icon: Icons.track_changes_rounded,
-                label: 'Track',
+                label: 'Issues',
                 active: false,
                 onTap: () => onTap(_trackRoute),
               ),
@@ -1030,26 +1073,10 @@ class _LeaderLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Icon(
-          Icons.workspace_premium_rounded,
-          color: Color(0xFFF5A623),
-          size: 22,
-        ),
-        SizedBox(width: _kGrid),
-        Text(
-          'MY LEADER',
-          style: TextStyle(
-            color: Color(0xFFF5A623),
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.6,
-            fontFamily: _fontFamily,
-          ),
-        ),
-      ],
+    return const Image(
+      image: AssetImage('assets/images/my_logo.jpg'),
+      height: 66,
+      fit: BoxFit.contain,
     );
   }
 }

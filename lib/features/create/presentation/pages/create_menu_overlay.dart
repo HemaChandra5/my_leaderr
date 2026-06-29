@@ -14,6 +14,7 @@ const Color _navBackground = Color(0xFF0D1117);
 const String _eventsRoute = '/events';
 const String _trackRoute = '/track';
 const String _createMenuRoute = '/create-menu';
+const String _homeRoute = '/';
 
 class CreateMenuAction {
   const CreateMenuAction({
@@ -281,6 +282,13 @@ class _OverlayBottomNavBar extends StatelessWidget {
 
     Navigator.of(context).pop();
 
+    if (route == _homeRoute || route == '/home') {
+      Future<void>.microtask(() {
+        Navigator.of(context).pushReplacementNamed(_homeRoute);
+      });
+      return;
+    }
+
     if (route == _eventsRoute || route == _trackRoute) {
       Future<void>.microtask(() {
         Navigator.of(context).pushReplacementNamed(route);
@@ -318,11 +326,11 @@ class _OverlayBottomNavBar extends StatelessWidget {
                 icon: Icons.home_outlined,
                 label: 'Home',
                 active: false,
-                onTap: () => _onTap(context, '/home'),
+                onTap: () => _onTap(context, _homeRoute),
               ),
               _NavItem(
                 icon: Icons.track_changes_rounded,
-                label: 'Track',
+                label: 'Issues',
                 active: false,
                 onTap: () => _onTap(context, _trackRoute),
               ),

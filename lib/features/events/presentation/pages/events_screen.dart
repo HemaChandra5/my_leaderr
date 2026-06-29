@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 const double _kGrid = 8;
 const String _fontFamily = 'Inter';
+const String _homeRoute = '/';
 const String _eventsRoute = '/events';
 const String _upcomingMeetingsRoute = '/events/upcoming';
 const String _trackRoute = '/track';
@@ -123,8 +124,24 @@ class _EventsScreenState extends State<EventsScreen>
     return _events;
   }
 
+  void _showNotificationSnackbar() {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          behavior: SnackBarBehavior.floating,
+          content: Text('Notifications enabled'),
+        ),
+      );
+  }
+
   void _handleBottomNavTap(String route) {
     if (route == _eventsRoute) {
+      return;
+    }
+
+    if (route == _homeRoute || route == '/home') {
+      Navigator.of(context).pushReplacementNamed(_homeRoute);
       return;
     }
 
@@ -165,14 +182,39 @@ class _EventsScreenState extends State<EventsScreen>
             elevation: 0,
             surfaceTintColor: Colors.transparent,
             centerTitle: true,
-            title: const Text(
-              'Events',
-              style: TextStyle(
-                color: _primaryText,
-                fontWeight: FontWeight.w600,
-                fontSize: 20,
-                fontFamily: _fontFamily,
-              ),
+            toolbarHeight: 72,
+            title: Stack(
+              alignment: Alignment.center,
+              children: [
+                const Align(
+                  alignment: Alignment.center,
+                  child: Image(
+                    image: AssetImage('assets/images/my_logo.jpg'),
+                    height: 66,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: SizedBox(width: 40),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Material(
+                    color: const Color(0xff17191C),
+                    shape: const CircleBorder(),
+                    child: IconButton(
+                      onPressed: _showNotificationSnackbar,
+                      splashRadius: 22,
+                      icon: const Icon(
+                        Icons.notifications_none_rounded,
+                        size: 22,
+                        color: Color(0xffFFFFFF),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           body: SafeArea(
@@ -655,7 +697,7 @@ class BottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFF161B22),
+      color: const Color(0xFF0D1117),
       child: SafeArea(
         top: false,
         child: Padding(
@@ -674,7 +716,7 @@ class BottomNavBar extends StatelessWidget {
               ),
               _NavItem(
                 icon: Icons.track_changes_rounded,
-                label: 'Track',
+                label: 'Issues',
                 active: false,
                 onTap: () => onTap(_trackRoute),
               ),
