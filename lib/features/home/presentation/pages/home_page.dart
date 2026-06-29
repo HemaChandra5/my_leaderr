@@ -109,6 +109,83 @@ class _HomePageState extends State<HomePage> {
     }());
   }
 
+  void _openNotificationsPanel() {
+    _trackAction('notifications_open');
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xff141414),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) {
+        final alerts = <String>[
+          'Community report approved in your ward.',
+          'State analytics digest is ready to review.',
+          'New feedback received from citizens.',
+          'National policy briefing starts in 30 minutes.',
+        ];
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0xff3A3A3A),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                const Text(
+                  'Notifications',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ...alerts.map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.notifications_active_rounded,
+                          color: Color(0xffF5A623),
+                          size: 18,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            item,
+                            style: const TextStyle(
+                              color: Color(0xffE8E8E8),
+                              fontSize: 14,
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   List<PostCardData> _buildFeed() {
     return [
       ..._generateCategoryFeed(
@@ -157,6 +234,8 @@ class _HomePageState extends State<HomePage> {
       final likes = 220 + ((index * 39) % 1800);
       final comments = 28 + ((index * 11) % 260);
       final shares = 12 + ((index * 7) % 140);
+      final boosts = 8 + ((index * 5) % 120);
+      final saves = 4 + ((index * 3) % 95);
       final minutes = 1 + ((index * 3) % 4);
       final seconds = (index * 13) % 60;
 
@@ -166,9 +245,11 @@ class _HomePageState extends State<HomePage> {
         role: role,
         timeAgo: '${(index % 8) + 1}h',
         description: description,
-        likes: '$likes',
-        comments: '$comments',
-        shares: '$shares',
+        likeCount: likes,
+        commentCount: comments,
+        shareCount: shares,
+        boostCount: boosts,
+        saveCount: saves,
         avatarAsset: 'assets/images/avatar$avatarIndex.png',
         avatarInitials: initials,
         isVerified: index % 3 != 0,
@@ -187,7 +268,7 @@ class _HomePageState extends State<HomePage> {
         .toList(growable: false);
 
     return Scaffold(
-      backgroundColor: const Color(0xff0D0D0D),
+      backgroundColor: const Color(0xff090A0B),
       resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: LayoutBuilder(
@@ -201,11 +282,8 @@ class _HomePageState extends State<HomePage> {
                 constraints: BoxConstraints(maxWidth: contentWidth),
                 child: Column(
                   children: [
-                    HomeHeader(
-                      onNotificationTap: () =>
-                          _trackAction('notifications_open'),
-                    ),
-                    const SizedBox(height: 16),
+                    HomeHeader(onNotificationTap: _openNotificationsPanel),
+                    const SizedBox(height: 18),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: CategoryTabs(
@@ -218,10 +296,10 @@ class _HomePageState extends State<HomePage> {
                         },
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 18),
                     Expanded(
                       child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 260),
+                        duration: const Duration(milliseconds: 300),
                         switchInCurve: Curves.easeOutCubic,
                         switchOutCurve: Curves.easeInCubic,
                         transitionBuilder: (child, animation) {
@@ -242,17 +320,18 @@ class _HomePageState extends State<HomePage> {
                           physics: const BouncingScrollPhysics(
                             parent: AlwaysScrollableScrollPhysics(),
                           ),
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 104),
+                          padding: const EdgeInsets.fromLTRB(16, 2, 16, 112),
                           itemBuilder: (context, index) => PostCard(
                             data: filteredFeed[index],
                             onMenuTap: () => _trackAction('post_menu'),
                             onLikeTap: () => _trackAction('post_like'),
                             onCommentTap: () => _trackAction('post_comment'),
                             onShareTap: () => _trackAction('post_share'),
+                            onBoostTap: () => _trackAction('post_boost'),
                             onBookmarkTap: () => _trackAction('post_bookmark'),
                           ),
                           separatorBuilder: (_, index) =>
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 18),
                           itemCount: filteredFeed.length,
                         ),
                       ),

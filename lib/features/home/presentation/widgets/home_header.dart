@@ -8,9 +8,17 @@ class HomeHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-      child: SizedBox(
-        height: 48,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Container(
+        height: 62,
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: const Color(0xff24262A).withValues(alpha: 0.6),
+            ),
+          ),
+        ),
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -18,7 +26,7 @@ class HomeHeader extends StatelessWidget {
               alignment: Alignment.center,
               child: Image(
                 image: AssetImage('assets/images/my_logo.jpg'),
-                height: 48,
+                height: 58,
                 fit: BoxFit.contain,
               ),
             ),
@@ -28,14 +36,17 @@ class HomeHeader extends StatelessWidget {
             ),
             Align(
               alignment: Alignment.centerRight,
-              child: IconButton(
-                onPressed: onNotificationTap,
-                padding: EdgeInsets.zero,
-                splashRadius: 20,
-                icon: const Icon(
-                  Icons.notifications_none_rounded,
-                  size: 24,
-                  color: Color(0xffFFFFFF),
+              child: Material(
+                color: const Color(0xff17191C),
+                shape: const CircleBorder(),
+                child: IconButton(
+                  onPressed: onNotificationTap,
+                  splashRadius: 22,
+                  icon: const Icon(
+                    Icons.notifications_none_rounded,
+                    size: 22,
+                    color: Color(0xffFFFFFF),
+                  ),
                 ),
               ),
             ),

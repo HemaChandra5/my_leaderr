@@ -15,19 +15,20 @@ class CategoryTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 48,
+      height: 54,
       child: Container(
-        padding: const EdgeInsets.all(3),
+        padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: const Color(0xff171717),
-          borderRadius: BorderRadius.circular(14),
+          color: const Color(0xff141517),
+          border: Border.all(color: const Color(0xff25272B)),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
           children: List.generate(
             tabs.length,
             (index) => Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: _CategoryTabPill(
                   title: tabs[index],
                   selected: index == selectedIndex,
@@ -59,21 +60,38 @@ class _CategoryTabPill extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Ink(
-          height: 42,
+        borderRadius: BorderRadius.circular(12.5),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          height: 44,
           decoration: BoxDecoration(
             color: selected ? const Color(0xffF5A623) : const Color(0xff171717),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(12.5),
+            border: Border.all(
+              color: selected
+                  ? const Color(0xffF8BE56)
+                  : const Color(0xff222427),
+            ),
+            boxShadow: selected
+                ? const [
+                    BoxShadow(
+                      color: Color(0x2BF5A623),
+                      blurRadius: 14,
+                      offset: Offset(0, 4),
+                    ),
+                  ]
+                : null,
           ),
           child: Center(
             child: Text(
               title,
               style: TextStyle(
                 color: selected ? Colors.black : Colors.white,
-                fontSize: 14,
+                fontSize: 13.5,
                 fontFamily: 'Inter',
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                letterSpacing: selected ? 0.2 : 0,
               ),
             ),
           ),

@@ -21,11 +21,18 @@ class BottomNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 82,
-      padding: const EdgeInsets.fromLTRB(12, 7, 12, 10),
-      decoration: const BoxDecoration(
-        color: Color(0xff111111),
-        border: Border(top: BorderSide(color: Color(0xff2A2A2A))),
+      height: 88,
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+      decoration: BoxDecoration(
+        color: const Color(0xff0F1012),
+        border: const Border(top: BorderSide(color: Color(0xff25272B))),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x22000000),
+            blurRadius: 14,
+            offset: Offset(0, -4),
+          ),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -85,24 +92,46 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = selected ? const Color(0xffF5A623) : const Color(0xff9E9E9E);
-    return InkResponse(
-      onTap: onTap,
-      radius: 24,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontFamily: 'Inter',
-              fontWeight: FontWeight.w600,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        color: selected ? const Color(0x1FF5A623) : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkResponse(
+        onTap: onTap,
+        radius: 24,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Icon(icon, color: color, size: 22),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontFamily: 'Inter',
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.2,
+              ),
             ),
-          ),
-        ],
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              margin: const EdgeInsets.only(top: 4),
+              width: selected ? 16 : 0,
+              height: 2,
+              decoration: BoxDecoration(
+                color: const Color(0xffF5A623),
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
