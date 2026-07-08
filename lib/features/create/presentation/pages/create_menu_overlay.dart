@@ -14,7 +14,8 @@ const Color _navBackground = Color(0xFF0D1117);
 const String _eventsRoute = '/events';
 const String _trackRoute = '/track';
 const String _createMenuRoute = '/create-menu';
-const String _homeRoute = '/';
+const String _homeRoute = '/home';
+const String _profileRoute = '/profile';
 
 class CreateMenuAction {
   const CreateMenuAction({
@@ -296,6 +297,13 @@ class _OverlayBottomNavBar extends StatelessWidget {
       return;
     }
 
+    if (route == _profileRoute) {
+      Future<void>.microtask(() {
+        Navigator.of(context).pushReplacementNamed(_profileRoute);
+      });
+      return;
+    }
+
     Future<void>.microtask(() {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
@@ -345,7 +353,7 @@ class _OverlayBottomNavBar extends StatelessWidget {
                 icon: Icons.person_outline_rounded,
                 label: 'Profile',
                 active: false,
-                onTap: () => _onTap(context, '/profile'),
+                onTap: () => _onTap(context, _profileRoute),
               ),
             ],
           ),

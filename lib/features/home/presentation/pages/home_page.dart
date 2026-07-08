@@ -8,6 +8,7 @@ import '../widgets/post_card.dart';
 const String _eventsRoute = '/events';
 const String _trackRoute = '/track';
 const String _createMenuRoute = '/create-menu';
+const String _profileRoute = '/profile';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -130,14 +131,7 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(
-          behavior: SnackBarBehavior.floating,
-          content: Text('Profile module is coming soon'),
-        ),
-      );
+    Navigator.of(context).pushReplacementNamed(_profileRoute);
   }
 
   void _trackAction(String action) {

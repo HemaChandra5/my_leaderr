@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:my_leaderr/auth/login_screen.dart';
+import 'auth/login_screen.dart';
+import 'core/constants/app_colors.dart';
+import 'features/welcome/presentation/widgets/action_buttons.dart';
+import 'features/welcome/presentation/widgets/app_logo.dart';
+import 'features/welcome/presentation/widgets/hero_globe.dart';
+import 'features/welcome/presentation/widgets/tagline_text.dart';
+import 'features/welcome/presentation/widgets/welcome_heading.dart';
 
-import '../../../../core/constants/app_colors.dart';
-import '../widgets/action_buttons.dart';
-import '../widgets/app_logo.dart';
-import '../widgets/hero_globe.dart';
-import '../widgets/tagline_text.dart';
-import '../widgets/welcome_heading.dart';
-import 'choose_role_page.dart';
+import 'language_screen.dart';
 
-class WelcomePage extends StatefulWidget {
-  const WelcomePage({super.key});
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
 
   @override
-  State<WelcomePage> createState() => _WelcomePageState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _WelcomePageState extends State<WelcomePage>
+class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _logoFade;
@@ -72,10 +72,10 @@ class _WelcomePageState extends State<WelcomePage>
     super.dispose();
   }
 
-  void _openChooseRole() {
+  void _openLanguage() {
     Navigator.of(
       context,
-    ).push(MaterialPageRoute<void>(builder: (_) => const ChooseRolePage()));
+    ).push(MaterialPageRoute<void>(builder: (_) => const LanguageScreen()));
   }
 
   void _openLogin() {
@@ -189,7 +189,7 @@ class _WelcomePageState extends State<WelcomePage>
                             FadeTransition(
                               opacity: _buttonsFade,
                               child: ActionButtons(
-                                onGetStarted: _openChooseRole,
+                                onGetStarted: _openLanguage,
                                 onLogin: _openLogin,
                               ),
                             ),

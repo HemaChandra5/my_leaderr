@@ -21,7 +21,7 @@ class BottomNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFF0D1117),
+      decoration: const BoxDecoration(color: Color(0xFF0D1117)),
       child: SafeArea(
         top: false,
         child: Padding(

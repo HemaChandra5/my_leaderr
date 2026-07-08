@@ -3,11 +3,12 @@ import 'package:flutter/services.dart';
 
 const double _kGrid = 8;
 const String _fontFamily = 'Inter';
-const String _homeRoute = '/';
+const String _homeRoute = '/home';
 const String _eventsRoute = '/events';
 const String _upcomingMeetingsRoute = '/events/upcoming';
 const String _trackRoute = '/track';
 const String _createMenuRoute = '/create-menu';
+const String _profileRoute = '/profile';
 
 class EventModel {
   const EventModel({
@@ -152,6 +153,11 @@ class _EventsScreenState extends State<EventsScreen>
 
     if (route == _trackRoute) {
       Navigator.of(context).pushReplacementNamed(_trackRoute);
+      return;
+    }
+
+    if (route == _profileRoute) {
+      Navigator.of(context).pushReplacementNamed(_profileRoute);
       return;
     }
 
@@ -712,7 +718,7 @@ class BottomNavBar extends StatelessWidget {
                 icon: Icons.home_outlined,
                 label: 'Home',
                 active: false,
-                onTap: () => onTap('/home'),
+                onTap: () => onTap(_homeRoute),
               ),
               _NavItem(
                 icon: Icons.track_changes_rounded,
@@ -731,7 +737,7 @@ class BottomNavBar extends StatelessWidget {
                 icon: Icons.person_outline_rounded,
                 label: 'Profile',
                 active: false,
-                onTap: () => onTap('/profile'),
+                onTap: () => onTap(_profileRoute),
               ),
             ],
           ),

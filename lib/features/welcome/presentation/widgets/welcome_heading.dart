@@ -21,17 +21,17 @@ class WelcomeHeading extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Text(
-          'Your Voice.',
+          'Our Leader.',
           textAlign: TextAlign.center,
           style: style.copyWith(color: AppColors.white),
         ),
         Text(
-          'Your Leader.',
+          'Our Community.',
           textAlign: TextAlign.center,
           style: style.copyWith(color: AppColors.primaryGold),
         ),
         Text(
-          'Your Community.',
+          'Our Future.',
           textAlign: TextAlign.center,
           style: style.copyWith(color: AppColors.white),
         ),
