@@ -15,7 +15,7 @@ class HomeHeader extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Container(
-        height: 72,
+        height: 80,
         padding: const EdgeInsets.symmetric(horizontal: 4),
         child: Stack(
           alignment: Alignment.center,
@@ -29,7 +29,7 @@ class HomeHeader extends StatelessWidget {
                   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   child: Image(
                     image: AssetImage('assets/images/my_logo.jpg'),
-                    height: 66,
+                    height: 74,
                     fit: BoxFit.contain,
                   ),
                 ),

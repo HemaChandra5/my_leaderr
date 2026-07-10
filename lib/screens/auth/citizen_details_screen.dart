@@ -7,7 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/user_provider.dart';
-import '../citizen/citizen_profile_screen.dart';
+import '../../features/profile/presentation/pages/profile_dashboard_gate.dart';
 
 class CitizenDetailsScreen extends StatefulWidget {
   const CitizenDetailsScreen({super.key});
@@ -114,7 +114,7 @@ class _CitizenDetailsScreenState extends State<CitizenDetailsScreen> {
 
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute<void>(builder: (_) => const CitizenProfileScreen()),
+        MaterialPageRoute<void>(builder: (_) => const ProfileDashboardGate()),
         (_) => false,
       );
     } on FirebaseAuthException catch (e) {

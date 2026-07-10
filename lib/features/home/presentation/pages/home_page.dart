@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/localization/app_language.dart';
+import '../../../../core/localization/app_localizations.dart';
+
 import '../widgets/bottom_navigation.dart';
 import '../widgets/category_tabs.dart';
 import '../widgets/home_header.dart';
@@ -7,7 +10,7 @@ import '../widgets/post_card.dart';
 
 const String _eventsRoute = '/events';
 const String _trackRoute = '/track';
-const String _createMenuRoute = '/create-menu';
+const String _communityRoute = '/community';
 const String _profileRoute = '/profile';
 
 class HomePage extends StatefulWidget {
@@ -21,6 +24,7 @@ class _HomePageState extends State<HomePage> {
   int _selectedTabIndex = 0;
   int _selectedNavIndex = 0;
   final ScrollController _feedScrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
 
   static const List<String> _localNames = [
     'Aarav Sharma',
@@ -61,52 +65,54 @@ class _HomePageState extends State<HomePage> {
     'Siya Roy',
   ];
 
-  static const List<String> _localRoles = [
-    'Ward Coordinator',
-    'Municipal Lead',
-    'Community Officer',
-    'Block Supervisor',
+  String get _language => AppLanguage.instance.language;
+  String _tr(String key) =>
+      AppLocalizations.translate(key, language: _language);
+
+  List<String> _localRoles() => [
+    _tr('role_ward_coordinator'),
+    _tr('role_municipal_lead'),
+    _tr('role_community_officer'),
+    _tr('role_block_supervisor'),
   ];
 
-  static const List<String> _stateRoles = [
-    'State Coordinator',
-    'Program Manager',
-    'Regional Director',
-    'Operations Lead',
+  List<String> _stateRoles() => [
+    _tr('role_state_coordinator'),
+    _tr('role_program_manager'),
+    _tr('role_regional_director'),
+    _tr('role_operations_lead'),
   ];
 
-  static const List<String> _nationalRoles = [
-    'National Strategy Lead',
-    'Operations Head',
-    'Policy Director',
-    'Transformation Lead',
+  List<String> _nationalRoles() => [
+    _tr('role_national_strategy_lead'),
+    _tr('role_operations_head'),
+    _tr('role_policy_director'),
+    _tr('role_transformation_lead'),
   ];
 
-  static const List<String> _localMessages = [
-    'Ward-level service dashboard is now live with transparent SLA tracking and weekly closure reports.',
-    'Drainage and road maintenance tickets are now mapped by locality to improve response time this quarter.',
-    'Citizen helpdesk now supports real-time issue routing to reduce duplicate complaints and backlog.',
-    'Night safety lighting program has entered phase two with predictive outage monitoring enabled.',
-    'We completed 100 percent geotag verification for sanitation requests across all neighborhood clusters.',
+  List<String> _localMessages() => [
+    _tr('local_msg_1'),
+    _tr('local_msg_2'),
+    _tr('local_msg_3'),
+    _tr('local_msg_4'),
+    _tr('local_msg_5'),
   ];
 
-  static const List<String> _stateMessages = [
-    'State scholarship onboarding crossed major milestones with faster verification and reduced drop-offs.',
-    'District scorecards now publish weekly governance KPIs for education, health, and response performance.',
-    'State service registry has been normalized to improve cross-department reporting and governance audits.',
-    'A new escalation matrix reduced critical issue turnaround time by over 30 percent in pilot districts.',
-    'We have launched a unified state command view for service continuity and performance tracking.',
+  List<String> _stateMessages() => [
+    _tr('state_msg_1'),
+    _tr('state_msg_2'),
+    _tr('state_msg_3'),
+    _tr('state_msg_4'),
+    _tr('state_msg_5'),
   ];
 
-  static const List<String> _nationalMessages = [
-    'National policy sprint delivered standardized digital service patterns now rolling out across departments.',
-    'Cross-region command workflows are active with real-time escalation and measurable incident SLAs.',
-    'National transformation framework now includes quarterly readiness scoring for platform-first delivery.',
-    'Public service modernization roadmap has entered execution stage with focused KPI accountability.',
-    'Inter-state operating model is now synchronized for data governance, reporting cadence, and resilience.',
+  List<String> _nationalMessages() => [
+    _tr('national_msg_1'),
+    _tr('national_msg_2'),
+    _tr('national_msg_3'),
+    _tr('national_msg_4'),
+    _tr('national_msg_5'),
   ];
-
-  late final List<PostCardData> _feed = _buildFeed();
 
   void _handleBottomNavSelection(int index) {
     setState(() => _selectedNavIndex = index);
@@ -122,7 +128,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     if (index == 2) {
-      Navigator.of(context).pushNamed(_createMenuRoute);
+      Navigator.of(context).pushReplacementNamed(_communityRoute);
       return;
     }
 
@@ -154,24 +160,42 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    _searchController.dispose();
     _feedScrollController.dispose();
     super.dispose();
   }
 
+  bool _matchesSearch(PostCardData post, String query) {
+    final q = query.toLowerCase();
+    return post.leaderName.toLowerCase().contains(q) ||
+        post.role.toLowerCase().contains(q) ||
+        post.description.toLowerCase().contains(q) ||
+        post.category.toLowerCase().contains(q);
+  }
+
   void _openNotificationsPanel() {
     _trackAction('notifications_open');
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color sheetBg = isDark ? const Color(0xff141414) : Colors.white;
+    final Color grip = isDark
+        ? const Color(0xff3A3A3A)
+        : const Color(0xFFD0D7E2);
+    final Color titleColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final Color alertText = isDark
+        ? const Color(0xffE8E8E8)
+        : const Color(0xFF334155);
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: const Color(0xff141414),
+      backgroundColor: sheetBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
       builder: (context) {
         final alerts = <String>[
-          'Community report approved in your ward.',
-          'State analytics digest is ready to review.',
-          'New feedback received from citizens.',
-          'National policy briefing starts in 30 minutes.',
+          _tr('alert_community_report'),
+          _tr('alert_state_digest'),
+          _tr('alert_new_feedback'),
+          _tr('alert_policy_briefing'),
         ];
         return SafeArea(
           top: false,
@@ -186,16 +210,16 @@ class _HomePageState extends State<HomePage> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: const Color(0xff3A3A3A),
+                      color: grip,
                       borderRadius: BorderRadius.circular(999),
                     ),
                   ),
                 ),
                 const SizedBox(height: 14),
-                const Text(
-                  'Notifications',
+                Text(
+                  _tr('notifications'),
                   style: TextStyle(
-                    color: Colors.white,
+                    color: titleColor,
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                   ),
@@ -216,8 +240,8 @@ class _HomePageState extends State<HomePage> {
                         Expanded(
                           child: Text(
                             item,
-                            style: const TextStyle(
-                              color: Color(0xffE8E8E8),
+                            style: TextStyle(
+                              color: alertText,
                               fontSize: 14,
                               height: 1.35,
                             ),
@@ -240,22 +264,22 @@ class _HomePageState extends State<HomePage> {
       ..._generateCategoryFeed(
         category: 'Local',
         names: _localNames,
-        roles: _localRoles,
-        messages: _localMessages,
+        roles: _localRoles(),
+        messages: _localMessages(),
         count: 24,
       ),
       ..._generateCategoryFeed(
         category: 'State',
         names: _stateNames,
-        roles: _stateRoles,
-        messages: _stateMessages,
+        roles: _stateRoles(),
+        messages: _stateMessages(),
         count: 24,
       ),
       ..._generateCategoryFeed(
         category: 'National',
         names: _nationalNames,
-        roles: _nationalRoles,
-        messages: _nationalMessages,
+        roles: _nationalRoles(),
+        messages: _nationalMessages(),
         count: 24,
       ),
     ];
@@ -311,95 +335,174 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final selectedTab = CategoryTabs.tabs[_selectedTabIndex];
-    final filteredFeed = _feed
-        .where((post) => post.category == selectedTab)
-        .toList(growable: false);
+    return AnimatedBuilder(
+      animation: AppLanguage.instance,
+      builder: (context, _) {
+        final feed = _buildFeed();
+        final bool isDark = Theme.of(context).brightness == Brightness.dark;
+        final Color pageBg = Theme.of(context).scaffoldBackgroundColor;
+        final Color primaryText = isDark
+            ? const Color(0xFFFFFFFF)
+            : const Color(0xFF0F172A);
+        final Color secondaryText = isDark
+            ? const Color(0xFF8B949E)
+            : const Color(0xFF64748B);
+        final Color fieldBg = isDark
+            ? const Color(0xFF161B22)
+            : const Color(0xFFEFF3F8);
+        final selectedTab = CategoryTabs.tabs[_selectedTabIndex];
+        final query = _searchController.text.trim();
+        final filteredFeed = feed
+            .where((post) {
+              if (post.category != selectedTab) {
+                return false;
+              }
+              if (query.isEmpty) {
+                return true;
+              }
+              return _matchesSearch(post, query);
+            })
+            .toList(growable: false);
 
-    return Scaffold(
-      backgroundColor: const Color(0xff090A0B),
-      resizeToAvoidBottomInset: false,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final contentWidth = constraints.maxWidth >= 600
-                ? 390.0
-                : constraints.maxWidth;
+        return Scaffold(
+          backgroundColor: pageBg,
+          resizeToAvoidBottomInset: false,
+          body: SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final contentWidth = constraints.maxWidth >= 600
+                    ? 390.0
+                    : constraints.maxWidth;
 
-            return Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: contentWidth),
-                child: Column(
-                  children: [
-                    HomeHeader(
-                      onNotificationTap: _openNotificationsPanel,
-                      onLogoTap: _scrollFeedToTop,
-                    ),
-                    const SizedBox(height: 18),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: CategoryTabs(
-                        selectedIndex: _selectedTabIndex,
-                        onTabSelected: (index) {
-                          setState(() => _selectedTabIndex = index);
-                          _trackAction(
-                            'tab_${CategoryTabs.tabs[index].toLowerCase()}',
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    Expanded(
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
-                        switchInCurve: Curves.easeOutCubic,
-                        switchOutCurve: Curves.easeInCubic,
-                        transitionBuilder: (child, animation) {
-                          final offsetAnimation = Tween<Offset>(
-                            begin: const Offset(0.02, 0),
-                            end: Offset.zero,
-                          ).animate(animation);
-                          return FadeTransition(
-                            opacity: animation,
-                            child: SlideTransition(
-                              position: offsetAnimation,
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: ListView.separated(
-                          key: ValueKey<String>(selectedTab),
-                          controller: _feedScrollController,
-                          physics: const BouncingScrollPhysics(
-                            parent: AlwaysScrollableScrollPhysics(),
-                          ),
-                          padding: const EdgeInsets.fromLTRB(16, 2, 16, 112),
-                          itemBuilder: (context, index) => PostCard(
-                            data: filteredFeed[index],
-                            onMenuTap: () => _trackAction('post_menu'),
-                            onLikeTap: () => _trackAction('post_like'),
-                            onCommentTap: () => _trackAction('post_comment'),
-                            onShareTap: () => _trackAction('post_share'),
-                            onBoostTap: () => _trackAction('post_boost'),
-                            onBookmarkTap: () => _trackAction('post_bookmark'),
-                          ),
-                          separatorBuilder: (_, index) =>
-                              const SizedBox(height: 18),
-                          itemCount: filteredFeed.length,
+                return Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: contentWidth),
+                    child: Column(
+                      children: [
+                        HomeHeader(
+                          onNotificationTap: _openNotificationsPanel,
+                          onLogoTap: _scrollFeedToTop,
                         ),
-                      ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                          child: SizedBox(
+                            height: 48,
+                            child: TextField(
+                              controller: _searchController,
+                              onChanged: (_) => setState(() {}),
+                              style: TextStyle(
+                                color: primaryText,
+                                fontSize: 14,
+                                fontFamily: 'Inter',
+                              ),
+                              decoration: InputDecoration(
+                                hintText: _tr('search_meetings'),
+                                hintStyle: TextStyle(
+                                  color: secondaryText,
+                                  fontSize: 14,
+                                  fontFamily: 'Inter',
+                                ),
+                                prefixIcon: Icon(
+                                  Icons.search,
+                                  color: secondaryText,
+                                  size: 20,
+                                ),
+                                filled: true,
+                                fillColor: fieldBg,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                  borderSide: BorderSide.none,
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                  borderSide: BorderSide.none,
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                  borderSide: BorderSide.none,
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 8,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: CategoryTabs(
+                            selectedIndex: _selectedTabIndex,
+                            onTabSelected: (index) {
+                              setState(() => _selectedTabIndex = index);
+                              _trackAction(
+                                'tab_${CategoryTabs.tabs[index].toLowerCase()}',
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        Expanded(
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 300),
+                            switchInCurve: Curves.easeOutCubic,
+                            switchOutCurve: Curves.easeInCubic,
+                            transitionBuilder: (child, animation) {
+                              final offsetAnimation = Tween<Offset>(
+                                begin: const Offset(0.02, 0),
+                                end: Offset.zero,
+                              ).animate(animation);
+                              return FadeTransition(
+                                opacity: animation,
+                                child: SlideTransition(
+                                  position: offsetAnimation,
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: ListView.separated(
+                              key: ValueKey<String>(selectedTab),
+                              controller: _feedScrollController,
+                              physics: const BouncingScrollPhysics(
+                                parent: AlwaysScrollableScrollPhysics(),
+                              ),
+                              padding: const EdgeInsets.fromLTRB(
+                                16,
+                                2,
+                                16,
+                                112,
+                              ),
+                              itemBuilder: (context, index) => PostCard(
+                                data: filteredFeed[index],
+                                onMenuTap: () => _trackAction('post_menu'),
+                                onLikeTap: () => _trackAction('post_like'),
+                                onCommentTap: () =>
+                                    _trackAction('post_comment'),
+                                onShareTap: () => _trackAction('post_share'),
+                                onBoostTap: () => _trackAction('post_boost'),
+                                onBookmarkTap: () =>
+                                    _trackAction('post_bookmark'),
+                              ),
+                              separatorBuilder: (_, index) =>
+                                  const SizedBox(height: 18),
+                              itemCount: filteredFeed.length,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-      bottomNavigationBar: BottomNavigation(
-        currentIndex: _selectedNavIndex,
-        onItemSelected: _handleBottomNavSelection,
-      ),
+                  ),
+                );
+              },
+            ),
+          ),
+          bottomNavigationBar: BottomNavigation(
+            currentIndex: _selectedNavIndex,
+            onItemSelected: _handleBottomNavSelection,
+          ),
+        );
+      },
     );
   }
 }

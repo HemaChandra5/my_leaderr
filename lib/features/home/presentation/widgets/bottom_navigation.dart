@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/localization/app_language.dart';
+import '../../../../core/localization/app_localizations.dart';
+
 class BottomNavigation extends StatelessWidget {
   const BottomNavigation({
     super.key,
@@ -10,13 +13,29 @@ class BottomNavigation extends StatelessWidget {
   static const List<String> items = [
     'Home',
     'Issues',
-    'Create',
+    'Community',
     'Events',
     'Profile',
   ];
 
   final int currentIndex;
   final ValueChanged<int> onItemSelected;
+
+  String _localizedLabel(int index) {
+    final language = AppLanguage.instance.language;
+    switch (index) {
+      case 0:
+        return AppLocalizations.translate('home', language: language);
+      case 1:
+        return AppLocalizations.translate('issues', language: language);
+      case 2:
+        return AppLocalizations.translate('community', language: language);
+      case 3:
+        return AppLocalizations.translate('events', language: language);
+      default:
+        return AppLocalizations.translate('profile', language: language);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,60 +50,35 @@ class BottomNavigation extends StatelessWidget {
             children: [
               _NavItem(
                 icon: Icons.home_outlined,
-                label: 'Home',
+                label: _localizedLabel(0),
                 selected: currentIndex == 0,
                 onTap: () => onItemSelected(0),
               ),
               _NavItem(
                 icon: Icons.track_changes_rounded,
-                label: 'Issues',
+                label: _localizedLabel(1),
                 selected: currentIndex == 1,
                 onTap: () => onItemSelected(1),
               ),
-              _AddButton(onTap: () => onItemSelected(2)),
+              _NavItem(
+                icon: Icons.groups_2_outlined,
+                label: _localizedLabel(2),
+                selected: currentIndex == 2,
+                onTap: () => onItemSelected(2),
+              ),
               _NavItem(
                 icon: Icons.event_outlined,
-                label: 'Events',
+                label: _localizedLabel(3),
                 selected: currentIndex == 3,
                 onTap: () => onItemSelected(3),
               ),
               _NavItem(
                 icon: Icons.person_outline_rounded,
-                label: 'Profile',
+                label: _localizedLabel(4),
                 selected: currentIndex == 4,
                 onTap: () => onItemSelected(4),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _AddButton extends StatelessWidget {
-  const _AddButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: 'Add',
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(24),
-          child: Ink(
-            width: 48,
-            height: 48,
-            decoration: const BoxDecoration(
-              color: Color(0xFFF5A623),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.add, color: Color(0xFF000000), size: 24),
           ),
         ),
       ),
@@ -120,6 +114,9 @@ class _NavItem extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               label,
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.fade,
               style: TextStyle(
                 color: color,
                 fontSize: 12,

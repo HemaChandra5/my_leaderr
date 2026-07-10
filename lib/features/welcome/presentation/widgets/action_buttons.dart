@@ -2,20 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/localization/app_localizations.dart';
 
 class ActionButtons extends StatelessWidget {
   const ActionButtons({
     super.key,
     required this.onGetStarted,
     required this.onLogin,
-    required this.getStartedText,
-    required this.loginText,
+    this.language = 'English',
   });
 
   final VoidCallback onGetStarted;
   final VoidCallback onLogin;
-  final String getStartedText;
-  final String loginText;
+  final String language;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +41,7 @@ class ActionButtons extends StatelessWidget {
           child: ElevatedButton(
             onPressed: onGetStarted,
             style: primaryStyle,
-            child: Text(getStartedText),
+            child: Text(AppLocalizations.translate('get_started', language: language)),
           ),
         ),
         const SizedBox(width: 14),
@@ -50,7 +49,7 @@ class ActionButtons extends StatelessWidget {
           child: OutlinedButton(
             onPressed: onLogin,
             style: secondaryStyle,
-            child: Text(loginText),
+            child: Text(AppLocalizations.translate('login', language: language)),
           ),
         ),
       ],

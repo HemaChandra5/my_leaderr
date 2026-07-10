@@ -6,9 +6,14 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_leaderr/main.dart';
+import 'package:my_leaderr/splash_screen.dart';
 
 void main() {
-  test('basic smoke test', () {
-    expect(1 + 1, 2);
+  testWidgets('app boots with splash screen', (tester) async {
+    await tester.pumpWidget(const MyLeaderApp());
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SplashScreen), findsOneWidget);
   });
 }

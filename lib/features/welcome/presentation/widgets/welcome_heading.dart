@@ -2,20 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/localization/app_localizations.dart';
 
 class WelcomeHeading extends StatelessWidget {
-  const WelcomeHeading({
-    super.key,
-    required this.fontSize,
-    required this.line1,
-    required this.line2,
-    required this.line3,
-  });
+  const WelcomeHeading({super.key, required this.fontSize, this.language = 'English'});
 
   final double fontSize;
-  final String line1;
-  final String line2;
-  final String line3;
+  final String language;
 
   @override
   Widget build(BuildContext context) {
@@ -30,17 +23,17 @@ class WelcomeHeading extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Text(
-          line1,
+          AppLocalizations.translate('our_leader', language: language),
           textAlign: TextAlign.center,
           style: style.copyWith(color: AppColors.white),
         ),
         Text(
-          line2,
+          AppLocalizations.translate('our_community', language: language),
           textAlign: TextAlign.center,
           style: style.copyWith(color: AppColors.primaryGold),
         ),
         Text(
-          line3,
+          AppLocalizations.translate('our_future', language: language),
           textAlign: TextAlign.center,
           style: style.copyWith(color: AppColors.white),
         ),
