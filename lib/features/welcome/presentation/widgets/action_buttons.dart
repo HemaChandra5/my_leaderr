@@ -8,10 +8,14 @@ class ActionButtons extends StatelessWidget {
     super.key,
     required this.onGetStarted,
     required this.onLogin,
+    required this.getStartedText,
+    required this.loginText,
   });
 
   final VoidCallback onGetStarted;
   final VoidCallback onLogin;
+  final String getStartedText;
+  final String loginText;
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +42,7 @@ class ActionButtons extends StatelessWidget {
           child: ElevatedButton(
             onPressed: onGetStarted,
             style: primaryStyle,
-            child: const Text('Get Started'),
+            child: Text(getStartedText),
           ),
         ),
         const SizedBox(width: 14),
@@ -46,7 +50,7 @@ class ActionButtons extends StatelessWidget {
           child: OutlinedButton(
             onPressed: onLogin,
             style: secondaryStyle,
-            child: const Text('Login'),
+            child: Text(loginText),
           ),
         ),
       ],

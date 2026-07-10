@@ -63,7 +63,8 @@ class _WelcomePageState extends State<WelcomePage>
     ).animate(CurvedAnimation(parent: curve, curve: const Interval(0.55, 1.0)));
     _globeScale = Tween<double>(begin: 1.05, end: 1).animate(curve);
 
-    _controller.forward();
+    // Keep the screen immediately visible even if startup jank drops early frames.
+    _controller.value = 1.0;
   }
 
   @override
@@ -91,8 +92,13 @@ class _WelcomePageState extends State<WelcomePage>
       body: SafeArea(
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
-            final double h = constraints.maxHeight;
-            final double w = constraints.maxWidth;
+            final Size viewport = MediaQuery.sizeOf(context);
+            final double h = constraints.maxHeight > 0
+                ? constraints.maxHeight
+                : viewport.height;
+            final double w = constraints.maxWidth > 0
+                ? constraints.maxWidth
+                : viewport.width;
 
             final double horizontalPadding = (w * 0.07)
                 .clamp(18, 28)

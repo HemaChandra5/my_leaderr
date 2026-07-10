@@ -4,9 +4,18 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
 
 class WelcomeHeading extends StatelessWidget {
-  const WelcomeHeading({super.key, required this.fontSize});
+  const WelcomeHeading({
+    super.key,
+    required this.fontSize,
+    required this.line1,
+    required this.line2,
+    required this.line3,
+  });
 
   final double fontSize;
+  final String line1;
+  final String line2;
+  final String line3;
 
   @override
   Widget build(BuildContext context) {
@@ -21,17 +30,17 @@ class WelcomeHeading extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Text(
-          'Our Leader.',
+          line1,
           textAlign: TextAlign.center,
           style: style.copyWith(color: AppColors.white),
         ),
         Text(
-          'Our Community.',
+          line2,
           textAlign: TextAlign.center,
           style: style.copyWith(color: AppColors.primaryGold),
         ),
         Text(
-          'Our Future.',
+          line3,
           textAlign: TextAlign.center,
           style: style.copyWith(color: AppColors.white),
         ),

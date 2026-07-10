@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "401426489706",
+    "project_id": "myleader-480b2",
+    "storage_bucket": "myleader-480b2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:401426489706:android:8b0713e5000fd606e10513",
+        "android_client_info": {
+          "package_name": "com.example.my_leaderr"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBcp6V311zRKCPewYiWd-iMAhUYRLLtT3M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

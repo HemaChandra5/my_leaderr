@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import 'auth/login_screen.dart';
 import 'core/constants/app_colors.dart';
 import 'features/welcome/presentation/widgets/action_buttons.dart';
@@ -6,8 +8,8 @@ import 'features/welcome/presentation/widgets/app_logo.dart';
 import 'features/welcome/presentation/widgets/hero_globe.dart';
 import 'features/welcome/presentation/widgets/tagline_text.dart';
 import 'features/welcome/presentation/widgets/welcome_heading.dart';
-
-import 'language_screen.dart';
+import 'providers/language_provider.dart';
+import 'screens/auth/choose_role_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -63,7 +65,8 @@ class _SplashScreenState extends State<SplashScreen>
     ).animate(CurvedAnimation(parent: curve, curve: const Interval(0.55, 1.0)));
     _globeScale = Tween<double>(begin: 1.05, end: 1).animate(curve);
 
-    _controller.forward();
+    // Keep the screen immediately visible even if startup jank drops early frames.
+    _controller.value = 1.0;
   }
 
   @override
@@ -72,10 +75,10 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
-  void _openLanguage() {
+  void _openGetStarted() {
     Navigator.of(
       context,
-    ).push(MaterialPageRoute<void>(builder: (_) => const LanguageScreen()));
+    ).push(MaterialPageRoute<void>(builder: (_) => const ChooseRoleScreen()));
   }
 
   void _openLogin() {
@@ -84,15 +87,40 @@ class _SplashScreenState extends State<SplashScreen>
     ).push(MaterialPageRoute<void>(builder: (_) => const LoginScreen()));
   }
 
+  Future<void> _updateLanguage(String language) async {
+    final LanguageProvider languageProvider = context.read<LanguageProvider>();
+    await languageProvider.setLanguage(language);
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '${languageProvider.t('language_changed')}: ${languageProvider.selectedLanguageLabel}',
+        ),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final LanguageProvider languageProvider = context.watch<LanguageProvider>();
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
-            final double h = constraints.maxHeight;
-            final double w = constraints.maxWidth;
+            final Size viewport = MediaQuery.sizeOf(context);
+            final double h = constraints.maxHeight > 0
+                ? constraints.maxHeight
+                : viewport.height;
+            final double w = constraints.maxWidth > 0
+                ? constraints.maxWidth
+                : viewport.width;
 
             final double horizontalPadding = (w * 0.07)
                 .clamp(18, 28)
@@ -128,6 +156,86 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: <Widget>[
+                      Align(
+                        alignment: Alignment.topRight,
+                        child: PopupMenuButton<String>(
+                          onSelected: _updateLanguage,
+                          color: const Color(0xFF121212),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: const BorderSide(color: Color(0xFF2A2A2A)),
+                          ),
+                          itemBuilder: (BuildContext context) {
+                            return languageProvider.supportedLanguages.map((
+                              String language,
+                            ) {
+                              final bool isSelected =
+                                  language == languageProvider.selectedLanguage;
+                              return PopupMenuItem<String>(
+                                value: language,
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        languageProvider.languageLabel(
+                                          language,
+                                        ),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                    if (isSelected)
+                                      const Icon(
+                                        Icons.check,
+                                        size: 18,
+                                        color: Color(0xFFF5A623),
+                                      ),
+                                  ],
+                                ),
+                              );
+                            }).toList();
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF141414),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(0xFF2A2A2A),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.language_rounded,
+                                  size: 18,
+                                  color: Color(0xFFF5A623),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  languageProvider.selectedLanguageLabel,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  color: Color(0xFF9B9B9B),
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                       SizedBox(height: topContentOffset),
                       FadeTransition(
                         opacity: _logoFade,
@@ -141,7 +249,9 @@ class _SplashScreenState extends State<SplashScreen>
                           child: Align(
                             alignment: Alignment.center,
                             child: TaglineText(
-                              text: 'Connect. Report. Resolve.',
+                              text: languageProvider.t(
+                                'connect_report_resolve',
+                              ),
                               fontSize: topTaglineSize,
                               color: const Color(0xE6FFFFFF),
                               fontWeight: FontWeight.w500,
@@ -175,13 +285,20 @@ class _SplashScreenState extends State<SplashScreen>
                             SizedBox(height: globeToHeadingSpace),
                             FadeTransition(
                               opacity: _headingFade,
-                              child: WelcomeHeading(fontSize: headingSize),
+                              child: WelcomeHeading(
+                                fontSize: headingSize,
+                                line1: languageProvider.t('heading_line_1'),
+                                line2: languageProvider.t('heading_line_2'),
+                                line3: languageProvider.t('heading_line_3'),
+                              ),
                             ),
                             SizedBox(height: headingToSubtitleSpace),
                             FadeTransition(
                               opacity: _subtitleFade,
                               child: TaglineText(
-                                text: 'Connect. Report. Resolve.',
+                                text: languageProvider.t(
+                                  'connect_report_resolve',
+                                ),
                                 fontSize: subtitleSize,
                               ),
                             ),
@@ -189,8 +306,12 @@ class _SplashScreenState extends State<SplashScreen>
                             FadeTransition(
                               opacity: _buttonsFade,
                               child: ActionButtons(
-                                onGetStarted: _openLanguage,
+                                onGetStarted: _openGetStarted,
                                 onLogin: _openLogin,
+                                getStartedText: languageProvider.t(
+                                  'get_started',
+                                ),
+                                loginText: languageProvider.t('login'),
                               ),
                             ),
                           ],
