@@ -43,7 +43,7 @@ class ProfileMenuCardWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF111111),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF1F242C)),
+        border: Border.all(color: const Color(0x66F5A623)),
       ),
       child: Column(
         children: List<Widget>.generate(items.length, (index) {
@@ -110,7 +110,7 @@ class ProfileMenuCardWidget extends StatelessWidget {
                     child: Divider(
                       height: 1,
                       thickness: 1,
-                      color: Color(0xFF1F242C),
+                      color: Color(0x33F5A623),
                     ),
                   ),
               ],

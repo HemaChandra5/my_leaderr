@@ -216,11 +216,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           fit: BoxFit.contain,
                         ),
                         const SizedBox(height: 6),
-                        Text(
-                          'Connect. Report. Resolve.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: secondaryText, fontSize: 14),
-                        ),
+                        const SizedBox.shrink(),
                         const SizedBox(height: 24),
                         ClipRRect(
                           borderRadius: BorderRadius.circular(20),

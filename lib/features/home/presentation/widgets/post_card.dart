@@ -120,7 +120,7 @@ class _PostCardState extends State<PostCard> {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
       decoration: BoxDecoration(
         color: const Color(0xff161616),
-        border: Border.all(color: const Color(0xff2C2C2C)),
+        border: Border.all(color: const Color(0x66F5A623)),
         borderRadius: BorderRadius.circular(18),
         boxShadow: const [
           BoxShadow(

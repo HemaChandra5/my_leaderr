@@ -78,7 +78,7 @@ class _CategoryTabPill extends StatelessWidget {
             border: Border.all(
               color: selected
                   ? const Color(0xffF8BE56)
-                  : const Color(0xff222427),
+                  : const Color(0x66F5A623),
             ),
             boxShadow: selected
                 ? const [

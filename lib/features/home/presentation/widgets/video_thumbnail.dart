@@ -10,7 +10,7 @@ class VideoThumbnail extends StatelessWidget {
   final String imageAsset;
   final String duration;
 
-  static const String _fallbackBrandImage = 'assets/images/my_logo.jpg';
+  static const String _fallbackBrandImage = 'assets/images/logo.png';
 
   @override
   Widget build(BuildContext context) {

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import 'auth/login_screen.dart';
 import 'core/localization/app_language.dart';
@@ -7,8 +6,6 @@ import 'core/constants/app_colors.dart';
 import 'core/theme/app_theme_manager.dart';
 import 'features/welcome/presentation/widgets/action_buttons.dart';
 import 'features/welcome/presentation/widgets/app_logo.dart';
-import 'features/welcome/presentation/widgets/hero_globe.dart';
-import 'features/welcome/presentation/widgets/tagline_text.dart';
 import 'features/welcome/presentation/widgets/welcome_heading.dart';
 import 'role_screen.dart';
 
@@ -37,12 +34,8 @@ class _SplashScreenState extends State<SplashScreen>
   String _language = 'English';
   late final AnimationController _controller;
   late final Animation<double> _logoFade;
-  late final Animation<double> _taglineFade;
-  late final Animation<double> _globeFade;
   late final Animation<double> _headingFade;
-  late final Animation<double> _subtitleFade;
   late final Animation<double> _buttonsFade;
-  late final Animation<double> _globeScale;
 
   @override
   void initState() {
@@ -50,9 +43,10 @@ class _SplashScreenState extends State<SplashScreen>
     _language = AppLanguage.instance.language;
     AppLanguage.instance.addListener(_onLanguageChanged);
     AppThemeManager.instance.addListener(_onThemeChanged);
+
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 900),
     );
 
     final CurvedAnimation curve = CurvedAnimation(
@@ -60,37 +54,21 @@ class _SplashScreenState extends State<SplashScreen>
       curve: Curves.easeOut,
     );
 
-    _logoFade = Tween<double>(
-      begin: 0.2,
-      end: 1,
-    ).animate(CurvedAnimation(parent: curve, curve: const Interval(0, 0.55)));
-    _taglineFade = Tween<double>(begin: 0.2, end: 1).animate(
-      CurvedAnimation(parent: curve, curve: const Interval(0.12, 0.65)),
+    _logoFade = Tween<double>(begin: 0.0, end: 1).animate(
+      CurvedAnimation(parent: curve, curve: const Interval(0, 0.5)),
     );
-    _globeFade = Tween<double>(
-      begin: 0.2,
-      end: 1,
-    ).animate(CurvedAnimation(parent: curve, curve: const Interval(0.2, 0.75)));
-    _headingFade = Tween<double>(begin: 0.2, end: 1).animate(
-      CurvedAnimation(parent: curve, curve: const Interval(0.35, 0.85)),
+    _headingFade = Tween<double>(begin: 0.0, end: 1).animate(
+      CurvedAnimation(parent: curve, curve: const Interval(0.3, 0.8)),
     );
-    _subtitleFade = Tween<double>(begin: 0.2, end: 1).animate(
-      CurvedAnimation(parent: curve, curve: const Interval(0.45, 0.92)),
+    _buttonsFade = Tween<double>(begin: 0.0, end: 1).animate(
+      CurvedAnimation(parent: curve, curve: const Interval(0.5, 1.0)),
     );
-    _buttonsFade = Tween<double>(
-      begin: 0.2,
-      end: 1,
-    ).animate(CurvedAnimation(parent: curve, curve: const Interval(0.55, 1.0)));
-    _globeScale = Tween<double>(begin: 1.05, end: 1).animate(curve);
 
-    // Keep the screen immediately visible even if startup jank drops early frames.
-    _controller.value = 1.0;
+    _controller.forward();
   }
 
   void _onLanguageChanged() {
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
     setState(() {
       _language = AppLanguage.instance.language;
     });
@@ -109,15 +87,13 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   void _openRole() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute<void>(builder: (_) => const RoleScreen()));
+    Navigator.of(context)
+        .push(MaterialPageRoute<void>(builder: (_) => const RoleScreen()));
   }
 
   void _openLogin() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute<void>(builder: (_) => const LoginScreen()));
+    Navigator.of(context)
+        .push(MaterialPageRoute<void>(builder: (_) => const LoginScreen()));
   }
 
   Widget _buildThemeToggle() {
@@ -130,14 +106,10 @@ class _SplashScreenState extends State<SplashScreen>
       ),
       tooltip: isDarkMode ? 'Switch to light mode' : 'Switch to dark mode',
       style: IconButton.styleFrom(
-        backgroundColor: isDarkMode
-            ? const Color(0xFF141619)
-            : const Color(0xFFE5E7EB),
-        foregroundColor: isDarkMode
-            ? AppColors.primaryGold
-            : const Color(0xFF111827),
+        backgroundColor: Colors.black.withOpacity(0.45),
+        foregroundColor: AppColors.primaryGold,
         side: BorderSide(
-          color: isDarkMode ? const Color(0xFF2B2B2B) : const Color(0xFFCFD8E1),
+          color: Colors.white.withOpacity(0.15),
           width: 1,
         ),
       ),
@@ -146,13 +118,6 @@ class _SplashScreenState extends State<SplashScreen>
 
   Widget _buildLanguageSelector() {
     final isDarkMode = AppThemeManager.instance.isDarkMode;
-    final Color chipBg = isDarkMode
-        ? const Color(0xFF141619)
-        : const Color(0xFFF4F6F8);
-    final Color chipBorder = isDarkMode
-        ? const Color(0xFF2B2B2B)
-        : const Color(0xFFCFD8E1);
-    final Color chipText = isDarkMode ? Colors.white : const Color(0xFF111827);
 
     return Theme(
       data: Theme.of(context).copyWith(
@@ -163,7 +128,10 @@ class _SplashScreenState extends State<SplashScreen>
         onSelected: AppLanguage.instance.setLanguage,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(22),
-          side: BorderSide(color: chipBorder, width: 1),
+          side: BorderSide(
+            color: Colors.white.withOpacity(0.15),
+            width: 1,
+          ),
         ),
         offset: const Offset(0, 40),
         itemBuilder: (BuildContext context) {
@@ -180,11 +148,10 @@ class _SplashScreenState extends State<SplashScreen>
                         color: isSelected
                             ? AppColors.primaryGold
                             : (isDarkMode
-                                  ? Colors.white
-                                  : const Color(0xFF0F172A)),
-                        fontWeight: isSelected
-                            ? FontWeight.w700
-                            : FontWeight.w500,
+                                ? Colors.white
+                                : const Color(0xFF0F172A)),
+                        fontWeight:
+                            isSelected ? FontWeight.w700 : FontWeight.w500,
                       ),
                     ),
                   ),
@@ -202,27 +169,31 @@ class _SplashScreenState extends State<SplashScreen>
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
           decoration: BoxDecoration(
-            color: chipBg,
+            color: Colors.black.withOpacity(0.45),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: chipBorder, width: 1),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.15),
+              width: 1,
+            ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.language_rounded, color: chipText, size: 18),
+              const Icon(Icons.language_rounded,
+                  color: Colors.white, size: 18),
               const SizedBox(width: 8),
               Text(
                 _language,
-                style: TextStyle(
-                  color: chipText,
+                style: const TextStyle(
+                  color: Colors.white,
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(width: 2),
-              Icon(
+              const Icon(
                 Icons.keyboard_arrow_down_rounded,
-                color: chipText,
+                color: Colors.white,
                 size: 20,
               ),
             ],
@@ -234,52 +205,53 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = AppThemeManager.instance.isDarkMode;
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints constraints) {
-            final Size viewport = MediaQuery.sizeOf(context);
-            final double h = constraints.maxHeight > 0
-                ? constraints.maxHeight
-                : viewport.height;
-            final double w = constraints.maxWidth > 0
-                ? constraints.maxWidth
-                : viewport.width;
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          /// 🌍 Full-screen background image
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/sp1.jpg',
+              fit: BoxFit.cover,
+            ),
+          ),
 
-            final double horizontalPadding = (w * 0.07)
-                .clamp(18, 28)
-                .toDouble();
-            final double logoSize = (w * 0.45).clamp(150, 220).toDouble();
-            final double topTaglineSize = (w * 0.048).clamp(16, 18).toDouble();
-            final double headingSize = (w * 0.078).clamp(27, 31).toDouble();
-            final double subtitleSize = (w * 0.04).clamp(14, 16).toDouble();
-            final double globeHeight = (h * 0.52).clamp(300, 460).toDouble();
+          /// 🌑 Gradient overlay — darkens top & bottom for readability
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.55),
+                    Colors.transparent,
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.75),
+                  ],
+                  stops: const [0.0, 0.3, 0.6, 1.0],
+                ),
+              ),
+            ),
+          ),
 
-            const double logoToTaglineSpace = 6;
-            final double taglineToGlobeSpace = (h * 0.038)
-                .clamp(18, 34)
-                .toDouble();
-            final double globeToHeadingSpace = (h * 0.001)
-                .clamp(0, 2)
-                .toDouble();
-            final double headingToSubtitleSpace = (h * 0.01)
-                .clamp(4, 10)
-                .toDouble();
-            final double subtitleToButtonsSpace = (h * 0.02)
-                .clamp(8, 16)
-                .toDouble();
-            const double topContentOffset = 8;
-            const double postGlobeOffset = -64;
+          /// ✨ Content
+          SafeArea(
+            child: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                final double h = constraints.maxHeight;
+                final double w = constraints.maxWidth;
 
-            return SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: h),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
+                final double horizontalPadding =
+                    (w * 0.07).clamp(18, 28).toDouble();
+                final double logoSize = (w * 0.42).clamp(140, 200).toDouble();
+                final double headingSize =
+                    (w * 0.078).clamp(27, 31).toDouble();
+
+                return Column(
                   children: <Widget>[
+                    /// 🔝 Top bar — language + theme toggle
                     Padding(
                       padding: const EdgeInsets.only(
                         left: 8.0,
@@ -294,98 +266,52 @@ class _SplashScreenState extends State<SplashScreen>
                         ],
                       ),
                     ),
-                    const SizedBox(height: 10),
+
+                    /// 👑 Logo
+                    SizedBox(height: h * 0.03),
+                    FadeTransition(
+                      opacity: _logoFade,
+                      child: AppLogo(logoSize: logoSize),
+                    ),
+
+                    /// Push everything else to bottom
+                    const Spacer(),
+
+                    /// 📝 Heading + Buttons at bottom
                     Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: horizontalPadding,
                       ),
                       child: Column(
                         children: <Widget>[
-                          SizedBox(height: topContentOffset),
                           FadeTransition(
-                            opacity: _logoFade,
-                            child: AppLogo(logoSize: logoSize),
-                          ),
-                          SizedBox(height: logoToTaglineSpace),
-                          FadeTransition(
-                            opacity: _taglineFade,
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: Align(
-                                alignment: Alignment.center,
-                                child: TaglineText(
-                                  text: 'Connect. Report. Resolve.',
-                                  fontSize: topTaglineSize,
-                                  color: isDarkMode
-                                      ? const Color(0xE6FFFFFF)
-                                      : const Color(0xFF475569),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
+                            opacity: _headingFade,
+                            child: WelcomeHeading(
+                              fontSize: headingSize,
+                              language: _language,
                             ),
                           ),
-                          SizedBox(height: taglineToGlobeSpace),
+                          SizedBox(height: h * 0.025),
                           FadeTransition(
-                            opacity: _globeFade,
-                            child: ScaleTransition(
-                              scale: _globeScale,
-                              child: SizedBox(
-                                height: globeHeight,
-                                child: OverflowBox(
-                                  alignment: const Alignment(-0.1, 0),
-                                  minWidth: w,
-                                  maxWidth: w * 1.65,
-                                  child: HeroGlobe(
-                                    height: globeHeight,
-                                    maxWidth: w * 1.65,
-                                  ),
-                                ),
-                              ),
+                            opacity: _buttonsFade,
+                            child: ActionButtons(
+                              onGetStarted: _openRole,
+                              onLogin: _openLogin,
+                              language: _language,
                             ),
                           ),
-                          Transform.translate(
-                            offset: const Offset(0, postGlobeOffset),
-                            child: Column(
-                              children: <Widget>[
-                                SizedBox(height: globeToHeadingSpace),
-                                FadeTransition(
-                                  opacity: _headingFade,
-                                  child: WelcomeHeading(
-                                    fontSize: headingSize,
-                                    language: _language,
-                                  ),
-                                ),
-                                SizedBox(height: headingToSubtitleSpace),
-                                FadeTransition(
-                                  opacity: _subtitleFade,
-                                  child: TaglineText(
-                                    text:
-                                        'Empowering citizens to report and resolve community issues.',
-                                    fontSize: subtitleSize,
-                                  ),
-                                ),
-                                SizedBox(height: subtitleToButtonsSpace),
-                                FadeTransition(
-                                  opacity: _buttonsFade,
-                                  child: ActionButtons(
-                                    onGetStarted: _openRole,
-                                    onLogin: _openLogin,
-                                    language: _language,
-                                  ),
-                                ),
-                              ],
-                            ),
+                          SizedBox(
+                            height: (h * 0.035).clamp(16, 32).toDouble(),
                           ),
-                          SizedBox(height: (h * 0.03).clamp(12, 24).toDouble()),
                         ],
                       ),
                     ),
                   ],
-                ),
-              ),
-            );
-          },
-        ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

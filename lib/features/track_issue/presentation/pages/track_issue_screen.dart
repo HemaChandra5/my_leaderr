@@ -832,7 +832,7 @@ class _LeaderLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Image(
-      image: AssetImage('assets/images/my_logo.jpg'),
+      image: AssetImage('assets/images/logo.png'),
       height: 74,
       fit: BoxFit.contain,
     );

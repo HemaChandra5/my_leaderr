@@ -110,21 +110,13 @@ class _ChooseRoleScreenState extends State<ChooseRoleScreen> {
                   Transform.translate(
                     offset: const Offset(0, -8),
                     child: Image.asset(
-                      'assets/images/my_logo.jpg',
+                      'assets/images/logo.png',
                       width: brandWidth,
                       fit: BoxFit.contain,
                     ),
                   ),
                   SizedBox(height: (h * 0.004).clamp(2, 4).toDouble()),
-                  const Text(
-                    'CONNECT. REPORT. RESOLVE.',
-                    style: TextStyle(
-                      color: _white70,
-                      fontSize: 11,
-                      letterSpacing: 3,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  const SizedBox.shrink(),
                   SizedBox(height: (h * 0.01).clamp(6, 10).toDouble()),
                   SizedBox(
                     width: double.infinity,

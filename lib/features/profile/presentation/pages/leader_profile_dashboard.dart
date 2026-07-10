@@ -206,7 +206,7 @@ class LeaderProfileDashboard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: const Color(0xFF111111),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFF1F242C)),
+                  border: Border.all(color: const Color(0x66F5A623)),
                 ),
                 child: Column(
                   children: const [
@@ -271,7 +271,7 @@ class _LeaderStatCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF111111),
         borderRadius: BorderRadius.circular(11),
-        border: Border.all(color: const Color(0xFF1F242C)),
+        border: Border.all(color: const Color(0x66F5A623)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -346,7 +346,7 @@ class _LeaderMenuDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Padding(
       padding: EdgeInsets.only(left: 46, right: 14),
-      child: Divider(height: 1, color: Color(0xFF1F242C)),
+      child: Divider(height: 1, color: Color(0x33F5A623)),
     );
   }
 }

@@ -787,8 +787,8 @@ class MeetingListItem extends StatelessWidget {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final Color cardColor = Theme.of(context).colorScheme.surface;
     final Color borderColor = isDark
-        ? const Color(0xFF30363D)
-        : const Color(0xFFD7DEE8);
+      ? const Color(0x66F5A623)
+      : const Color(0x99D6A848);
     final Color primaryText = isDark
         ? const Color(0xFFFFFFFF)
         : const Color(0xFF0F172A);
@@ -1153,7 +1153,7 @@ class _LeaderLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Image(
-      image: AssetImage('assets/images/my_logo.jpg'),
+      image: AssetImage('assets/images/logo.png'),
       height: 66,
       fit: BoxFit.contain,
     );

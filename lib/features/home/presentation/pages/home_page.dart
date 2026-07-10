@@ -384,7 +384,7 @@ class _HomePageState extends State<HomePage> {
                           onLogoTap: _scrollFeedToTop,
                         ),
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                           child: SizedBox(
                             height: 48,
                             child: TextField(
@@ -429,7 +429,7 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 10),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: CategoryTabs(
@@ -442,7 +442,7 @@ class _HomePageState extends State<HomePage> {
                             },
                           ),
                         ),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 12),
                         Expanded(
                           child: AnimatedSwitcher(
                             duration: const Duration(milliseconds: 300),
