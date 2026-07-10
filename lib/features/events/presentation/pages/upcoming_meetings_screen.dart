@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../core/localization/app_language.dart';
+import '../../../../core/localization/app_localizations.dart';
+
 const double _kGrid = 8;
 const String _fontFamily = 'Inter';
 const String _homeRoute = '/home';
@@ -54,15 +57,6 @@ class UpcomingMeetingsScreen extends StatefulWidget {
 
 class _UpcomingMeetingsScreenState extends State<UpcomingMeetingsScreen>
     with SingleTickerProviderStateMixin {
-  static const Color _background = Color(0xFF000000);
-  static const Color _surfaceCard = Color(0xFF111111);
-  static const Color _surfaceAlt = Color(0xFF161B22);
-  static const Color _gold = Color(0xFFF5A623);
-  static const Color _textPrimary = Color(0xFFFFFFFF);
-  static const Color _textSecondary = Color(0xFF8B949E);
-  static const Color _border = Color(0xFF30363D);
-  static const Color _green = Color(0xFF22C55E);
-
   final TextEditingController _searchController = TextEditingController();
   late final AnimationController _listAnimationController;
 
@@ -129,6 +123,10 @@ class _UpcomingMeetingsScreenState extends State<UpcomingMeetingsScreen>
 
     return result.toList();
   }
+
+  String get _language => AppLanguage.instance.language;
+  String _tr(String key) =>
+      AppLocalizations.translate(key, language: _language);
 
   void _onFilterChanged(MeetingsFilter filter) {
     if (filter == MeetingsFilter.all) {
@@ -201,9 +199,9 @@ class _UpcomingMeetingsScreenState extends State<UpcomingMeetingsScreen>
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        const SnackBar(
+        SnackBar(
           behavior: SnackBarBehavior.floating,
-          content: Text('This section is coming soon'),
+          content: Text(_tr('coming_soon')),
         ),
       );
   }
@@ -237,9 +235,9 @@ class _UpcomingMeetingsScreenState extends State<UpcomingMeetingsScreen>
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        const SnackBar(
+        SnackBar(
           behavior: SnackBarBehavior.floating,
-          content: Text('Notifications enabled'),
+          content: Text(_tr('notifications_enabled')),
         ),
       );
   }
@@ -248,150 +246,172 @@ class _UpcomingMeetingsScreenState extends State<UpcomingMeetingsScreen>
   Widget build(BuildContext context) {
     final List<MeetingModel> meetings = _filteredMeetings;
 
-    return Theme(
-      data: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: _background,
-        useMaterial3: true,
-        fontFamily: _fontFamily,
-      ),
-      child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.light,
-        child: Scaffold(
-          backgroundColor: _background,
-          appBar: AppBar(
-            backgroundColor: _background,
-            elevation: 0,
-            surfaceTintColor: Colors.transparent,
-            centerTitle: true,
-            toolbarHeight: 72,
-            title: Stack(
-              alignment: Alignment.center,
-              children: [
-                const Align(alignment: Alignment.center, child: _LeaderLogo()),
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: SizedBox(width: 40),
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Material(
-                    color: const Color(0xff17191C),
-                    shape: const CircleBorder(),
-                    child: IconButton(
-                      onPressed: _showNotificationSnackbar,
-                      splashRadius: 22,
-                      icon: const Icon(
-                        Icons.notifications_none_rounded,
-                        size: 22,
-                        color: Color(0xffFFFFFF),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          body: SafeArea(
-            child: ListView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(
-                _kGrid * 2,
-                _kGrid,
-                _kGrid * 2,
-                _kGrid * 2,
-              ),
-              children: <Widget>[
-                SearchBarWidget(
-                  controller: _searchController,
-                  onChanged: (_) => setState(() {}),
-                ),
-                const SizedBox(height: _kGrid * 1.5),
-                SegmentedToggle(
-                  selected: _selectedFilter,
-                  onChanged: _onFilterChanged,
-                ),
-                const SizedBox(height: _kGrid * 2),
-                const Text(
-                  'Featured Meeting',
-                  style: TextStyle(
-                    color: _textPrimary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: _fontFamily,
-                  ),
-                ),
-                const SizedBox(height: _kGrid),
-                FeaturedMeetingCard(
-                  isGoing: _isRsvpGoing,
-                  onRsvpTap: () {
-                    setState(() {
-                      _isRsvpGoing = !_isRsvpGoing;
-                    });
-                  },
-                  formattedDate: _formatDateTime(DateTime(2026, 7, 12, 11, 0)),
-                ),
-                const SizedBox(height: _kGrid * 2),
-                const Text(
-                  'Upcoming Meetings',
-                  style: TextStyle(
-                    color: _textPrimary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: _fontFamily,
-                  ),
-                ),
-                const SizedBox(height: _kGrid * 1.5),
-                ...List<Widget>.generate(meetings.length, (int index) {
-                  final MeetingModel meeting = meetings[index];
-                  final int beginMs = index * 150;
-                  final int endMs = beginMs + 500;
-                  final Duration total =
-                      _listAnimationController.duration ??
-                      const Duration(milliseconds: 900);
-                  final double start = (beginMs / total.inMilliseconds).clamp(
-                    0.0,
-                    1.0,
-                  );
-                  final double end = (endMs / total.inMilliseconds).clamp(
-                    0.0,
-                    1.0,
-                  );
+    return AnimatedBuilder(
+      animation: AppLanguage.instance,
+      builder: (context, _) {
+        final bool isDark = Theme.of(context).brightness == Brightness.dark;
+        final Color background = Theme.of(context).scaffoldBackgroundColor;
+        final Color primaryText = isDark
+            ? const Color(0xFFFFFFFF)
+            : const Color(0xFF0F172A);
+        final Color iconChip = isDark
+            ? const Color(0xFF17191C)
+            : const Color(0xFFE7ECF3);
 
-                  final CurvedAnimation animation = CurvedAnimation(
-                    parent: _listAnimationController,
-                    curve: Interval(start, end, curve: Curves.easeOutCubic),
-                  );
-
-                  return AnimatedBuilder(
-                    animation: animation,
-                    builder: (BuildContext context, Widget? child) {
-                      final double value = animation.value;
-                      return Opacity(
-                        opacity: value,
-                        child: Transform.translate(
-                          offset: Offset(0, (1 - value) * 18),
-                          child: child,
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: isDark
+              ? SystemUiOverlayStyle.light
+              : SystemUiOverlayStyle.dark,
+          child: Scaffold(
+            backgroundColor: background,
+            appBar: AppBar(
+              backgroundColor: background,
+              elevation: 0,
+              surfaceTintColor: Colors.transparent,
+              centerTitle: true,
+              toolbarHeight: 72,
+              title: Stack(
+                alignment: Alignment.center,
+                children: [
+                  const Align(
+                    alignment: Alignment.center,
+                    child: _LeaderLogo(),
+                  ),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: SizedBox(width: 40),
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Material(
+                      color: iconChip,
+                      shape: const CircleBorder(),
+                      child: IconButton(
+                        onPressed: _showNotificationSnackbar,
+                        splashRadius: 22,
+                        icon: Icon(
+                          Icons.notifications_none_rounded,
+                          size: 22,
+                          color: primaryText,
                         ),
-                      );
-                    },
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        bottom: index == meetings.length - 1 ? 0 : _kGrid * 2,
-                      ),
-                      child: MeetingListItem(
-                        meeting: meeting,
-                        onInterestedTap: () => _toggleInterested(index),
                       ),
                     ),
-                  );
-                }),
-              ],
+                  ),
+                ],
+              ),
+            ),
+            body: SafeArea(
+              child: ListView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(
+                  _kGrid * 2,
+                  _kGrid,
+                  _kGrid * 2,
+                  _kGrid * 2,
+                ),
+                children: <Widget>[
+                  SearchBarWidget(
+                    controller: _searchController,
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  const SizedBox(height: _kGrid * 1.5),
+                  SegmentedToggle(
+                    selected: _selectedFilter,
+                    inactiveTextColor: isDark
+                        ? const Color(0xFF8B949E)
+                        : const Color(0xFF64748B),
+                    background: isDark
+                        ? const Color(0xFF161B22)
+                        : const Color(0xFFEFF3F8),
+                    onChanged: _onFilterChanged,
+                  ),
+                  const SizedBox(height: _kGrid * 2),
+                  Text(
+                    _tr('featured_meeting'),
+                    style: TextStyle(
+                      color: primaryText,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: _fontFamily,
+                    ),
+                  ),
+                  const SizedBox(height: _kGrid),
+                  FeaturedMeetingCard(
+                    isGoing: _isRsvpGoing,
+                    onRsvpTap: () {
+                      setState(() {
+                        _isRsvpGoing = !_isRsvpGoing;
+                      });
+                    },
+                    formattedDate: _formatDateTime(
+                      DateTime(2026, 7, 12, 11, 0),
+                    ),
+                  ),
+                  const SizedBox(height: _kGrid * 2),
+                  Text(
+                    _tr('upcoming_meetings'),
+                    style: TextStyle(
+                      color: primaryText,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: _fontFamily,
+                    ),
+                  ),
+                  const SizedBox(height: _kGrid * 1.5),
+                  ...List<Widget>.generate(meetings.length, (int index) {
+                    final MeetingModel meeting = meetings[index];
+                    final int beginMs = index * 150;
+                    final int endMs = beginMs + 500;
+                    final Duration total =
+                        _listAnimationController.duration ??
+                        const Duration(milliseconds: 900);
+                    final double start = (beginMs / total.inMilliseconds).clamp(
+                      0.0,
+                      1.0,
+                    );
+                    final double end = (endMs / total.inMilliseconds).clamp(
+                      0.0,
+                      1.0,
+                    );
+
+                    final CurvedAnimation animation = CurvedAnimation(
+                      parent: _listAnimationController,
+                      curve: Interval(start, end, curve: Curves.easeOutCubic),
+                    );
+
+                    return AnimatedBuilder(
+                      animation: animation,
+                      builder: (BuildContext context, Widget? child) {
+                        final double value = animation.value;
+                        return Opacity(
+                          opacity: value,
+                          child: Transform.translate(
+                            offset: Offset(0, (1 - value) * 18),
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          bottom: index == meetings.length - 1 ? 0 : _kGrid * 2,
+                        ),
+                        child: MeetingListItem(
+                          meeting: meeting,
+                          onInterestedTap: () => _toggleInterested(index),
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+            bottomNavigationBar: BottomNavBar(
+              onTap: _onBottomNavTap,
+              language: _language,
             ),
           ),
-          bottomNavigationBar: BottomNavBar(onTap: _onBottomNavTap),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -408,30 +428,40 @@ class SearchBarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color primaryText = isDark
+        ? const Color(0xFFFFFFFF)
+        : const Color(0xFF0F172A);
+    final Color secondaryText = isDark
+        ? const Color(0xFF8B949E)
+        : const Color(0xFF64748B);
+    final Color fieldBg = isDark
+        ? const Color(0xFF161B22)
+        : const Color(0xFFEFF3F8);
+    final language = AppLanguage.instance.language;
     return SizedBox(
       height: 48,
       child: TextField(
         controller: controller,
         onChanged: onChanged,
-        style: const TextStyle(
-          color: Color(0xFFFFFFFF),
+        style: TextStyle(
+          color: primaryText,
           fontSize: 14,
           fontFamily: _fontFamily,
         ),
         decoration: InputDecoration(
-          hintText: 'Search meetings, events, keywords...',
-          hintStyle: const TextStyle(
-            color: Color(0xFF8B949E),
+          hintText: AppLocalizations.translate(
+            'search_meetings',
+            language: language,
+          ),
+          hintStyle: TextStyle(
+            color: secondaryText,
             fontSize: 14,
             fontFamily: _fontFamily,
           ),
-          prefixIcon: const Icon(
-            Icons.search,
-            color: Color(0xFF8B949E),
-            size: 20,
-          ),
+          prefixIcon: Icon(Icons.search, color: secondaryText, size: 20),
           filled: true,
-          fillColor: const Color(0xFF161B22),
+          fillColor: fieldBg,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30),
             borderSide: BorderSide.none,
@@ -459,32 +489,39 @@ class SegmentedToggle extends StatelessWidget {
     super.key,
     required this.selected,
     required this.onChanged,
+    required this.inactiveTextColor,
+    required this.background,
   });
 
   final MeetingsFilter selected;
   final ValueChanged<MeetingsFilter> onChanged;
+  final Color inactiveTextColor;
+  final Color background;
 
   @override
   Widget build(BuildContext context) {
+    final language = AppLanguage.instance.language;
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFF161B22),
+        color: background,
         borderRadius: BorderRadius.circular(30),
       ),
       child: Row(
         children: <Widget>[
           Expanded(
             child: _SegmentButton(
-              label: 'All',
+              label: AppLocalizations.translate('all', language: language),
               active: selected == MeetingsFilter.all,
+              inactiveTextColor: inactiveTextColor,
               onTap: () => onChanged(MeetingsFilter.all),
             ),
           ),
           Expanded(
             child: _SegmentButton(
-              label: 'Upcoming',
+              label: AppLocalizations.translate('upcoming', language: language),
               active: selected == MeetingsFilter.upcoming,
+              inactiveTextColor: inactiveTextColor,
               onTap: () => onChanged(MeetingsFilter.upcoming),
             ),
           ),
@@ -498,11 +535,13 @@ class _SegmentButton extends StatelessWidget {
   const _SegmentButton({
     required this.label,
     required this.active,
+    required this.inactiveTextColor,
     required this.onTap,
   });
 
   final String label;
   final bool active;
+  final Color inactiveTextColor;
   final VoidCallback onTap;
 
   @override
@@ -524,9 +563,7 @@ class _SegmentButton extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                color: active
-                    ? const Color(0xFF000000)
-                    : const Color(0xFF8B949E),
+                color: active ? const Color(0xFF000000) : inactiveTextColor,
                 fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                 fontSize: 14,
                 fontFamily: _fontFamily,
@@ -671,6 +708,7 @@ class _RsvpButtonState extends State<_RsvpButton> {
 
   @override
   Widget build(BuildContext context) {
+    final language = AppLanguage.instance.language;
     final Matrix4 transform = _pressed
         ? (Matrix4.identity()..scale(0.97))
         : Matrix4.identity();
@@ -693,7 +731,9 @@ class _RsvpButtonState extends State<_RsvpButton> {
         ),
         child: Center(
           child: Text(
-            widget.isGoing ? 'Going' : 'RSVP Now',
+            widget.isGoing
+                ? AppLocalizations.translate('going', language: language)
+                : AppLocalizations.translate('rsvp_now', language: language),
             style: const TextStyle(
               color: Color(0xFF000000),
               fontSize: 13,
@@ -744,6 +784,17 @@ class MeetingListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color cardColor = Theme.of(context).colorScheme.surface;
+    final Color borderColor = isDark
+        ? const Color(0xFF30363D)
+        : const Color(0xFFD7DEE8);
+    final Color primaryText = isDark
+        ? const Color(0xFFFFFFFF)
+        : const Color(0xFF0F172A);
+    final Color secondaryText = isDark
+        ? const Color(0xFF8B949E)
+        : const Color(0xFF64748B);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -753,9 +804,9 @@ class MeetingListItem extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFF111111),
+              color: cardColor,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFF30363D)),
+              border: Border.all(color: borderColor),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -766,8 +817,8 @@ class MeetingListItem extends StatelessWidget {
                     Expanded(
                       child: Text(
                         meeting.title,
-                        style: const TextStyle(
-                          color: Color(0xFFFFFFFF),
+                        style: TextStyle(
+                          color: primaryText,
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           fontFamily: _fontFamily,
@@ -784,17 +835,17 @@ class MeetingListItem extends StatelessWidget {
                 const SizedBox(height: _kGrid),
                 Row(
                   children: <Widget>[
-                    const Icon(
+                    Icon(
                       Icons.calendar_today_outlined,
-                      color: Color(0xFF8B949E),
+                      color: secondaryText,
                       size: 14,
                     ),
                     const SizedBox(width: _kGrid / 2),
                     Expanded(
                       child: Text(
                         _formatDateTime(meeting.date),
-                        style: const TextStyle(
-                          color: Color(0xFF8B949E),
+                        style: TextStyle(
+                          color: secondaryText,
                           fontSize: 12,
                           fontFamily: _fontFamily,
                         ),
@@ -805,17 +856,17 @@ class MeetingListItem extends StatelessWidget {
                 const SizedBox(height: _kGrid / 2),
                 Row(
                   children: <Widget>[
-                    const Icon(
+                    Icon(
                       Icons.location_on_outlined,
-                      color: Color(0xFF8B949E),
+                      color: secondaryText,
                       size: 14,
                     ),
                     const SizedBox(width: _kGrid / 2),
                     Expanded(
                       child: Text(
                         meeting.location,
-                        style: const TextStyle(
-                          color: Color(0xFF8B949E),
+                        style: TextStyle(
+                          color: secondaryText,
                           fontSize: 12,
                           fontFamily: _fontFamily,
                         ),
@@ -825,9 +876,9 @@ class MeetingListItem extends StatelessWidget {
                 ),
                 const SizedBox(height: _kGrid),
                 Text(
-                  '${meeting.interestedCount} Interested',
-                  style: const TextStyle(
-                    color: Color(0xFF8B949E),
+                  '${meeting.interestedCount} ${AppLocalizations.translate('interested', language: AppLanguage.instance.language)}',
+                  style: TextStyle(
+                    color: secondaryText,
                     fontSize: 12,
                     fontFamily: _fontFamily,
                   ),
@@ -848,6 +899,14 @@ class DateBlockWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color bg = isDark ? const Color(0xFF161B22) : const Color(0xFFEFF3F8);
+    final Color primaryText = isDark
+        ? const Color(0xFFFFFFFF)
+        : const Color(0xFF0F172A);
+    final Color secondaryText = isDark
+        ? const Color(0xFF8B949E)
+        : const Color(0xFF64748B);
     const List<String> months = <String>[
       'JAN',
       'FEB',
@@ -867,15 +926,15 @@ class DateBlockWidget extends StatelessWidget {
       width: 60,
       padding: const EdgeInsets.symmetric(vertical: _kGrid * 1.5),
       decoration: BoxDecoration(
-        color: const Color(0xFF161B22),
+        color: bg,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: <Widget>[
           Text(
             date.day.toString().padLeft(2, '0'),
-            style: const TextStyle(
-              color: Color(0xFFFFFFFF),
+            style: TextStyle(
+              color: primaryText,
               fontSize: 20,
               fontWeight: FontWeight.w700,
               fontFamily: _fontFamily,
@@ -884,8 +943,8 @@ class DateBlockWidget extends StatelessWidget {
           const SizedBox(height: _kGrid / 2),
           Text(
             months[date.month - 1],
-            style: const TextStyle(
-              color: Color(0xFF8B949E),
+            style: TextStyle(
+              color: secondaryText,
               fontSize: 12,
               fontFamily: _fontFamily,
             ),
@@ -904,6 +963,7 @@ class _InterestedBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final language = AppLanguage.instance.language;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -919,7 +979,12 @@ class _InterestedBadge extends StatelessWidget {
               : Border.all(color: const Color(0xFF30363D), width: 1),
         ),
         child: Text(
-          isInterested ? 'Interested' : 'Mark Interested',
+          isInterested
+              ? AppLocalizations.translate('interested', language: language)
+              : AppLocalizations.translate(
+                  'mark_interested',
+                  language: language,
+                ),
           style: const TextStyle(
             color: Color(0xFFFFFFFF),
             fontSize: 11,
@@ -933,14 +998,17 @@ class _InterestedBadge extends StatelessWidget {
 }
 
 class BottomNavBar extends StatelessWidget {
-  const BottomNavBar({super.key, required this.onTap});
+  const BottomNavBar({super.key, required this.onTap, required this.language});
 
   final ValueChanged<String> onTap;
+  final String language;
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color navBackground = isDark ? const Color(0xFF0D1117) : Colors.white;
     return Container(
-      color: const Color(0xFF0D1117),
+      color: navBackground,
       child: SafeArea(
         top: false,
         child: Padding(
@@ -953,26 +1021,29 @@ class BottomNavBar extends StatelessWidget {
             children: <Widget>[
               _NavItem(
                 icon: Icons.home_outlined,
-                label: 'Home',
+                label: AppLocalizations.translate('home', language: language),
                 active: false,
                 onTap: () => onTap(_homeRoute),
               ),
               _NavItem(
                 icon: Icons.track_changes_rounded,
-                label: 'Issues',
+                label: AppLocalizations.translate('issues', language: language),
                 active: false,
                 onTap: () => onTap(_trackRoute),
               ),
               _AddButton(onTap: () => onTap(_createMenuRoute)),
               _NavItem(
                 icon: Icons.event_outlined,
-                label: 'Events',
+                label: AppLocalizations.translate('events', language: language),
                 active: true,
                 onTap: () => onTap(_eventsRoute),
               ),
               _NavItem(
                 icon: Icons.person_outline_rounded,
-                label: 'Profile',
+                label: AppLocalizations.translate(
+                  'profile',
+                  language: language,
+                ),
                 active: false,
                 onTap: () => onTap(_profileRoute),
               ),
@@ -999,9 +1070,11 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color color = active
-        ? const Color(0xFFF5A623)
-        : const Color(0xFF8B949E);
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color inactiveColor = isDark
+        ? const Color(0xFF8B949E)
+        : const Color(0xFF64748B);
+    final Color color = active ? const Color(0xFFF5A623) : inactiveColor;
 
     return InkResponse(
       onTap: onTap,

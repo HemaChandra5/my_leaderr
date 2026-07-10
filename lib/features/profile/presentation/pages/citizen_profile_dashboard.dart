@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../core/localization/app_language.dart';
+import '../../../../core/localization/app_localizations.dart';
+
 import '../../domain/models/citizen_profile.dart';
 import '../widgets/bottom_nav_bar_widget.dart';
 import '../widgets/profile_header_widget.dart';
@@ -10,7 +13,7 @@ import '../widgets/stats_row_widget.dart';
 const String _homeRoute = '/home';
 const String _eventsRoute = '/events';
 const String _trackRoute = '/track';
-const String _createMenuRoute = '/create-menu';
+const String _communityRoute = '/community';
 
 class CitizenProfileDashboard extends StatefulWidget {
   const CitizenProfileDashboard({super.key});
@@ -37,6 +40,10 @@ class _CitizenProfileDashboardState extends State<CitizenProfileDashboard>
     issuesResolved: 15,
     eventsAttended: 12,
   );
+
+  String get _language => AppLanguage.instance.language;
+  String _tr(String key) =>
+      AppLocalizations.translate(key, language: _language);
 
   @override
   void initState() {
@@ -100,7 +107,7 @@ class _CitizenProfileDashboardState extends State<CitizenProfileDashboard>
     }
 
     if (index == 2) {
-      Navigator.of(context).pushNamed(_createMenuRoute);
+      Navigator.of(context).pushReplacementNamed(_communityRoute);
       return;
     }
 
@@ -115,68 +122,109 @@ class _CitizenProfileDashboardState extends State<CitizenProfileDashboard>
         ? 360.0
         : MediaQuery.sizeOf(context).width;
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light,
-      child: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: Scaffold(
-          backgroundColor: const Color(0xFF000000),
-          appBar: AppBar(
-            backgroundColor: const Color(0xFF000000),
-            elevation: 0,
-            scrolledUnderElevation: 0,
-            centerTitle: true,
-            title: const Text(
-              'Profile',
-              style: TextStyle(
-                color: Color(0xFFFFFFFF),
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            actions: [
-              IconButton(
-                onPressed: () => _handleMenuTap('Settings'),
-                icon: const Icon(
-                  Icons.settings_outlined,
-                  color: Color(0xFF8B949E),
+    return AnimatedBuilder(
+      animation: AppLanguage.instance,
+      builder: (context, _) {
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle.light,
+          child: GestureDetector(
+            onTap: () => FocusScope.of(context).unfocus(),
+            child: Scaffold(
+              backgroundColor: const Color(0xFF000000),
+              body: SafeArea(
+                child: FadeTransition(
+                  opacity: _screenFade,
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minWidth: minWidth,
+                        maxWidth: 640,
+                      ),
+                      child: ListView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(14, 10, 14, 20),
+                        children: [
+                          Row(
+                            children: [
+                              const Spacer(),
+                              Image.asset(
+                                'assets/images/logo.png',
+                                width: 120,
+                                fit: BoxFit.contain,
+                              ),
+                              const Spacer(),
+                              IconButton(
+                                onPressed: () =>
+                                    _handleMenuTap(_tr('settings')),
+                                icon: const Icon(
+                                  Icons.settings_outlined,
+                                  color: Color(0xFF8B949E),
+                                  size: 22,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          SlideTransition(
+                            position: _headerSlide,
+                            child: ProfileHeaderWidget(profile: _profile),
+                          ),
+                          const SizedBox(height: 14),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 12,
+                              horizontal: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF111111),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(0x66F5A623),
+                                width: 1,
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                Text(
+                                  _tr('boost_citizen'),
+                                  style: const TextStyle(
+                                    color: Color(0xFFF5A623),
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  _tr('unlock_premium_features'),
+                                  style: const TextStyle(
+                                    color: Color(0xFF8B949E),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          ScaleTransition(
+                            scale: _statsScale,
+                            child: StatsRowWidget(profile: _profile),
+                          ),
+                          const SizedBox(height: 12),
+                          ProfileMenuCardWidget(onItemTap: _handleMenuTap),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ],
-          ),
-          body: SafeArea(
-            child: FadeTransition(
-              opacity: _screenFade,
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minWidth: minWidth,
-                    maxWidth: 640,
-                  ),
-                  child: ListView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
-                    children: [
-                      SlideTransition(
-                        position: _headerSlide,
-                        child: ProfileHeaderWidget(profile: _profile),
-                      ),
-                      const SizedBox(height: 16),
-                      ScaleTransition(
-                        scale: _statsScale,
-                        child: StatsRowWidget(profile: _profile),
-                      ),
-                      const SizedBox(height: 16),
-                      ProfileMenuCardWidget(onItemTap: _handleMenuTap),
-                    ],
-                  ),
-                ),
+              bottomNavigationBar: BottomNavBarWidget(
+                onTabTap: _onBottomTabTap,
               ),
             ),
           ),
-          bottomNavigationBar: BottomNavBarWidget(onTabTap: _onBottomTabTap),
-        ),
-      ),
+        );
+      },
     );
   }
 }

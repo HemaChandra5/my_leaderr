@@ -185,84 +185,100 @@ class _PostCardState extends State<PostCard> {
             ),
             child: Row(
               children: [
-                _InteractivePostAction(
-                  icon: Icons.thumb_up_alt_outlined,
-                  activeIcon: Icons.thumb_up_alt_rounded,
-                  label: _formatCount(_likeCount),
-                  active: _liked,
-                  pulse: _likePulse,
-                  onTap: () {
-                    widget.onLikeTap();
-                    setState(() {
-                      _liked = !_liked;
-                      _likeCount = _nextCount(_likeCount, _liked);
-                    });
-                    _pulse((value) => _likePulse = value);
-                  },
+                Expanded(
+                  child: Center(
+                    child: _InteractivePostAction(
+                      icon: Icons.thumb_up_alt_outlined,
+                      activeIcon: Icons.thumb_up_alt_rounded,
+                      label: _formatCount(_likeCount),
+                      active: _liked,
+                      pulse: _likePulse,
+                      onTap: () {
+                        widget.onLikeTap();
+                        setState(() {
+                          _liked = !_liked;
+                          _likeCount = _nextCount(_likeCount, _liked);
+                        });
+                        _pulse((value) => _likePulse = value);
+                      },
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 10),
-                _InteractivePostAction(
-                  icon: Icons.mode_comment_outlined,
-                  activeIcon: Icons.mode_comment_rounded,
-                  label: _formatCount(_commentCount),
-                  active: _commented,
-                  pulse: _commentPulse,
-                  onTap: () {
-                    widget.onCommentTap();
-                    setState(() {
-                      _commented = !_commented;
-                      _commentCount = _nextCount(_commentCount, _commented);
-                    });
-                    _pulse((value) => _commentPulse = value);
-                  },
+                Expanded(
+                  child: Center(
+                    child: _InteractivePostAction(
+                      icon: Icons.mode_comment_outlined,
+                      activeIcon: Icons.mode_comment_rounded,
+                      label: _formatCount(_commentCount),
+                      active: _commented,
+                      pulse: _commentPulse,
+                      onTap: () {
+                        widget.onCommentTap();
+                        setState(() {
+                          _commented = !_commented;
+                          _commentCount = _nextCount(_commentCount, _commented);
+                        });
+                        _pulse((value) => _commentPulse = value);
+                      },
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 10),
-                _InteractivePostAction(
-                  icon: Icons.share_outlined,
-                  activeIcon: Icons.share_rounded,
-                  label: _formatCount(_shareCount),
-                  active: _shared,
-                  pulse: _sharePulse,
-                  onTap: () {
-                    widget.onShareTap();
-                    setState(() {
-                      _shared = !_shared;
-                      _shareCount = _nextCount(_shareCount, _shared);
-                    });
-                    _pulse((value) => _sharePulse = value);
-                  },
+                Expanded(
+                  child: Center(
+                    child: _InteractivePostAction(
+                      icon: Icons.rocket_launch_outlined,
+                      activeIcon: Icons.rocket_launch_rounded,
+                      label: _formatCount(_boostCount),
+                      active: _boosted,
+                      pulse: _boostPulse,
+                      onTap: () {
+                        widget.onBoostTap();
+                        setState(() {
+                          _boosted = !_boosted;
+                          _boostCount = _nextCount(_boostCount, _boosted);
+                        });
+                        _pulse((value) => _boostPulse = value);
+                      },
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 10),
-                _InteractivePostAction(
-                  icon: Icons.rocket_launch_outlined,
-                  activeIcon: Icons.rocket_launch_rounded,
-                  label: _formatCount(_boostCount),
-                  active: _boosted,
-                  pulse: _boostPulse,
-                  onTap: () {
-                    widget.onBoostTap();
-                    setState(() {
-                      _boosted = !_boosted;
-                      _boostCount = _nextCount(_boostCount, _boosted);
-                    });
-                    _pulse((value) => _boostPulse = value);
-                  },
+                Expanded(
+                  child: Center(
+                    child: _InteractivePostAction(
+                      icon: Icons.share_outlined,
+                      activeIcon: Icons.share_rounded,
+                      label: _formatCount(_shareCount),
+                      active: _shared,
+                      pulse: _sharePulse,
+                      onTap: () {
+                        widget.onShareTap();
+                        setState(() {
+                          _shared = !_shared;
+                          _shareCount = _nextCount(_shareCount, _shared);
+                        });
+                        _pulse((value) => _sharePulse = value);
+                      },
+                    ),
+                  ),
                 ),
-                const Spacer(),
-                _InteractivePostAction(
-                  icon: Icons.bookmark_border_rounded,
-                  activeIcon: Icons.bookmark_rounded,
-                  label: _formatCount(_saveCount),
-                  active: _saved,
-                  pulse: _savePulse,
-                  onTap: () {
-                    widget.onBookmarkTap();
-                    setState(() {
-                      _saved = !_saved;
-                      _saveCount = _nextCount(_saveCount, _saved);
-                    });
-                    _pulse((value) => _savePulse = value);
-                  },
+                Expanded(
+                  child: Center(
+                    child: _InteractivePostAction(
+                      icon: Icons.bookmark_border_rounded,
+                      activeIcon: Icons.bookmark_rounded,
+                      label: _formatCount(_saveCount),
+                      active: _saved,
+                      pulse: _savePulse,
+                      onTap: () {
+                        widget.onBookmarkTap();
+                        setState(() {
+                          _saved = !_saved;
+                          _saveCount = _nextCount(_saveCount, _saved);
+                        });
+                        _pulse((value) => _savePulse = value);
+                      },
+                    ),
+                  ),
                 ),
               ],
             ),

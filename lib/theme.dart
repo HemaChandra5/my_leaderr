@@ -56,4 +56,48 @@ class AppTheme {
       ),
     );
   }
+
+  static ThemeData get light {
+    const Color lightBg = Color(0xFFF8FAFC);
+    const Color lightSurface = Colors.white;
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: lightBg,
+      fontFamily: 'Inter',
+      colorScheme: const ColorScheme.light(
+        primary: gold,
+        secondary: gold,
+        surface: lightSurface,
+      ),
+      cardTheme: CardThemeData(
+        color: lightSurface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusCard),
+          side: const BorderSide(color: Color(0xFFE2E8F0)),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: gold,
+          foregroundColor: Colors.black,
+          minimumSize: const Size.fromHeight(52),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radiusButton),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: gold,
+          side: const BorderSide(color: gold),
+          minimumSize: const Size.fromHeight(52),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radiusButton),
+          ),
+        ),
+      ),
+    );
+  }
 }

@@ -1,31 +1,53 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/localization/app_language.dart';
+import '../../../../core/localization/app_localizations.dart';
+
 class ProfileMenuCardWidget extends StatelessWidget {
   const ProfileMenuCardWidget({super.key, required this.onItemTap});
 
   final ValueChanged<String> onItemTap;
 
-  static const _items = <({IconData icon, String title})>[
-    (icon: Icons.article_outlined, title: 'My Posts'),
-    (icon: Icons.mode_comment_outlined, title: 'My Comments'),
-    (icon: Icons.report_gmailerrorred_rounded, title: 'My Reported Issues'),
-    (icon: Icons.bookmark_border_rounded, title: 'Saved Posts'),
-    (icon: Icons.settings_outlined, title: 'Settings'),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final language = AppLanguage.instance.language;
+    final items = <({IconData icon, String title})>[
+      (
+        icon: Icons.article_outlined,
+        title: AppLocalizations.translate('my_posts', language: language),
+      ),
+      (
+        icon: Icons.mode_comment_outlined,
+        title: AppLocalizations.translate('my_comments', language: language),
+      ),
+      (
+        icon: Icons.report_gmailerrorred_rounded,
+        title: AppLocalizations.translate(
+          'my_reported_issues',
+          language: language,
+        ),
+      ),
+      (
+        icon: Icons.bookmark_border_rounded,
+        title: AppLocalizations.translate('saved_posts', language: language),
+      ),
+      (
+        icon: Icons.settings_outlined,
+        title: AppLocalizations.translate('settings', language: language),
+      ),
+    ];
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      margin: EdgeInsets.zero,
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
         color: const Color(0xFF111111),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF30363D)),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF1F242C)),
       ),
       child: Column(
-        children: List<Widget>.generate(_items.length, (index) {
-          final item = _items[index];
+        children: List<Widget>.generate(items.length, (index) {
+          final item = items[index];
           return TweenAnimationBuilder<double>(
             tween: Tween(begin: 0, end: 1),
             duration: Duration(milliseconds: 250 + (index * 50)),
@@ -65,7 +87,7 @@ class ProfileMenuCardWidget extends StatelessWidget {
                                   item.title,
                                   style: const TextStyle(
                                     color: Color(0xFFFFFFFF),
-                                    fontSize: 14,
+                                    fontSize: 15,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -82,7 +104,7 @@ class ProfileMenuCardWidget extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (index != _items.length - 1)
+                if (index != items.length - 1)
                   const Padding(
                     padding: EdgeInsets.only(left: 46, right: 14),
                     child: Divider(

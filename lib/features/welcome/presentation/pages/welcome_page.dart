@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:my_leaderr/auth/login_screen.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/localization/app_language.dart';
 import '../widgets/action_buttons.dart';
 import '../widgets/app_logo.dart';
 import '../widgets/hero_globe.dart';
@@ -18,6 +19,7 @@ class WelcomePage extends StatefulWidget {
 
 class _WelcomePageState extends State<WelcomePage>
     with SingleTickerProviderStateMixin {
+  String _language = 'English';
   late final AnimationController _controller;
   late final Animation<double> _logoFade;
   late final Animation<double> _taglineFade;
@@ -30,6 +32,8 @@ class _WelcomePageState extends State<WelcomePage>
   @override
   void initState() {
     super.initState();
+    _language = AppLanguage.instance.language;
+    AppLanguage.instance.addListener(_onLanguageChanged);
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -66,8 +70,18 @@ class _WelcomePageState extends State<WelcomePage>
     _controller.forward();
   }
 
+  void _onLanguageChanged() {
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _language = AppLanguage.instance.language;
+    });
+  }
+
   @override
   void dispose() {
+    AppLanguage.instance.removeListener(_onLanguageChanged);
     _controller.dispose();
     super.dispose();
   }
@@ -97,7 +111,7 @@ class _WelcomePageState extends State<WelcomePage>
             final double horizontalPadding = (w * 0.07)
                 .clamp(18, 28)
                 .toDouble();
-            final double logoSize = (w * 0.34).clamp(112, 160).toDouble();
+            final double logoSize = (w * 0.45).clamp(150, 220).toDouble();
             final double topTaglineSize = (w * 0.048).clamp(16, 18).toDouble();
             final double headingSize = (w * 0.078).clamp(27, 31).toDouble();
             final double subtitleSize = (w * 0.04).clamp(14, 16).toDouble();
@@ -141,7 +155,7 @@ class _WelcomePageState extends State<WelcomePage>
                           child: Align(
                             alignment: Alignment.center,
                             child: TaglineText(
-                              text: 'Connect. Report. Resolve.',
+                              text: '',
                               fontSize: topTaglineSize,
                               color: const Color(0xE6FFFFFF),
                               fontWeight: FontWeight.w500,
@@ -175,13 +189,13 @@ class _WelcomePageState extends State<WelcomePage>
                             SizedBox(height: globeToHeadingSpace),
                             FadeTransition(
                               opacity: _headingFade,
-                              child: WelcomeHeading(fontSize: headingSize),
+                              child: WelcomeHeading(fontSize: headingSize, language: _language),
                             ),
                             SizedBox(height: headingToSubtitleSpace),
                             FadeTransition(
                               opacity: _subtitleFade,
                               child: TaglineText(
-                                text: 'Connect. Report. Resolve.',
+                                text: '',
                                 fontSize: subtitleSize,
                               ),
                             ),
@@ -191,6 +205,7 @@ class _WelcomePageState extends State<WelcomePage>
                               child: ActionButtons(
                                 onGetStarted: _openChooseRole,
                                 onLogin: _openLogin,
+                                language: _language,
                               ),
                             ),
                           ],

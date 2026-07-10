@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../core/localization/app_language.dart';
+import '../../../../core/localization/app_localizations.dart';
+
 const double _kGrid = 8;
 const String _fontFamily = 'Inter';
 const String _homeRoute = '/home';
+const String _communityRoute = '/community';
 const String _eventsRoute = '/events';
 const String _upcomingMeetingsRoute = '/events/upcoming';
 const String _trackRoute = '/track';
-const String _createMenuRoute = '/create-menu';
 const String _profileRoute = '/profile';
 
 class EventModel {
@@ -49,14 +52,7 @@ class EventsScreen extends StatefulWidget {
 
 class _EventsScreenState extends State<EventsScreen>
     with SingleTickerProviderStateMixin {
-  static const Color _background = Color(0xFF000000);
-  static const Color _card = Color(0xFF111111);
-  static const Color _surface = Color(0xFF161B22);
-  static const Color _gold = Color(0xFFF5A623);
-  static const Color _primaryText = Color(0xFFFFFFFF);
-  static const Color _secondaryText = Color(0xFF8B949E);
-  static const Color _border = Color(0xFF30363D);
-
+  final TextEditingController _searchController = TextEditingController();
   late final AnimationController _staggerController;
   EventFilter _selectedFilter = EventFilter.all;
 
@@ -113,25 +109,52 @@ class _EventsScreenState extends State<EventsScreen>
 
   @override
   void dispose() {
+    _searchController.dispose();
     _staggerController.dispose();
     super.dispose();
   }
 
   List<EventModel> get _filteredEvents {
+    final query = _searchController.text.trim().toLowerCase();
     if (_selectedFilter == EventFilter.upcoming) {
       final DateTime now = DateTime.now();
-      return _events.where((EventModel e) => e.date.isAfter(now)).toList();
+      return _events
+          .where((EventModel e) {
+            if (!e.date.isAfter(now)) {
+              return false;
+            }
+            if (query.isEmpty) {
+              return true;
+            }
+            return e.title.toLowerCase().contains(query) ||
+                e.location.toLowerCase().contains(query) ||
+                e.status.toLowerCase().contains(query);
+          })
+          .toList(growable: false);
     }
-    return _events;
+    if (query.isEmpty) {
+      return _events;
+    }
+    return _events
+        .where((EventModel e) {
+          return e.title.toLowerCase().contains(query) ||
+              e.location.toLowerCase().contains(query) ||
+              e.status.toLowerCase().contains(query);
+        })
+        .toList(growable: false);
   }
+
+  String get _language => AppLanguage.instance.language;
+  String _tr(String key) =>
+      AppLocalizations.translate(key, language: _language);
 
   void _showNotificationSnackbar() {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        const SnackBar(
+        SnackBar(
           behavior: SnackBarBehavior.floating,
-          content: Text('Notifications enabled'),
+          content: Text(_tr('notifications_enabled')),
         ),
       );
   }
@@ -146,8 +169,8 @@ class _EventsScreenState extends State<EventsScreen>
       return;
     }
 
-    if (route == _createMenuRoute) {
-      Navigator.of(context).pushNamed(_createMenuRoute);
+    if (route == _communityRoute) {
+      Navigator.of(context).pushReplacementNamed(_communityRoute);
       return;
     }
 
@@ -164,152 +187,225 @@ class _EventsScreenState extends State<EventsScreen>
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        const SnackBar(
+        SnackBar(
           behavior: SnackBarBehavior.floating,
-          content: Text('This section is coming soon'),
+          content: Text(_tr('coming_soon')),
         ),
       );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: _background,
-        useMaterial3: true,
-        fontFamily: _fontFamily,
-      ),
-      child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.light,
-        child: Scaffold(
-          appBar: AppBar(
-            backgroundColor: _background,
-            elevation: 0,
-            surfaceTintColor: Colors.transparent,
-            centerTitle: true,
-            toolbarHeight: 72,
-            title: Stack(
-              alignment: Alignment.center,
-              children: [
-                const Align(
-                  alignment: Alignment.center,
-                  child: Image(
-                    image: AssetImage('assets/images/my_logo.jpg'),
-                    height: 66,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: SizedBox(width: 40),
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
+    return AnimatedBuilder(
+      animation: AppLanguage.instance,
+      builder: (context, _) {
+        final bool isDark = Theme.of(context).brightness == Brightness.dark;
+        final Color background = Theme.of(context).scaffoldBackgroundColor;
+        final Color surfaceAlt = isDark
+            ? const Color(0xFF161B22)
+            : const Color(0xFFEFF3F8);
+        final Color primaryText = isDark
+            ? const Color(0xFFFFFFFF)
+            : const Color(0xFF0F172A);
+        final Color secondaryText = isDark
+            ? const Color(0xFF8B949E)
+            : const Color(0xFF64748B);
+        final Color border = isDark
+            ? const Color(0xFF30363D)
+            : const Color(0xFFD7DEE8);
+        final Color iconChip = isDark
+            ? const Color(0xFF17191C)
+            : const Color(0xFFE7ECF3);
+
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: isDark
+              ? SystemUiOverlayStyle.light
+              : SystemUiOverlayStyle.dark,
+          child: Scaffold(
+            backgroundColor: background,
+            appBar: AppBar(
+              backgroundColor: background,
+              elevation: 0,
+              surfaceTintColor: Colors.transparent,
+              automaticallyImplyLeading: false,
+              centerTitle: true,
+              toolbarHeight: 80,
+              title: const Image(
+                image: AssetImage('assets/images/my_logo.jpg'),
+                height: 74,
+                fit: BoxFit.contain,
+              ),
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
                   child: Material(
-                    color: const Color(0xff17191C),
+                    color: iconChip,
                     shape: const CircleBorder(),
                     child: IconButton(
                       onPressed: _showNotificationSnackbar,
                       splashRadius: 22,
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.notifications_none_rounded,
                         size: 22,
-                        color: Color(0xffFFFFFF),
+                        color: primaryText,
                       ),
                     ),
                   ),
                 ),
               ],
             ),
-          ),
-          body: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                const SizedBox(height: _kGrid),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: _kGrid * 2),
-                  child: SegmentedToggle(
-                    selected: _selectedFilter,
-                    onChanged: (EventFilter value) {
-                      if (value == EventFilter.upcoming) {
-                        Navigator.of(
-                          context,
-                        ).pushReplacementNamed(_upcomingMeetingsRoute);
-                        return;
-                      }
-
-                      setState(() {
-                        _selectedFilter = value;
-                        _staggerController
-                          ..reset()
-                          ..forward();
-                      });
-                    },
-                  ),
-                ),
-                const SizedBox(height: _kGrid * 2),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: _kGrid * 2),
-                  child: Text(
-                    'All Events',
-                    style: TextStyle(
-                      color: _primaryText,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: _fontFamily,
+            body: SafeArea(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  const SizedBox(height: _kGrid),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: _kGrid * 2),
+                    child: SizedBox(
+                      height: 48,
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (_) => setState(() {}),
+                        style: TextStyle(
+                          color: primaryText,
+                          fontSize: 14,
+                          fontFamily: _fontFamily,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: _tr('search_meetings'),
+                          hintStyle: TextStyle(
+                            color: secondaryText,
+                            fontSize: 14,
+                            fontFamily: _fontFamily,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: secondaryText,
+                            size: 20,
+                          ),
+                          filled: true,
+                          fillColor: surfaceAlt,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 8,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: _kGrid * 2),
-                Expanded(
-                  child: ListView.builder(
-                    physics: const BouncingScrollPhysics(),
+                  const SizedBox(height: _kGrid * 1.5),
+                  Padding(
                     padding: const EdgeInsets.symmetric(horizontal: _kGrid * 2),
-                    itemCount: _filteredEvents.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      final EventModel event = _filteredEvents[index];
-                      final int beginMs = index * 150;
-                      final int endMs = beginMs + 500;
-                      final Duration total =
-                          _staggerController.duration ??
-                          const Duration(milliseconds: 850);
-                      final double start = (beginMs / total.inMilliseconds)
-                          .clamp(0.0, 1.0);
-                      final double end = (endMs / total.inMilliseconds).clamp(
-                        0.0,
-                        1.0,
-                      );
+                    child: SegmentedToggle(
+                      selected: _selectedFilter,
+                      background: surfaceAlt,
+                      borderColor: border,
+                      inactiveTextColor: secondaryText,
+                      onChanged: (EventFilter value) {
+                        if (value == EventFilter.upcoming) {
+                          Navigator.of(
+                            context,
+                          ).pushReplacementNamed(_upcomingMeetingsRoute);
+                          return;
+                        }
 
-                      final CurvedAnimation animation = CurvedAnimation(
-                        parent: _staggerController,
-                        curve: Interval(start, end, curve: Curves.easeOutCubic),
-                      );
-
-                      return AnimatedBuilder(
-                        animation: animation,
-                        builder: (BuildContext context, Widget? child) {
-                          final double t = animation.value;
-                          return Opacity(
-                            opacity: t,
-                            child: Transform.translate(
-                              offset: Offset(0, (1 - t) * 22),
-                              child: child,
-                            ),
-                          );
-                        },
-                        child: EventCard(event: event),
-                      );
-                    },
+                        setState(() {
+                          _selectedFilter = value;
+                          _staggerController
+                            ..reset()
+                            ..forward();
+                        });
+                      },
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: _kGrid * 2),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: _kGrid * 2),
+                    child: Text(
+                      _tr('all_events'),
+                      style: TextStyle(
+                        color: primaryText,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: _fontFamily,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: _kGrid * 2),
+                  Expanded(
+                    child: ListView.builder(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: _kGrid * 2,
+                      ),
+                      itemCount: _filteredEvents.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        final EventModel event = _filteredEvents[index];
+                        final int beginMs = index * 150;
+                        final int endMs = beginMs + 500;
+                        final Duration total =
+                            _staggerController.duration ??
+                            const Duration(milliseconds: 850);
+                        final double start = (beginMs / total.inMilliseconds)
+                            .clamp(0.0, 1.0);
+                        final double end = (endMs / total.inMilliseconds).clamp(
+                          0.0,
+                          1.0,
+                        );
+
+                        final CurvedAnimation animation = CurvedAnimation(
+                          parent: _staggerController,
+                          curve: Interval(
+                            start,
+                            end,
+                            curve: Curves.easeOutCubic,
+                          ),
+                        );
+
+                        return AnimatedBuilder(
+                          animation: animation,
+                          builder: (BuildContext context, Widget? child) {
+                            final double t = animation.value;
+                            return Opacity(
+                              opacity: t,
+                              child: Transform.translate(
+                                offset: Offset(0, (1 - t) * 22),
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: EventCard(
+                            key: ValueKey<String>(
+                              '${event.title}_${event.date.toIso8601String()}',
+                            ),
+                            event: event,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            bottomNavigationBar: BottomNavBar(
+              onTap: _handleBottomNavTap,
+              language: _language,
             ),
           ),
-          bottomNavigationBar: BottomNavBar(onTap: _handleBottomNavTap),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -319,33 +415,42 @@ class SegmentedToggle extends StatelessWidget {
     super.key,
     required this.selected,
     required this.onChanged,
+    required this.background,
+    required this.borderColor,
+    required this.inactiveTextColor,
   });
 
   final EventFilter selected;
   final ValueChanged<EventFilter> onChanged;
+  final Color background;
+  final Color borderColor;
+  final Color inactiveTextColor;
 
   @override
   Widget build(BuildContext context) {
+    final language = AppLanguage.instance.language;
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFF161B22),
+        color: background,
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: const Color(0xFF30363D)),
+        border: Border.all(color: borderColor),
       ),
       child: Row(
         children: <Widget>[
           Expanded(
             child: _SegmentButton(
-              label: 'All',
+              label: AppLocalizations.translate('all', language: language),
               active: selected == EventFilter.all,
+              inactiveTextColor: inactiveTextColor,
               onTap: () => onChanged(EventFilter.all),
             ),
           ),
           Expanded(
             child: _SegmentButton(
-              label: 'Upcoming',
+              label: AppLocalizations.translate('upcoming', language: language),
               active: selected == EventFilter.upcoming,
+              inactiveTextColor: inactiveTextColor,
               onTap: () => onChanged(EventFilter.upcoming),
             ),
           ),
@@ -359,11 +464,13 @@ class _SegmentButton extends StatelessWidget {
   const _SegmentButton({
     required this.label,
     required this.active,
+    required this.inactiveTextColor,
     required this.onTap,
   });
 
   final String label;
   final bool active;
+  final Color inactiveTextColor;
   final VoidCallback onTap;
 
   @override
@@ -385,9 +492,7 @@ class _SegmentButton extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                color: active
-                    ? const Color(0xFF000000)
-                    : const Color(0xFF8B949E),
+                color: active ? const Color(0xFF000000) : inactiveTextColor,
                 fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                 fontSize: 14,
                 fontFamily: _fontFamily,
@@ -400,10 +505,38 @@ class _SegmentButton extends StatelessWidget {
   }
 }
 
-class EventCard extends StatelessWidget {
+class EventCard extends StatefulWidget {
   const EventCard({super.key, required this.event});
 
   final EventModel event;
+
+  @override
+  State<EventCard> createState() => _EventCardState();
+}
+
+class _EventCardState extends State<EventCard> {
+  late int _likeCount;
+  late int _commentCount;
+  late int _shareCount;
+
+  late bool _liked;
+  bool _commented = false;
+  bool _shared = false;
+  late bool _bookmarked;
+
+  @override
+  void initState() {
+    super.initState();
+    _likeCount = widget.event.likes;
+    _commentCount = widget.event.comments;
+    _shareCount = widget.event.shares;
+    _liked = false;
+    _bookmarked = widget.event.isBookmarked;
+  }
+
+  int _nextCount(int current, bool active) {
+    return active ? current + 1 : (current > 0 ? current - 1 : 0);
+  }
 
   String _formatDate(DateTime dateTime) {
     const List<String> months = <String>[
@@ -444,28 +577,37 @@ class EventCard extends StatelessWidget {
   }
 
   String _statusLabel(String status) {
+    final language = AppLanguage.instance.language;
     switch (status) {
       case 'upcoming':
-        return 'Upcoming';
+        return AppLocalizations.translate('upcoming', language: language);
       case 'ongoing':
-        return 'Ongoing';
+        return AppLocalizations.translate('ongoing', language: language);
       case 'completed':
-        return 'Completed';
+        return AppLocalizations.translate('completed', language: language);
       default:
-        return 'Event';
+        return AppLocalizations.translate('events', language: language);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isCompleted = event.status == 'completed';
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color cardColor = Theme.of(context).colorScheme.surface;
+    final Color borderColor = isDark
+        ? const Color(0xFF30363D)
+        : const Color(0xFFD7DEE8);
+    final Color inactiveText = isDark
+        ? const Color(0xFF8B949E)
+        : const Color(0xFF64748B);
+    final bool isCompleted = widget.event.status == 'completed';
 
     return Container(
       margin: const EdgeInsets.only(bottom: _kGrid * 2),
       decoration: BoxDecoration(
-        color: const Color(0xFF111111),
+        color: cardColor,
         borderRadius: BorderRadius.circular(_kGrid * 2),
-        border: Border.all(color: const Color(0xFF30363D)),
+        border: Border.all(color: borderColor),
         boxShadow: const <BoxShadow>[
           BoxShadow(
             color: Color(0x66000000),
@@ -487,7 +629,7 @@ class EventCard extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: <Widget>[
-                  Image.network(event.imageUrl, fit: BoxFit.cover),
+                  Image.network(widget.event.imageUrl, fit: BoxFit.cover),
                   DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -500,7 +642,7 @@ class EventCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (event.isVideo)
+                  if (widget.event.isVideo)
                     Positioned(
                       top: _kGrid,
                       right: _kGrid,
@@ -514,7 +656,7 @@ class EventCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(_kGrid),
                         ),
                         child: Text(
-                          event.duration ?? '00:00',
+                          widget.event.duration ?? '00:00',
                           style: const TextStyle(
                             color: Color(0xFFFFFFFF),
                             fontSize: 12,
@@ -531,7 +673,7 @@ class EventCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          event.title,
+                          widget.event.title,
                           style: const TextStyle(
                             color: Color(0xFFFFFFFF),
                             fontSize: 16,
@@ -550,7 +692,7 @@ class EventCard extends StatelessWidget {
                             const SizedBox(width: _kGrid / 2),
                             Expanded(
                               child: Text(
-                                _formatDate(event.date),
+                                _formatDate(widget.event.date),
                                 style: const TextStyle(
                                   color: Color(0xFF8B949E),
                                   fontSize: 12,
@@ -572,7 +714,7 @@ class EventCard extends StatelessWidget {
                             const SizedBox(width: _kGrid / 2),
                             Expanded(
                               child: Text(
-                                event.location,
+                                widget.event.location,
                                 style: const TextStyle(
                                   color: Color(0xFF8B949E),
                                   fontSize: 12,
@@ -591,7 +733,7 @@ class EventCard extends StatelessWidget {
                               decoration: BoxDecoration(
                                 color: isCompleted
                                     ? const Color(0xFF161B22)
-                                    : _statusColor(event.status),
+                                    : _statusColor(widget.event.status),
                                 borderRadius: BorderRadius.circular(
                                   _kGrid * 1.5,
                                 ),
@@ -600,7 +742,7 @@ class EventCard extends StatelessWidget {
                                     : null,
                               ),
                               child: Text(
-                                _statusLabel(event.status),
+                                _statusLabel(widget.event.status),
                                 style: TextStyle(
                                   color: isCompleted
                                       ? const Color(0xFFF5A623)
@@ -631,29 +773,61 @@ class EventCard extends StatelessWidget {
               children: <Widget>[
                 _CountAction(
                   icon: Icons.favorite_border_rounded,
-                  count: event.likes,
-                  active: false,
+                  activeIcon: Icons.favorite_rounded,
+                  count: _likeCount,
+                  active: _liked,
+                  onTap: () {
+                    setState(() {
+                      _liked = !_liked;
+                      _likeCount = _nextCount(_likeCount, _liked);
+                    });
+                  },
                 ),
                 const SizedBox(width: _kGrid * 2),
                 _CountAction(
                   icon: Icons.mode_comment_outlined,
-                  count: event.comments,
-                  active: false,
+                  activeIcon: Icons.mode_comment_rounded,
+                  count: _commentCount,
+                  active: _commented,
+                  onTap: () {
+                    setState(() {
+                      _commented = !_commented;
+                      _commentCount = _nextCount(_commentCount, _commented);
+                    });
+                  },
                 ),
                 const SizedBox(width: _kGrid * 2),
                 _CountAction(
-                  icon: Icons.share_outlined,
-                  count: event.shares,
-                  active: false,
+                  icon: Icons.reply_outlined,
+                  activeIcon: Icons.reply_rounded,
+                  count: _shareCount,
+                  active: _shared,
+                  onTap: () {
+                    setState(() {
+                      _shared = !_shared;
+                      _shareCount = _nextCount(_shareCount, _shared);
+                    });
+                  },
                 ),
                 const Spacer(),
-                Icon(
-                  event.isBookmarked
-                      ? Icons.bookmark_rounded
-                      : Icons.bookmark_border_rounded,
-                  color: event.isBookmarked
-                      ? const Color(0xFFF5A623)
-                      : const Color(0xFF8B949E),
+                InkWell(
+                  borderRadius: BorderRadius.circular(999),
+                  onTap: () {
+                    setState(() {
+                      _bookmarked = !_bookmarked;
+                    });
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Icon(
+                      _bookmarked
+                          ? Icons.bookmark_rounded
+                          : Icons.bookmark_border_rounded,
+                      color: _bookmarked
+                          ? const Color(0xFFF5A623)
+                          : inactiveText,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -667,43 +841,63 @@ class EventCard extends StatelessWidget {
 class _CountAction extends StatelessWidget {
   const _CountAction({
     required this.icon,
+    required this.activeIcon,
     required this.count,
     required this.active,
+    required this.onTap,
   });
 
   final IconData icon;
+  final IconData activeIcon;
   final int count;
   final bool active;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final Color color = active
-        ? const Color(0xFFF5A623)
-        : const Color(0xFF8B949E);
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color inactive = isDark
+        ? const Color(0xFF8B949E)
+        : const Color(0xFF64748B);
+    final Color color = active ? const Color(0xFFF5A623) : inactive;
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Icon(icon, color: color, size: 18),
-        const SizedBox(width: _kGrid / 2),
-        Text(
-          '$count',
-          style: TextStyle(color: color, fontSize: 12, fontFamily: _fontFamily),
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(active ? activeIcon : icon, color: color, size: 18),
+            const SizedBox(width: _kGrid / 2),
+            Text(
+              '$count',
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontFamily: _fontFamily,
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
 
 class BottomNavBar extends StatelessWidget {
-  const BottomNavBar({super.key, required this.onTap});
+  const BottomNavBar({super.key, required this.onTap, required this.language});
 
   final ValueChanged<String> onTap;
+  final String language;
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color navBackground = isDark ? const Color(0xFF0D1117) : Colors.white;
     return Container(
-      color: const Color(0xFF0D1117),
+      color: navBackground,
       child: SafeArea(
         top: false,
         child: Padding(
@@ -714,30 +908,57 @@ class BottomNavBar extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              _NavItem(
-                icon: Icons.home_outlined,
-                label: 'Home',
-                active: false,
-                onTap: () => onTap(_homeRoute),
+              Expanded(
+                child: _NavItem(
+                  icon: Icons.home_outlined,
+                  label: AppLocalizations.translate('home', language: language),
+                  active: false,
+                  onTap: () => onTap(_homeRoute),
+                ),
               ),
-              _NavItem(
-                icon: Icons.track_changes_rounded,
-                label: 'Issues',
-                active: false,
-                onTap: () => onTap(_trackRoute),
+              Expanded(
+                child: _NavItem(
+                  icon: Icons.track_changes_rounded,
+                  label: AppLocalizations.translate(
+                    'issues',
+                    language: language,
+                  ),
+                  active: false,
+                  onTap: () => onTap(_trackRoute),
+                ),
               ),
-              _AddButton(onTap: () => onTap(_createMenuRoute)),
-              _NavItem(
-                icon: Icons.event_outlined,
-                label: 'Events',
-                active: true,
-                onTap: () => onTap(_eventsRoute),
+              Expanded(
+                child: _NavItem(
+                  icon: Icons.groups_2_outlined,
+                  label: AppLocalizations.translate(
+                    'community',
+                    language: language,
+                  ),
+                  active: false,
+                  onTap: () => onTap(_communityRoute),
+                ),
               ),
-              _NavItem(
-                icon: Icons.person_outline_rounded,
-                label: 'Profile',
-                active: false,
-                onTap: () => onTap(_profileRoute),
+              Expanded(
+                child: _NavItem(
+                  icon: Icons.event_outlined,
+                  label: AppLocalizations.translate(
+                    'events',
+                    language: language,
+                  ),
+                  active: true,
+                  onTap: () => onTap(_eventsRoute),
+                ),
+              ),
+              Expanded(
+                child: _NavItem(
+                  icon: Icons.person_outline_rounded,
+                  label: AppLocalizations.translate(
+                    'profile',
+                    language: language,
+                  ),
+                  active: false,
+                  onTap: () => onTap(_profileRoute),
+                ),
               ),
             ],
           ),
@@ -762,76 +983,33 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color color = active
-        ? const Color(0xFFF5A623)
-        : const Color(0xFF8B949E);
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color inactive = isDark
+        ? const Color(0xFF8B949E)
+        : const Color(0xFF64748B);
+    final Color color = active ? const Color(0xFFF5A623) : inactive;
 
     return InkResponse(
       onTap: onTap,
       radius: _kGrid * 3,
-      child: SizedBox(
-        width: _kGrid * 7,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(icon, color: color, size: 22),
-            const SizedBox(height: _kGrid / 2),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 12,
-                fontWeight: active ? FontWeight.w600 : FontWeight.w500,
-                fontFamily: _fontFamily,
-              ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(icon, color: color, size: 22),
+          const SizedBox(height: _kGrid / 2),
+          Text(
+            label,
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.fade,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: active ? FontWeight.w600 : FontWeight.w500,
+              fontFamily: _fontFamily,
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _AddButton extends StatefulWidget {
-  const _AddButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  State<_AddButton> createState() => _AddButtonState();
-}
-
-class _AddButtonState extends State<_AddButton> {
-  bool _pressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final Matrix4 transform = _pressed
-        ? (Matrix4.identity()..scale(0.94))
-        : Matrix4.identity();
-
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      onTap: widget.onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 100),
-        transform: transform,
-        width: _kGrid * 6,
-        height: _kGrid * 6,
-        decoration: const BoxDecoration(
-          color: Color(0xFFF5A623),
-          shape: BoxShape.circle,
-          boxShadow: <BoxShadow>[
-            BoxShadow(
-              color: Color(0x66000000),
-              blurRadius: 8,
-              offset: Offset(0, 3),
-            ),
-          ],
-        ),
-        child: const Icon(Icons.add, color: Color(0xFF000000), size: 24),
+          ),
+        ],
       ),
     );
   }

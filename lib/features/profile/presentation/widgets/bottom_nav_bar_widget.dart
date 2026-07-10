@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/localization/app_language.dart';
+import '../../../../core/localization/app_localizations.dart';
+
 class BottomNavBarWidget extends StatelessWidget {
   const BottomNavBarWidget({super.key, required this.onTabTap});
 
@@ -7,56 +10,53 @@ class BottomNavBarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final language = AppLanguage.instance.language;
     return Container(
-      height: 84,
+      height: 78,
       decoration: const BoxDecoration(
-        color: Color(0xFF111111),
-        border: Border(top: BorderSide(color: Color(0xFF30363D))),
+        color: Color(0xFF0D1117),
+        border: Border(top: BorderSide(color: Color(0xFF1F242C))),
       ),
-      child: Stack(
-        clipBehavior: Clip.none,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Expanded(child: _item(0, Icons.home_rounded, 'Home', false)),
-              Expanded(
-                child: _item(1, Icons.track_changes_rounded, 'Track', false),
-              ),
-              const SizedBox(width: 72),
-              Expanded(
-                child: _item(3, Icons.event_note_rounded, 'Events', false),
-              ),
-              Expanded(child: _item(4, Icons.person_rounded, 'Profile', true)),
-            ],
+          Expanded(
+            child: _item(
+              0,
+              Icons.home_rounded,
+              AppLocalizations.translate('home', language: language),
+              false,
+            ),
           ),
-          Positioned(
-            top: -22,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: GestureDetector(
-                onTap: () => onTabTap(2),
-                child: Container(
-                  width: 58,
-                  height: 58,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5A623),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFF5A623).withValues(alpha: 0.35),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.add,
-                    color: Color(0xFF000000),
-                    size: 32,
-                  ),
-                ),
-              ),
+          Expanded(
+            child: _item(
+              1,
+              Icons.track_changes_rounded,
+              AppLocalizations.translate('issues', language: language),
+              false,
+            ),
+          ),
+          Expanded(
+            child: _item(
+              2,
+              Icons.groups_2_outlined,
+              AppLocalizations.translate('community', language: language),
+              false,
+            ),
+          ),
+          Expanded(
+            child: _item(
+              3,
+              Icons.event_note_rounded,
+              AppLocalizations.translate('events', language: language),
+              false,
+            ),
+          ),
+          Expanded(
+            child: _item(
+              4,
+              Icons.person_rounded,
+              AppLocalizations.translate('profile', language: language),
+              true,
             ),
           ),
         ],
@@ -75,6 +75,9 @@ class BottomNavBarWidget extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.fade,
             style: TextStyle(
               color: color,
               fontSize: 12,

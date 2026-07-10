@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../core/localization/app_language.dart';
+import '../../../../core/localization/app_localizations.dart';
+
 const double _kGrid = 8;
 const String _homeRoute = '/home';
+const String _communityRoute = '/community';
 const String _eventsRoute = '/events';
 const String _trackRoute = '/track';
-const String _createMenuRoute = '/create-menu';
 const String _profileRoute = '/profile';
 
 class IssueUpdate {
@@ -35,18 +38,12 @@ class TrackIssueScreen extends StatefulWidget {
 
 class _TrackIssueScreenState extends State<TrackIssueScreen>
     with SingleTickerProviderStateMixin {
-  static const Color _bg = Color(0xFF000000);
-  static const Color _surface = Color(0xFF111111);
   static const Color _gold = Color(0xFFF5A623);
   static const Color _navy = Color(0xFF0D1B3E);
-  static const Color _textPrimary = Color(0xFFFFFFFF);
-  static const Color _textSecondary = Color(0xFF8B949E);
-  static const Color _success = Color(0xFF22C55E);
-  static const Color _progress = Color(0xFF3B82F6);
-  static const Color _navBackground = Color(0xFF0D1117);
 
   static const Duration _itemStagger = Duration(milliseconds: 150);
   static const Duration _entryDuration = Duration(milliseconds: 700);
+  final TextEditingController _searchController = TextEditingController();
 
   final List<IssueUpdate> _updates = [
     IssueUpdate(
@@ -83,6 +80,10 @@ class _TrackIssueScreenState extends State<TrackIssueScreen>
 
   late final AnimationController _controller;
 
+  String get _language => AppLanguage.instance.language;
+  String _tr(String key) =>
+      AppLocalizations.translate(key, language: _language);
+
   @override
   void initState() {
     super.initState();
@@ -92,17 +93,33 @@ class _TrackIssueScreenState extends State<TrackIssueScreen>
 
   @override
   void dispose() {
+    _searchController.dispose();
     _controller.dispose();
     super.dispose();
+  }
+
+  List<IssueUpdate> get _filteredUpdates {
+    final query = _searchController.text.trim().toLowerCase();
+    if (query.isEmpty) {
+      return _updates;
+    }
+    return _updates
+        .where((update) {
+          return update.name.toLowerCase().contains(query) ||
+              update.designation.toLowerCase().contains(query) ||
+              update.message.toLowerCase().contains(query) ||
+              update.status.toLowerCase().contains(query);
+        })
+        .toList(growable: false);
   }
 
   void _showNotificationSnackbar() {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        const SnackBar(
+        SnackBar(
           behavior: SnackBarBehavior.floating,
-          content: Text('Notifications enabled'),
+          content: Text(_tr('notifications_enabled')),
         ),
       );
   }
@@ -117,8 +134,8 @@ class _TrackIssueScreenState extends State<TrackIssueScreen>
       return;
     }
 
-    if (route == _createMenuRoute) {
-      Navigator.of(context).pushNamed(_createMenuRoute);
+    if (route == _communityRoute) {
+      Navigator.of(context).pushReplacementNamed(_communityRoute);
       return;
     }
 
@@ -135,110 +152,159 @@ class _TrackIssueScreenState extends State<TrackIssueScreen>
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        const SnackBar(
+        SnackBar(
           behavior: SnackBarBehavior.floating,
-          content: Text('This section is coming soon'),
+          content: Text(_tr('coming_soon')),
         ),
       );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: _bg,
-        useMaterial3: true,
-      ),
-      child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.light,
-        child: Scaffold(
-          backgroundColor: _bg,
-          appBar: AppBar(
-            backgroundColor: _bg,
-            elevation: 0,
-            surfaceTintColor: Colors.transparent,
-            centerTitle: true,
-            toolbarHeight: 72,
-            title: Stack(
-              alignment: Alignment.center,
-              children: [
-                const Align(alignment: Alignment.center, child: _LeaderLogo()),
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: SizedBox(width: 40),
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
+    return AnimatedBuilder(
+      animation: AppLanguage.instance,
+      builder: (context, _) {
+        final bool isDark = Theme.of(context).brightness == Brightness.dark;
+        final Color background = Theme.of(context).scaffoldBackgroundColor;
+        final Color primaryText = isDark
+            ? const Color(0xFFFFFFFF)
+            : const Color(0xFF0F172A);
+        final Color secondaryText = isDark
+            ? const Color(0xFF8B949E)
+            : const Color(0xFF64748B);
+        final Color fieldBg = isDark
+            ? const Color(0xFF161B22)
+            : const Color(0xFFEFF3F8);
+        final Color iconChip = isDark
+            ? const Color(0xFF17191C)
+            : const Color(0xFFE7ECF3);
+
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: isDark
+              ? SystemUiOverlayStyle.light
+              : SystemUiOverlayStyle.dark,
+          child: Scaffold(
+            backgroundColor: background,
+            appBar: AppBar(
+              backgroundColor: background,
+              elevation: 0,
+              surfaceTintColor: Colors.transparent,
+              automaticallyImplyLeading: false,
+              centerTitle: true,
+              toolbarHeight: 80,
+              title: const _LeaderLogo(),
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
                   child: Material(
-                    color: const Color(0xff17191C),
+                    color: iconChip,
                     shape: const CircleBorder(),
                     child: IconButton(
                       onPressed: _showNotificationSnackbar,
                       splashRadius: 22,
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.notifications_none_rounded,
                         size: 22,
-                        color: Color(0xffFFFFFF),
+                        color: primaryText,
                       ),
                     ),
                   ),
                 ),
               ],
             ),
-          ),
-          body: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: _kGrid * 2),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: _kGrid),
-                  const Text(
-                    'Live Updates',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: _textPrimary,
-                      letterSpacing: 0.2,
+            body: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: _kGrid * 2),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: _kGrid),
+                    SizedBox(
+                      height: 48,
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (_) => setState(() {}),
+                        style: TextStyle(color: primaryText, fontSize: 14),
+                        decoration: InputDecoration(
+                          hintText: _tr('search_meetings'),
+                          hintStyle: TextStyle(
+                            color: secondaryText,
+                            fontSize: 14,
+                          ),
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: secondaryText,
+                            size: 20,
+                          ),
+                          filled: true,
+                          fillColor: fieldBg,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 8,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: _kGrid * 2),
-                  Expanded(
-                    child: TimelineWidget(
-                      updates: _updates,
-                      controller: _controller,
-                      stagger: _itemStagger,
+                    const SizedBox(height: _kGrid * 1.5),
+                    Text(
+                      _tr('live_updates'),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: primaryText,
+                        letterSpacing: 0.2,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          bottomNavigationBar: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    _kGrid * 2,
-                    _kGrid,
-                    _kGrid * 2,
-                    _kGrid,
-                  ),
-                  child: _NotifyButton(
-                    onTap: _showNotificationSnackbar,
-                    gold: _gold,
-                    navy: _navy,
-                  ),
+                    const SizedBox(height: _kGrid * 2),
+                    Expanded(
+                      child: TimelineWidget(
+                        updates: _filteredUpdates,
+                        controller: _controller,
+                        stagger: _itemStagger,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              BottomNavBar(onTap: _handleBottomNavTap),
-            ],
+            ),
+            bottomNavigationBar: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      _kGrid * 2,
+                      _kGrid,
+                      _kGrid * 2,
+                      _kGrid,
+                    ),
+                    child: _NotifyButton(
+                      onTap: _showNotificationSnackbar,
+                      gold: _gold,
+                      navy: _navy,
+                      language: _language,
+                    ),
+                  ),
+                ),
+                BottomNavBar(onTap: _handleBottomNavTap, language: _language),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -402,11 +468,19 @@ class UpdateCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color cardColor = Theme.of(context).colorScheme.surface;
+    final Color primaryText = isDark
+        ? const Color(0xFFFFFFFF)
+        : const Color(0xFF0F172A);
+    final Color secondaryText = isDark
+        ? const Color(0xFF8B949E)
+        : const Color(0xFF64748B);
     return Container(
       margin: const EdgeInsets.only(bottom: _kGrid * 2),
       padding: const EdgeInsets.all(_kGrid * 2),
       decoration: BoxDecoration(
-        color: const Color(0xFF111111),
+        color: cardColor,
         borderRadius: BorderRadius.circular(_kGrid * 2),
         border: Border.all(
           color: const Color(0xFFF5A623).withValues(alpha: 0.22),
@@ -442,8 +516,8 @@ class UpdateCard extends StatelessWidget {
                   children: [
                     Text(
                       update.name,
-                      style: const TextStyle(
-                        color: Color(0xFFFFFFFF),
+                      style: TextStyle(
+                        color: primaryText,
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
                       ),
@@ -451,10 +525,7 @@ class UpdateCard extends StatelessWidget {
                     const SizedBox(height: _kGrid / 2),
                     Text(
                       update.designation,
-                      style: const TextStyle(
-                        color: Color(0xFF8B949E),
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: secondaryText, fontSize: 12),
                     ),
                   ],
                 ),
@@ -466,18 +537,14 @@ class UpdateCard extends StatelessWidget {
           const SizedBox(height: _kGrid * 1.5),
           Text(
             _formatDate(update.timestamp),
-            style: const TextStyle(color: Color(0xFF8B949E), fontSize: 12),
+            style: TextStyle(color: secondaryText, fontSize: 12),
           ),
           const SizedBox(height: _kGrid * 1.5),
           Text(
             update.message,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Color(0xFFFFFFFF),
-              fontSize: 14,
-              height: 1.4,
-            ),
+            style: TextStyle(color: primaryText, fontSize: 14, height: 1.4),
           ),
           const SizedBox(height: _kGrid * 1.5),
           ClipRRect(
@@ -501,15 +568,25 @@ class StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final language = AppLanguage.instance.language;
     final bool isStarted = status == 'started';
     final bool isProgress = status == 'in_progress';
     final bool isCompleted = status == 'completed';
 
     final String label = switch (status) {
-      'started' => 'Work Started',
-      'in_progress' => 'In Progress',
-      'completed' => 'Completed',
-      _ => 'Update',
+      'started' => AppLocalizations.translate(
+        'work_started',
+        language: language,
+      ),
+      'in_progress' => AppLocalizations.translate(
+        'in_progress',
+        language: language,
+      ),
+      'completed' => AppLocalizations.translate(
+        'completed',
+        language: language,
+      ),
+      _ => AppLocalizations.translate('update', language: language),
     };
 
     final Color bgColor = isStarted
@@ -551,14 +628,17 @@ class StatusBadge extends StatelessWidget {
 }
 
 class BottomNavBar extends StatelessWidget {
-  const BottomNavBar({super.key, required this.onTap});
+  const BottomNavBar({super.key, required this.onTap, required this.language});
 
   final ValueChanged<String> onTap;
+  final String language;
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color navBackground = isDark ? const Color(0xFF0D1117) : Colors.white;
     return Container(
-      color: const Color(0xFF0D1117),
+      color: navBackground,
       child: SafeArea(
         top: false,
         child: Padding(
@@ -569,69 +649,59 @@ class BottomNavBar extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _NavItem(
-                icon: Icons.home_outlined,
-                label: 'Home',
-                active: false,
-                onTap: () => onTap(_homeRoute),
+              Expanded(
+                child: _NavItem(
+                  icon: Icons.home_outlined,
+                  label: AppLocalizations.translate('home', language: language),
+                  active: false,
+                  onTap: () => onTap(_homeRoute),
+                ),
               ),
-              _NavItem(
-                icon: Icons.track_changes_rounded,
-                label: 'Issues',
-                active: true,
-                onTap: () => onTap(_trackRoute),
+              Expanded(
+                child: _NavItem(
+                  icon: Icons.track_changes_rounded,
+                  label: AppLocalizations.translate(
+                    'issues',
+                    language: language,
+                  ),
+                  active: true,
+                  onTap: () => onTap(_trackRoute),
+                ),
               ),
-              _AddButton(onTap: () => onTap(_createMenuRoute)),
-              _NavItem(
-                icon: Icons.event_outlined,
-                label: 'Events',
-                active: false,
-                onTap: () => onTap(_eventsRoute),
+              Expanded(
+                child: _NavItem(
+                  icon: Icons.groups_2_outlined,
+                  label: AppLocalizations.translate(
+                    'community',
+                    language: language,
+                  ),
+                  active: false,
+                  onTap: () => onTap(_communityRoute),
+                ),
               ),
-              _NavItem(
-                icon: Icons.person_outline_rounded,
-                label: 'Profile',
-                active: false,
-                onTap: () => onTap(_profileRoute),
+              Expanded(
+                child: _NavItem(
+                  icon: Icons.event_outlined,
+                  label: AppLocalizations.translate(
+                    'events',
+                    language: language,
+                  ),
+                  active: false,
+                  onTap: () => onTap(_eventsRoute),
+                ),
+              ),
+              Expanded(
+                child: _NavItem(
+                  icon: Icons.person_outline_rounded,
+                  label: AppLocalizations.translate(
+                    'profile',
+                    language: language,
+                  ),
+                  active: false,
+                  onTap: () => onTap(_profileRoute),
+                ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _AddButton extends StatelessWidget {
-  const _AddButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: 'Add',
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(_kGrid * 3),
-          child: Ink(
-            width: _kGrid * 6,
-            height: _kGrid * 6,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5A623),
-              shape: BoxShape.circle,
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x44000000),
-                  blurRadius: 8,
-                  offset: Offset(0, 3),
-                ),
-              ],
-            ),
-            child: const Icon(Icons.add, color: Color(0xFF000000), size: 24),
           ),
         ),
       ),
@@ -654,29 +724,31 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color color = active
-        ? const Color(0xFFF5A623)
-        : const Color(0xFF8B949E);
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color inactive = isDark
+        ? const Color(0xFF8B949E)
+        : const Color(0xFF64748B);
+    final Color color = active ? const Color(0xFFF5A623) : inactive;
     return InkResponse(
       onTap: onTap,
       radius: _kGrid * 3,
-      child: SizedBox(
-        width: _kGrid * 7,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 22),
-            const SizedBox(height: _kGrid / 2),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 12,
-                fontWeight: active ? FontWeight.w600 : FontWeight.w500,
-              ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 22),
+          const SizedBox(height: _kGrid / 2),
+          Text(
+            label,
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.fade,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: active ? FontWeight.w600 : FontWeight.w500,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -687,11 +759,13 @@ class _NotifyButton extends StatefulWidget {
     required this.onTap,
     required this.gold,
     required this.navy,
+    required this.language,
   });
 
   final VoidCallback onTap;
   final Color gold;
   final Color navy;
+  final String language;
 
   @override
   State<_NotifyButton> createState() => _NotifyButtonState();
@@ -726,14 +800,20 @@ class _NotifyButtonState extends State<_NotifyButton> {
             ],
           ),
         ),
-        child: const Row(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.notifications_none_rounded, color: Color(0xFFF5A623)),
-            SizedBox(width: _kGrid),
+            const Icon(
+              Icons.notifications_none_rounded,
+              color: Color(0xFFF5A623),
+            ),
+            const SizedBox(width: _kGrid),
             Text(
-              'Notify Me on Update',
-              style: TextStyle(
+              AppLocalizations.translate(
+                'notify_me_update',
+                language: widget.language,
+              ),
+              style: const TextStyle(
                 color: Color(0xFFF5A623),
                 fontWeight: FontWeight.w600,
                 fontSize: 16,
@@ -753,7 +833,7 @@ class _LeaderLogo extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Image(
       image: AssetImage('assets/images/my_logo.jpg'),
-      height: 66,
+      height: 74,
       fit: BoxFit.contain,
     );
   }

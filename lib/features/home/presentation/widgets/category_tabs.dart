@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/localization/app_language.dart';
+import '../../../../core/localization/app_localizations.dart';
+
 class CategoryTabs extends StatelessWidget {
   const CategoryTabs({
     super.key,
@@ -12,28 +15,32 @@ class CategoryTabs extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onTabSelected;
 
+  String _localizedTabTitle(int index) {
+    final language = AppLanguage.instance.language;
+    switch (index) {
+      case 0:
+        return AppLocalizations.translate('local', language: language);
+      case 1:
+        return AppLocalizations.translate('state', language: language);
+      default:
+        return AppLocalizations.translate('national', language: language);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 54,
-      child: Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: const Color(0xff141517),
-          border: Border.all(color: const Color(0xff25272B)),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          children: List.generate(
-            tabs.length,
-            (index) => Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: _CategoryTabPill(
-                  title: tabs[index],
-                  selected: index == selectedIndex,
-                  onTap: () => onTabSelected(index),
-                ),
+      child: Row(
+        children: List.generate(
+          tabs.length,
+          (index) => Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: _CategoryTabPill(
+                title: _localizedTabTitle(index),
+                selected: index == selectedIndex,
+                onTap: () => onTabSelected(index),
               ),
             ),
           ),
