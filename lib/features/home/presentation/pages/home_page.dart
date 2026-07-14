@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../../../../core/localization/app_language.dart';
 import '../../../../core/localization/app_localizations.dart';
@@ -23,8 +24,10 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedTabIndex = 0;
   int _selectedNavIndex = 0;
+  bool _showSearchBar = false;
   final ScrollController _feedScrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
 
   static const List<String> _localNames = [
     'Aarav Sharma',
@@ -118,20 +121,15 @@ class _HomePageState extends State<HomePage> {
     setState(() => _selectedNavIndex = index);
     _trackAction('nav_${BottomNavigation.items[index].toLowerCase()}');
 
-    if (index == 0) {
-      return;
-    }
-
+    if (index == 0) return;
     if (index == 1) {
       Navigator.of(context).pushReplacementNamed(_trackRoute);
       return;
     }
-
     if (index == 2) {
       Navigator.of(context).pushReplacementNamed(_communityRoute);
       return;
     }
-
     if (index == 3) {
       Navigator.of(context).pushReplacementNamed(_eventsRoute);
       return;
@@ -158,9 +156,53 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _toggleSearchBar() {
+    if (_showSearchBar) {
+      _closeSearchBar();
+      return;
+    }
+
+    setState(() {
+      _showSearchBar = true;
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _searchFocusNode.requestFocus();
+      }
+    });
+  }
+
+  void _closeSearchBar() {
+    if (!_showSearchBar) {
+      return;
+    }
+
+    setState(() {
+      _showSearchBar = false;
+      _searchController.clear();
+    });
+    _searchFocusNode.unfocus();
+  }
+
+  void _handleOutsideTap() {
+    if (_showSearchBar) {
+      _closeSearchBar();
+      return;
+    }
+    FocusScope.of(context).unfocus();
+  }
+
+  void _handleFeedScroll(UserScrollNotification notification) {
+    if (_showSearchBar && notification.direction != ScrollDirection.idle) {
+      _closeSearchBar();
+    }
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     _feedScrollController.dispose();
     super.dispose();
   }
@@ -364,142 +406,115 @@ class _HomePageState extends State<HomePage> {
             })
             .toList(growable: false);
 
-        return Scaffold(
-          backgroundColor: pageBg,
-          resizeToAvoidBottomInset: false,
-          body: SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final contentWidth = constraints.maxWidth >= 600
-                    ? 390.0
-                    : constraints.maxWidth;
+        return GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: _handleOutsideTap,
+          child: Scaffold(
+            backgroundColor: pageBg,
+            resizeToAvoidBottomInset: false,
+            body: SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final contentWidth = constraints.maxWidth >= 600
+                      ? 390.0
+                      : constraints.maxWidth;
 
-                return Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: contentWidth),
-                    child: Column(
-                      children: [
-                        HomeHeader(
-                          onNotificationTap: _openNotificationsPanel,
-                          onLogoTap: _scrollFeedToTop,
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                          child: SizedBox(
-                            height: 48,
-                            child: TextField(
-                              controller: _searchController,
-                              onChanged: (_) => setState(() {}),
-                              style: TextStyle(
-                                color: primaryText,
-                                fontSize: 14,
-                                fontFamily: 'Inter',
-                              ),
-                              decoration: InputDecoration(
-                                hintText: _tr('search_meetings'),
-                                hintStyle: TextStyle(
-                                  color: secondaryText,
-                                  fontSize: 14,
-                                  fontFamily: 'Inter',
-                                ),
-                                prefixIcon: Icon(
-                                  Icons.search,
-                                  color: secondaryText,
-                                  size: 20,
-                                ),
-                                filled: true,
-                                fillColor: fieldBg,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                  borderSide: BorderSide.none,
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                  borderSide: BorderSide.none,
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                  borderSide: BorderSide.none,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 8,
+                  return Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: contentWidth),
+                      child: Column(
+                        children: [
+                          HomeHeader(
+                            onNotificationTap: _openNotificationsPanel,
+                            onSearchTap: _toggleSearchBar,
+                            onLogoTap: _scrollFeedToTop,
+                            searchActive: _showSearchBar,
+                            searchController: _searchController,
+                            searchFocusNode: _searchFocusNode,
+                            onSearchChanged: (_) => setState(() {}),
+                            searchHintText: _tr('search_meetings'),
+                            searchFieldColor: fieldBg,
+                            searchTextColor: primaryText,
+                            searchHintColor: secondaryText,
+                          ),
+                          const SizedBox(height: 6),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: CategoryTabs(
+                              selectedIndex: _selectedTabIndex,
+                              onTabSelected: (index) {
+                                setState(() => _selectedTabIndex = index);
+                                _trackAction(
+                                  'tab_${CategoryTabs.tabs[index].toLowerCase()}',
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Expanded(
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 300),
+                              switchInCurve: Curves.easeOutCubic,
+                              switchOutCurve: Curves.easeInCubic,
+                              transitionBuilder: (child, animation) {
+                                final offsetAnimation = Tween<Offset>(
+                                  begin: const Offset(0.02, 0),
+                                  end: Offset.zero,
+                                ).animate(animation);
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: SlideTransition(
+                                    position: offsetAnimation,
+                                    child: child,
+                                  ),
+                                );
+                              },
+                              child: NotificationListener<UserScrollNotification>(
+                                onNotification: (notification) {
+                                  _handleFeedScroll(notification);
+                                  return false;
+                                },
+                                child: ListView.separated(
+                                  key: ValueKey<String>(selectedTab),
+                                  controller: _feedScrollController,
+                                  physics: const BouncingScrollPhysics(
+                                    parent: AlwaysScrollableScrollPhysics(),
+                                  ),
+                                  padding: const EdgeInsets.fromLTRB(
+                                    16,
+                                    2,
+                                    16,
+                                    112,
+                                  ),
+                                  itemBuilder: (context, index) => PostCard(
+                                    data: filteredFeed[index],
+                                    onMenuTap: () => _trackAction('post_menu'),
+                                    onLikeTap: () => _trackAction('post_like'),
+                                    onCommentTap: () =>
+                                        _trackAction('post_comment'),
+                                    onShareTap: () => _trackAction('post_share'),
+                                    onBoostTap: () => _trackAction('post_boost'),
+                                    onBookmarkTap: () =>
+                                        _trackAction('post_bookmark'),
+                                  ),
+                                  separatorBuilder: (_, index) =>
+                                      const SizedBox(height: 18),
+                                  itemCount: filteredFeed.length,
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 10),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: CategoryTabs(
-                            selectedIndex: _selectedTabIndex,
-                            onTabSelected: (index) {
-                              setState(() => _selectedTabIndex = index);
-                              _trackAction(
-                                'tab_${CategoryTabs.tabs[index].toLowerCase()}',
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Expanded(
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 300),
-                            switchInCurve: Curves.easeOutCubic,
-                            switchOutCurve: Curves.easeInCubic,
-                            transitionBuilder: (child, animation) {
-                              final offsetAnimation = Tween<Offset>(
-                                begin: const Offset(0.02, 0),
-                                end: Offset.zero,
-                              ).animate(animation);
-                              return FadeTransition(
-                                opacity: animation,
-                                child: SlideTransition(
-                                  position: offsetAnimation,
-                                  child: child,
-                                ),
-                              );
-                            },
-                            child: ListView.separated(
-                              key: ValueKey<String>(selectedTab),
-                              controller: _feedScrollController,
-                              physics: const BouncingScrollPhysics(
-                                parent: AlwaysScrollableScrollPhysics(),
-                              ),
-                              padding: const EdgeInsets.fromLTRB(
-                                16,
-                                2,
-                                16,
-                                112,
-                              ),
-                              itemBuilder: (context, index) => PostCard(
-                                data: filteredFeed[index],
-                                onMenuTap: () => _trackAction('post_menu'),
-                                onLikeTap: () => _trackAction('post_like'),
-                                onCommentTap: () =>
-                                    _trackAction('post_comment'),
-                                onShareTap: () => _trackAction('post_share'),
-                                onBoostTap: () => _trackAction('post_boost'),
-                                onBookmarkTap: () =>
-                                    _trackAction('post_bookmark'),
-                              ),
-                              separatorBuilder: (_, index) =>
-                                  const SizedBox(height: 18),
-                              itemCount: filteredFeed.length,
-                            ),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
-          ),
-          bottomNavigationBar: BottomNavigation(
-            currentIndex: _selectedNavIndex,
-            onItemSelected: _handleBottomNavSelection,
+            bottomNavigationBar: BottomNavigation(
+              currentIndex: _selectedNavIndex,
+              onItemSelected: _handleBottomNavSelection,
+            ),
           ),
         );
       },

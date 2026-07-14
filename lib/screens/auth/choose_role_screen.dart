@@ -100,7 +100,7 @@ class _ChooseRoleScreenState extends State<ChooseRoleScreen> {
                           Icon(
                             Icons.keyboard_arrow_down_rounded,
                             color: Color(0xAAFFFFFF),
-                            size: 16,
+                            size: 19,
                           ),
                         ],
                       ),

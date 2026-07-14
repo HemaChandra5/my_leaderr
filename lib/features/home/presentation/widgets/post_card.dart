@@ -117,11 +117,11 @@ class _PostCardState extends State<PostCard> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+      padding: const EdgeInsets.fromLTRB(11, 11, 11, 9),
       decoration: BoxDecoration(
         color: const Color(0xff161616),
-        border: Border.all(color: const Color(0x66F5A623)),
-        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0x78F5A623)),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
             color: Color(0x18000000),
@@ -138,9 +138,9 @@ class _PostCardState extends State<PostCard> {
               ProfileAvatar(
                 initials: widget.data.avatarInitials ?? 'LD',
                 imageAsset: widget.data.avatarAsset,
-                size: 44,
+                size: 38,
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
                 child: _PostIdentity(
                   leaderName: widget.data.leaderName,
@@ -155,33 +155,33 @@ class _PostCardState extends State<PostCard> {
                 icon: const Icon(
                   Icons.more_horiz_rounded,
                   color: Colors.white,
-                  size: 20,
+                  size: 18,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           Text(
             widget.data.description,
             style: const TextStyle(
               color: Color(0xffF4F4F4),
-              fontSize: 15,
+              fontSize: 13,
               fontFamily: 'Inter',
-              height: 1.5,
+              height: 1.35,
               fontWeight: FontWeight.w400,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           VideoThumbnail(
             imageAsset: widget.data.mediaAsset,
             duration: widget.data.mediaDuration,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             decoration: BoxDecoration(
               color: const Color(0xff161616),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
               children: [
@@ -316,7 +316,7 @@ class _PostIdentity extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 16,
+                  fontSize: 14,
                   fontFamily: 'Inter',
                   fontWeight: FontWeight.w700,
                 ),
@@ -332,14 +332,14 @@ class _PostIdentity extends StatelessWidget {
             ],
           ],
         ),
-        const SizedBox(height: 3),
+        const SizedBox(height: 2),
         Text(
           '$role • $timeAgo',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             color: Color(0xff9E9E9E),
-            fontSize: 12,
+            fontSize: 11,
             fontFamily: 'Inter',
             fontWeight: FontWeight.w500,
           ),

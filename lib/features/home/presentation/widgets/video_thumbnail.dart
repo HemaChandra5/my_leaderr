@@ -15,10 +15,10 @@ class VideoThumbnail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 220,
+      height: 160,
       width: double.infinity,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -39,8 +39,8 @@ class VideoThumbnail extends StatelessWidget {
             ),
             Center(
               child: Container(
-                width: 56,
-                height: 56,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
                   color: const Color(0x8A000000),
                   shape: BoxShape.circle,
@@ -48,7 +48,7 @@ class VideoThumbnail extends StatelessWidget {
                 child: const Icon(
                   Icons.play_arrow_rounded,
                   color: Colors.white,
-                  size: 30,
+                  size: 26,
                 ),
               ),
             ),
