@@ -595,8 +595,8 @@ class _EventCardState extends State<EventCard> {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final Color cardColor = Theme.of(context).colorScheme.surface;
     final Color borderColor = isDark
-      ? const Color(0x66F5A623)
-      : const Color(0x99D6A848);
+        ? const Color(0x66F5A623)
+        : const Color(0x99D6A848);
     final Color inactiveText = isDark
         ? const Color(0xFF8B949E)
         : const Color(0xFF64748B);
