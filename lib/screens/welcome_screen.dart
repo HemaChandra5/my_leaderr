@@ -137,7 +137,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               Icon(
                 Icons.keyboard_arrow_down_rounded,
                 color: chipText,
-                size: 20,
+                size: 24,
               ),
             ],
           ),

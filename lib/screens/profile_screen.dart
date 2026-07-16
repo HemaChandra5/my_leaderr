@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
+import '../features/profile/presentation/pages/settings_screen.dart';
 import '../theme.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -63,51 +63,87 @@ class _ProfileScreenState extends State<ProfileScreen>
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
-      child: FadeTransition(
-        opacity: _screenFade,
-        child: SafeArea(
-          child: ListView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            children: [
-              const _ProfileAppBar(),
-              const SizedBox(height: 16),
-              const ProfileHeader(),
-              const SizedBox(height: 16),
-              SlideTransition(position: _statsSlide, child: const StatsRow()),
-              const SizedBox(height: 16),
-              ProfileMenuCard(
-                menuItems: _menuItems,
-                controller: _menuController,
-              ),
-            ],
+      child: Scaffold(
+        backgroundColor: AppTheme.background,
+        body: FadeTransition(
+          opacity: _screenFade,
+          child: SafeArea(
+            child: ListView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              children: [
+                const _ProfileAppBar(),
+                const SizedBox(height: 16),
+                const ProfileHeader(),
+                const SizedBox(height: 20),
+                const BoostCard(),
+                const SizedBox(height: 20),
+                SlideTransition(position: _statsSlide, child: const StatsRow()),
+                const SizedBox(height: 20),
+                ProfileMenuCard(
+                  menuItems: _menuItems,
+                  controller: _menuController,
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 }
+
+////////////////////////////////////////////////////////////
+/// ✅ TOP APP BAR WITH LOGO
+////////////////////////////////////////////////////////////
 
 class _ProfileAppBar extends StatelessWidget {
   const _ProfileAppBar();
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox(
-      height: 48,
-      child: Center(
-        child: Text(
-          'Profile',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
+    return SizedBox(
+      height: 70,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const SizedBox(width: 40),
+          Column(
+            children: const [
+              SizedBox(height: 4),
+              Icon(Icons.emoji_events, color: AppTheme.gold, size: 32),
+              SizedBox(height: 4),
+              Text(
+                'MY LEADER',
+                style: TextStyle(
+                  color: AppTheme.gold,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 2,
+                ),
+              ),
+            ],
           ),
-        ),
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
+              );
+            },
+            icon: const Icon(
+              Icons.settings_outlined,
+              color: AppTheme.textSecondary,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
+
+////////////////////////////////////////////////////////////
+/// ✅ PROFILE HEADER WITH VERIFIED BADGE
+////////////////////////////////////////////////////////////
 
 class ProfileHeader extends StatelessWidget {
   const ProfileHeader({super.key});
@@ -129,16 +165,23 @@ class ProfileHeader extends StatelessWidget {
             backgroundImage: AssetImage('assets/images/avatar2.png'),
           ),
         ),
-        const SizedBox(height: 8),
-        const Text(
-          'Priya Sharma',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Text(
+              'Priya Sharma',
+              style: TextStyle(
+                color: AppTheme.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            SizedBox(width: 6),
+            Icon(Icons.verified, color: AppTheme.gold, size: 18),
+          ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         const Text(
           'Citizen • Kukatpally',
           style: TextStyle(
@@ -151,7 +194,7 @@ class ProfileHeader extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFF22C55E).withValues(alpha: 0.15),
+            color: const Color(0xFF22C55E).withOpacity(0.15),
             borderRadius: BorderRadius.circular(20),
           ),
           child: const Text(
@@ -168,160 +211,97 @@ class ProfileHeader extends StatelessWidget {
   }
 }
 
+////////////////////////////////////////////////////////////
+/// ✅ BOOST CARD
+////////////////////////////////////////////////////////////
+
+class BoostCard extends StatelessWidget {
+  const BoostCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppTheme.gold),
+      ),
+      child: const Column(
+        children: [
+          Text(
+            'Boost - Citizen',
+            style: TextStyle(
+              color: AppTheme.gold,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          SizedBox(height: 6),
+          Text(
+            'Unlock premium features',
+            style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+////////////////////////////////////////////////////////////
+/// ✅ GOLD BORDER STATS
+////////////////////////////////////////////////////////////
+
 class StatsRow extends StatelessWidget {
   const StatsRow({super.key});
 
   @override
   Widget build(BuildContext context) {
-    const dividerColor = Color(0xFF1F242C);
-
-    return Column(
-      children: [
-        const Divider(height: 1, color: dividerColor),
-        const SizedBox(height: 12),
-        const Row(
-          children: [
-            Expanded(
-              child: _StatItem(value: '24', label: 'Posts'),
-            ),
-            Expanded(
-              child: _StatItem(value: '18', label: 'Issues Reported'),
-            ),
-            Expanded(
-              child: _StatItem(value: '15', label: 'Issues Resolved'),
-            ),
-            Expanded(
-              child: _StatItem(value: '12', label: 'Events Attended'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        const Divider(height: 1, color: dividerColor),
+    return Row(
+      children: const [
+        Expanded(child: _GoldStat('24', 'Posts')),
+        SizedBox(width: 10),
+        Expanded(child: _GoldStat('18', 'Issues')),
+        SizedBox(width: 10),
+        Expanded(child: _GoldStat('15', 'Resolved')),
+        SizedBox(width: 10),
+        Expanded(child: _GoldStat('12', 'Events')),
       ],
     );
   }
 }
 
-class _StatItem extends StatelessWidget {
-  const _StatItem({required this.value, required this.label});
-
+class _GoldStat extends StatelessWidget {
   final String value;
   final String label;
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: AppTheme.textSecondary,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class ProfileMenuCard extends StatelessWidget {
-  const ProfileMenuCard({
-    super.key,
-    required this.menuItems,
-    required this.controller,
-  });
-
-  final List<({IconData icon, String title})> menuItems;
-  final AnimationController controller;
+  const _GoldStat(this.value, this.label);
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.border),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.gold),
       ),
       child: Column(
-        children: List<Widget>.generate(menuItems.length, (index) {
-          final item = menuItems[index];
-          final start = (index * 0.07).clamp(0.0, 0.8);
-          final end = (start + 0.35).clamp(0.0, 1.0);
-          final animation = CurvedAnimation(
-            parent: controller,
-            curve: Interval(start, end, curve: Curves.easeOutCubic),
-          );
-
-          return FadeTransition(
-            opacity: animation,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, 0.06),
-                end: Offset.zero,
-              ).animate(animation),
-              child: Column(
-                children: [
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () {
-                        debugPrint('ProfileMenu: ${item.title}');
-                      },
-                      child: SizedBox(
-                        height: 56,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 14),
-                          child: Row(
-                            children: [
-                              Icon(
-                                item.icon,
-                                color: AppTheme.textSecondary,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  item.title,
-                                  style: const TextStyle(
-                                    color: AppTheme.textPrimary,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                              const Icon(
-                                Icons.chevron_right_rounded,
-                                color: AppTheme.textSecondary,
-                                size: 20,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (index != menuItems.length - 1)
-                    const Padding(
-                      padding: EdgeInsets.only(left: 46, right: 14),
-                      child: Divider(height: 1, color: AppTheme.border),
-                    ),
-                ],
-              ),
+        children: [
+          Text(
+            value,
+            style: const TextStyle(
+              color: AppTheme.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
             ),
-          );
-        }),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11),
+          ),
+        ],
       ),
     );
   }

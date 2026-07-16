@@ -34,6 +34,35 @@ class AuthService {
     );
   }
 
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw FirebaseAuthException(
+        code: 'not-authenticated',
+        message: 'Please login again to continue.',
+      );
+    }
+
+    final email = user.email;
+    if (email == null || email.isEmpty) {
+      throw FirebaseAuthException(
+        code: 'unsupported-account',
+        message: 'Password change is not available for this account.',
+      );
+    }
+
+    final credential = EmailAuthProvider.credential(
+      email: email,
+      password: currentPassword,
+    );
+
+    await user.reauthenticateWithCredential(credential);
+    await user.updatePassword(newPassword);
+  }
+
   Future<String> sendOtp(String phoneNumber) async {
     final Completer<String> completer = Completer<String>();
 

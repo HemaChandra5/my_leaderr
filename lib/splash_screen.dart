@@ -194,7 +194,7 @@ class _SplashScreenState extends State<SplashScreen>
               const Icon(
                 Icons.keyboard_arrow_down_rounded,
                 color: Colors.white,
-                size: 20,
+                size: 24,
               ),
             ],
           ),

@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../role_screen.dart';
 import 'citizen_profile_dashboard.dart';
-import 'leader_profile_dashboard.dart';
 
 class ProfileDashboardGate extends StatefulWidget {
   const ProfileDashboardGate({super.key});
@@ -13,8 +10,6 @@ class ProfileDashboardGate extends StatefulWidget {
 }
 
 class _ProfileDashboardGateState extends State<ProfileDashboardGate> {
-  static const String _roleKey = 'selected_role';
-  String? _role;
   bool _isLoading = true;
 
   @override
@@ -24,13 +19,12 @@ class _ProfileDashboardGateState extends State<ProfileDashboardGate> {
   }
 
   Future<void> _loadRole() async {
-    final prefs = await SharedPreferences.getInstance();
+    await Future<void>.delayed(Duration.zero);
     if (!mounted) {
       return;
     }
 
     setState(() {
-      _role = prefs.getString(_roleKey);
       _isLoading = false;
     });
   }
@@ -46,14 +40,7 @@ class _ProfileDashboardGateState extends State<ProfileDashboardGate> {
       );
     }
 
-    if (_role == 'Leader') {
-      return const LeaderProfileDashboard();
-    }
-
-    if (_role == 'Citizen') {
-      return const CitizenProfileDashboard();
-    }
-
-    return const RoleScreen();
+    // Temporary wiring: send all logged-in members to citizen profile flow.
+    return const CitizenProfileDashboard();
   }
 }

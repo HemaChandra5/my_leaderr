@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../core/localization/app_language.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../search/presentation/pages/search_explorer_screen.dart';
 
 const double _kGrid = 8;
 const String _fontFamily = 'Inter';
@@ -242,6 +243,17 @@ class _UpcomingMeetingsScreenState extends State<UpcomingMeetingsScreen>
       );
   }
 
+  Future<void> _openSearchExplorer() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => SearchExplorerScreen(
+          initialQuery: _searchController.text,
+          initialNavIndex: 3,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final List<MeetingModel> meetings = _filteredMeetings;
@@ -313,6 +325,7 @@ class _UpcomingMeetingsScreenState extends State<UpcomingMeetingsScreen>
                   SearchBarWidget(
                     controller: _searchController,
                     onChanged: (_) => setState(() {}),
+                    onTap: _openSearchExplorer,
                   ),
                   const SizedBox(height: _kGrid * 1.5),
                   SegmentedToggle(
@@ -421,10 +434,12 @@ class SearchBarWidget extends StatelessWidget {
     super.key,
     required this.controller,
     required this.onChanged,
+    required this.onTap,
   });
 
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -443,7 +458,8 @@ class SearchBarWidget extends StatelessWidget {
       height: 48,
       child: TextField(
         controller: controller,
-        onChanged: onChanged,
+        readOnly: true,
+        onTap: onTap,
         style: TextStyle(
           color: primaryText,
           fontSize: 14,

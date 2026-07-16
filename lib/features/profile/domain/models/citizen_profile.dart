@@ -8,6 +8,7 @@ class CitizenProfile {
     required this.issuesReported,
     required this.issuesResolved,
     required this.eventsAttended,
+    this.profileImage,
   });
 
   final String name;
@@ -18,4 +19,5 @@ class CitizenProfile {
   final int issuesReported;
   final int issuesResolved;
   final int eventsAttended;
+  final String? profileImage;
 }

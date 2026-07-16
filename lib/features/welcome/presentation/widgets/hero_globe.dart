@@ -21,7 +21,7 @@ class HeroGlobe extends StatelessWidget {
                 scale: 1.22,
                 alignment: const Alignment(-0.1, 0),
                 child: Image.asset(
-                  'assets/images/welcome_earth2.jpg',
+                  'assets/images/welcome_earth2.png',
                   fit: BoxFit.cover,
                   alignment: const Alignment(-0.1, 0),
                   filterQuality: FilterQuality.low,

@@ -11,17 +11,20 @@ class ProfileMenuCardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final language = AppLanguage.instance.language;
-    final items = <({IconData icon, String title})>[
+    final items = <({IconData icon, String key, String title})>[
       (
         icon: Icons.article_outlined,
+        key: 'my_posts',
         title: AppLocalizations.translate('my_posts', language: language),
       ),
       (
         icon: Icons.mode_comment_outlined,
+        key: 'my_comments',
         title: AppLocalizations.translate('my_comments', language: language),
       ),
       (
         icon: Icons.report_gmailerrorred_rounded,
+        key: 'my_reported_issues',
         title: AppLocalizations.translate(
           'my_reported_issues',
           language: language,
@@ -29,10 +32,12 @@ class ProfileMenuCardWidget extends StatelessWidget {
       ),
       (
         icon: Icons.bookmark_border_rounded,
+        key: 'saved_posts',
         title: AppLocalizations.translate('saved_posts', language: language),
       ),
       (
         icon: Icons.settings_outlined,
+        key: 'settings',
         title: AppLocalizations.translate('settings', language: language),
       ),
     ];
@@ -64,14 +69,14 @@ class ProfileMenuCardWidget extends StatelessWidget {
             child: Column(
               children: [
                 _ScaleTapMenuItem(
-                  onTap: () => onItemTap(item.title),
+                  onTap: () => onItemTap(item.key),
                   child: SizedBox(
                     height: 56,
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(
                         splashColor: const Color(0xFF161B22),
-                        onTap: () => onItemTap(item.title),
+                        onTap: () => onItemTap(item.key),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           child: Row(

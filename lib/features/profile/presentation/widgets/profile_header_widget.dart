@@ -27,15 +27,20 @@ class ProfileHeaderWidget extends StatelessWidget {
             shape: BoxShape.circle,
             border: Border.all(color: const Color(0xFFF5A623), width: 1.2),
           ),
-          child: const Hero(
+          child: Hero(
             tag: 'citizen-profile-avatar',
             child: CircleAvatar(
               backgroundColor: Color(0xFF161B22),
-              child: Icon(
-                Icons.person_rounded,
-                size: 30,
-                color: Color(0xFFFFFFFF),
-              ),
+              backgroundImage: (profile.profileImage ?? '').isNotEmpty
+                  ? NetworkImage(profile.profileImage!)
+                  : null,
+              child: (profile.profileImage ?? '').isNotEmpty
+                  ? null
+                  : const Icon(
+                      Icons.person_rounded,
+                      size: 30,
+                      color: Color(0xFFFFFFFF),
+                    ),
             ),
           ),
         ),
@@ -58,12 +63,6 @@ class ProfileHeaderWidget extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (profile.isVerified)
-                    const Icon(
-                      Icons.verified_rounded,
-                      color: Color(0xFFF5A623),
-                      size: 18,
-                    ),
                 ],
               ),
               const SizedBox(height: 3),

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../core/localization/app_language.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../search/presentation/pages/search_explorer_screen.dart';
 
 const double _kGrid = 8;
 const String _homeRoute = '/home';
@@ -124,6 +125,17 @@ class _TrackIssueScreenState extends State<TrackIssueScreen>
       );
   }
 
+  Future<void> _openSearchExplorer() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => SearchExplorerScreen(
+          initialQuery: _searchController.text,
+          initialNavIndex: 1,
+        ),
+      ),
+    );
+  }
+
   void _handleBottomNavTap(String route) {
     if (route == _trackRoute) {
       return;
@@ -223,7 +235,8 @@ class _TrackIssueScreenState extends State<TrackIssueScreen>
                       height: 48,
                       child: TextField(
                         controller: _searchController,
-                        onChanged: (_) => setState(() {}),
+                        readOnly: true,
+                        onTap: _openSearchExplorer,
                         style: TextStyle(color: primaryText, fontSize: 14),
                         decoration: InputDecoration(
                           hintText: _tr('search_meetings'),

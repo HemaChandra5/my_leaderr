@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../core/localization/app_language.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../search/presentation/pages/search_explorer_screen.dart';
 
 const double _kGrid = 8;
 const String _fontFamily = 'Inter';
@@ -159,6 +160,17 @@ class _EventsScreenState extends State<EventsScreen>
       );
   }
 
+  Future<void> _openSearchExplorer() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => SearchExplorerScreen(
+          initialQuery: _searchController.text,
+          initialNavIndex: 3,
+        ),
+      ),
+    );
+  }
+
   void _handleBottomNavTap(String route) {
     if (route == _eventsRoute) {
       return;
@@ -265,7 +277,8 @@ class _EventsScreenState extends State<EventsScreen>
                       height: 48,
                       child: TextField(
                         controller: _searchController,
-                        onChanged: (_) => setState(() {}),
+                        readOnly: true,
+                        onTap: _openSearchExplorer,
                         style: TextStyle(
                           color: primaryText,
                           fontSize: 14,
