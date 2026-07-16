@@ -62,7 +62,7 @@ class _StatItem extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppColors.divider),
+          border: Border.all(color: const Color(0x66F5A623)),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

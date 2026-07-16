@@ -143,7 +143,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               Icon(
                 Icons.keyboard_arrow_down_rounded,
                 color: chipText,
-                size: 20,
+                size: 24,
               ),
             ],
           ),
@@ -213,6 +213,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           fit: BoxFit.contain,
                         ),
                         const SizedBox(height: 6),
+                        const SizedBox.shrink(),
                         const SizedBox(height: 24),
                         ClipRRect(
                           borderRadius: BorderRadius.circular(20),

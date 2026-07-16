@@ -14,17 +14,22 @@ class CitizenDetailsScreen extends StatefulWidget {
   const CitizenDetailsScreen({super.key});
 
   @override
-  State<CitizenDetailsScreen> createState() => _CitizenDetailsScreenState();
+  State<CitizenDetailsScreen> createState() =>
+      _CitizenDetailsScreenState();
 }
 
-class _CitizenDetailsScreenState extends State<CitizenDetailsScreen> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+class _CitizenDetailsScreenState
+    extends State<CitizenDetailsScreen> {
+  final GlobalKey<FormState> _formKey =
+      GlobalKey<FormState>();
+
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _cityController = TextEditingController();
   final _stateController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _passwordController =
+      TextEditingController();
 
   File? _profileImage;
 
@@ -40,44 +45,59 @@ class _CitizenDetailsScreenState extends State<CitizenDetailsScreen> {
   }
 
   Future<void> _pickImage() async {
-    final XFile? picked = await ImagePicker().pickImage(
+    final picked =
+        await ImagePicker().pickImage(
       source: ImageSource.gallery,
     );
-    if (picked == null) {
-      return;
-    }
-    setState(() => _profileImage = File(picked.path));
+    if (picked == null) return;
+    setState(() =>
+        _profileImage = File(picked.path));
   }
 
   Future<String?> _askOtpCode() async {
-    final TextEditingController otpController = TextEditingController();
+    final controller =
+        TextEditingController();
+
     return showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text(
-          'Enter OTP',
-          style: TextStyle(color: AppColors.textPrimary),
-        ),
+      builder: (_) => AlertDialog(
+      backgroundColor: AppColors.surface,
+      title: Text("Enter OTP",
+        style:
+          TextStyle(color: AppColors.textPrimary)),
         content: TextField(
-          controller: otpController,
-          keyboardType: TextInputType.number,
-          style: TextStyle(color: AppColors.textPrimary),
-          cursorColor: AppColors.primaryGold,
-          decoration: InputDecoration(
-            hintText: '6-digit code',
-            hintStyle: TextStyle(color: AppColors.textMuted),
+          controller: controller,
+          keyboardType:
+              TextInputType.number,
+        style: TextStyle(
+          color: AppColors.textPrimary),
+        decoration: InputDecoration(
+            hintText: "6-digit code",
+        hintStyle: TextStyle(
+          color: AppColors.textMuted),
           ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            onPressed: () =>
+                Navigator.pop(context),
+        child: Text("Cancel", style: TextStyle(color: AppColors.textMuted)),
           ),
           ElevatedButton(
+            style: ElevatedButton
+                .styleFrom(
+              backgroundColor:
+            AppColors.primaryGold,
+              foregroundColor:
+            AppColors.onGold,
+            ),
             onPressed: () =>
-                Navigator.of(context).pop(otpController.text.trim()),
-            child: const Text('Verify'),
+                Navigator.pop(
+                    context,
+                    controller.text
+                        .trim()),
+            child:
+                const Text("Verify"),
           ),
         ],
       ),
@@ -85,216 +105,357 @@ class _CitizenDetailsScreenState extends State<CitizenDetailsScreen> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    if (!_formKey.currentState!
+        .validate()) return;
 
-    final provider = context.read<UserProvider>();
+    final provider =
+        context.read<UserProvider>();
+
     try {
-      final String normalizedPhone = _normalizeIndianPhone(
-        _phoneController.text,
-      );
-      final String verificationId = await provider.sendCitizenOtp(
-        normalizedPhone,
-      );
-      if (!mounted) return;
-      final String? otp = await _askOtpCode();
-      if (!mounted || otp == null || otp.isEmpty) {
-        return;
-      }
+      final phone =
+          _phoneController.text.trim();
+      final digitsOnly = phone
+        .replaceAll(RegExp(r'\D'), '');
+      final normalized =
+        digitsOnly.startsWith('91') &&
+            digitsOnly.length > 10
+          ? '+$digitsOnly'
+          : '+91$digitsOnly';
 
-      await provider.completeCitizenOnboarding(
-        name: _nameController.text.trim(),
-        phone: normalizedPhone,
-        email: _emailController.text.trim().isEmpty
+      final verificationId =
+          await provider
+              .sendCitizenOtp(
+                  normalized);
+
+      final otp =
+          await _askOtpCode();
+
+      if (otp == null ||
+          otp.isEmpty) return;
+
+      await provider
+          .completeCitizenOnboarding(
+        name:
+            _nameController.text.trim(),
+        phone: normalized,
+        email: _emailController
+                .text
+                .trim()
+                .isEmpty
             ? null
-            : _emailController.text.trim(),
-        city: _cityController.text.trim(),
-        state: _stateController.text.trim(),
-        profileImageFile: _profileImage,
-        verificationId: verificationId,
+            : _emailController.text
+                .trim(),
+        city:
+            _cityController.text.trim(),
+        state:
+            _stateController.text
+                .trim(),
+        profileImageFile:
+            _profileImage,
+        verificationId:
+            verificationId,
         otpCode: otp,
       );
 
-      if (!mounted) return;
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute<void>(builder: (_) => const ProfileDashboardGate()),
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+            builder: (_) =>
+                const ProfileDashboardGate()),
         (_) => false,
       );
-    } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? 'Authentication error')),
-      );
-    } on TimeoutException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.message ?? 'Request timed out')));
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        SnackBar(content: Text('$e')),
+      );
     }
   }
 
-  String _normalizeIndianPhone(String rawInput) {
-    final String compact = rawInput.replaceAll(RegExp(r'\s+|-'), '');
-    if (compact.startsWith('+')) {
-      return compact;
-    }
-    String digitsOnly = compact.replaceAll(RegExp(r'[^0-9]'), '');
-    if (digitsOnly.startsWith('0')) {
-      digitsOnly = digitsOnly.replaceFirst(RegExp(r'^0+'), '');
-    }
-    if (digitsOnly.startsWith('91') && digitsOnly.length > 10) {
-      return '+$digitsOnly';
-    }
-    return '+91$digitsOnly';
-  }
-
-  InputDecoration _decor(String label) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: TextStyle(color: AppColors.primaryGold),
-      floatingLabelStyle: TextStyle(color: AppColors.primaryGold),
-      hintStyle: TextStyle(color: AppColors.textMuted),
-      filled: true,
-      fillColor: AppColors.surface,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.divider),
+  /// ✅ GOLD BORDER FIELD
+  Widget _goldField({
+    required IconData icon,
+    required String hint,
+    required TextEditingController
+        controller,
+    bool obscure = false,
+    TextInputType keyboard =
+        TextInputType.text,
+  }) {
+    return Container(
+      margin:
+          const EdgeInsets.only(bottom: 18),
+      padding:
+          const EdgeInsets.symmetric(
+              horizontal: 16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius:
+            BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.primaryGold,
+          width: 1.2,
+        ),
       ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.divider),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.primaryGold, width: 1.2),
+      child: Row(
+        children: [
+          Icon(icon,
+              color: AppColors.primaryGold),
+          const SizedBox(width: 12),
+          Expanded(
+            child: TextFormField(
+              controller: controller,
+              keyboardType: keyboard,
+              obscureText: obscure,
+              style: TextStyle(
+                  color: AppColors.textPrimary),
+              validator: (v) {
+                if (hint ==
+                    "Email (Optional)")
+                  return null;
+                if (v == null ||
+                    v.isEmpty)
+                  return "Required";
+                if (hint ==
+                        "Phone Number" &&
+                    v.length < 10)
+                  return "Invalid phone";
+                if (hint ==
+                        "Password" &&
+                    v.length < 6)
+                  return "Min 6 chars";
+                return null;
+              },
+              decoration:
+                  InputDecoration(
+                hintText: hint,
+                hintStyle:
+                  TextStyle(
+                    color: AppColors.textMuted),
+                filled: false,
+                fillColor: Colors.transparent,
+                isDense: true,
+                contentPadding:
+                  const EdgeInsets.symmetric(
+                    vertical: 16),
+                border:
+                    InputBorder.none,
+                enabledBorder:
+                  InputBorder.none,
+                focusedBorder:
+                  InputBorder.none,
+                disabledBorder:
+                  InputBorder.none,
+                errorBorder:
+                  InputBorder.none,
+                focusedErrorBorder:
+                  InputBorder.none,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = context.watch<UserProvider>();
-    final loading = userProvider.isLoading;
+    final loading =
+        context.watch<UserProvider>()
+            .isLoading;
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        title: const Text('Citizen Details'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              GestureDetector(
-                onTap: _pickImage,
-                child: CircleAvatar(
-                  radius: 44,
-                  backgroundColor: AppColors.surface,
-                  backgroundImage: _profileImage == null
-                      ? null
-                      : FileImage(_profileImage!),
-                  child: _profileImage == null
-                      ? Icon(
-                          Icons.camera_alt_rounded,
-                          color: AppColors.primaryGold,
-                        )
-                      : null,
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _nameController,
-                style: TextStyle(color: AppColors.textPrimary),
-                cursorColor: AppColors.primaryGold,
-                decoration: _decor('Full Name'),
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Required' : null,
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _phoneController,
-                style: TextStyle(color: AppColors.textPrimary),
-                cursorColor: AppColors.primaryGold,
-                decoration: _decor('Phone Number'),
-                keyboardType: TextInputType.phone,
-                validator: (v) => v == null || v.trim().length < 10
-                    ? 'Enter valid phone'
-                    : null,
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _emailController,
-                style: TextStyle(color: AppColors.textPrimary),
-                cursorColor: AppColors.primaryGold,
-                decoration: _decor('Email (Optional)'),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _cityController,
-                style: TextStyle(color: AppColors.textPrimary),
-                cursorColor: AppColors.primaryGold,
-                decoration: _decor('City'),
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Required' : null,
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _stateController,
-                style: TextStyle(color: AppColors.textPrimary),
-                cursorColor: AppColors.primaryGold,
-                decoration: _decor('State'),
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Required' : null,
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _passwordController,
-                obscureText: true,
-                style: TextStyle(color: AppColors.textPrimary),
-                cursorColor: AppColors.primaryGold,
-                decoration: _decor('Password'),
-                validator: (v) =>
-                    v == null || v.length < 6 ? 'Min 6 chars' : null,
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: loading ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF5A623),
-                    foregroundColor: Colors.black,
-                    minimumSize: const Size.fromHeight(52),
-                  ),
-                  child: loading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Submit'),
-                ),
-              ),
-              if (loading) ...[
-                const SizedBox(height: 10),
+      body: SafeArea(
+        child:
+            SingleChildScrollView(
+          padding:
+              const EdgeInsets.all(22),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+
                 Text(
-                  userProvider.loadingMessage.isEmpty
-                      ? 'Please wait...'
-                      : userProvider.loadingMessage,
-                  style: TextStyle(color: AppColors.textMuted),
-                  textAlign: TextAlign.center,
+                  "Citizen Verification",
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 24,
+                    fontWeight:
+                        FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(
+                    height: 6),
+
+                Text(
+                  "Please provide your official details",
+                  style: TextStyle(
+                    color: AppColors.textMuted),
+                ),
+
+                const SizedBox(
+                    height: 30),
+
+                /// ✅ Gold Circular Border Profile
+                Center(
+                  child:
+                      GestureDetector(
+                    onTap:
+                        _pickImage,
+                    child: Container(
+                      padding:
+                          const EdgeInsets
+                              .all(3),
+                      decoration:
+                          const BoxDecoration(
+                        shape: BoxShape
+                            .circle,
+                        border:
+                            Border.fromBorderSide(
+                          BorderSide(
+                              color: Color(
+                                  0xFFD4AF37),
+                              width: 2),
+                        ),
+                      ),
+                      child:
+                          CircleAvatar(
+                        radius: 46,
+                        backgroundColor:
+                          AppColors.surface,
+                        backgroundImage:
+                            _profileImage ==
+                                    null
+                                ? null
+                                : FileImage(
+                                    _profileImage!),
+                        child:
+                          _profileImage == null
+                            ? Icon(
+                              Icons.camera_alt,
+                              color: AppColors.primaryGold,
+                              )
+                            : null,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(
+                    height: 30),
+
+                _goldField(
+                    icon: Icons
+                        .person_outline,
+                    hint: "Full Name",
+                    controller:
+                        _nameController),
+
+                _goldField(
+                    icon: Icons
+                        .phone_outlined,
+                    hint:
+                        "Phone Number",
+                    controller:
+                        _phoneController,
+                    keyboard:
+                        TextInputType
+                            .phone),
+
+                _goldField(
+                    icon:
+                        Icons.email_outlined,
+                    hint:
+                        "Email (Optional)",
+                    controller:
+                        _emailController),
+
+                _goldField(
+                    icon: Icons
+                        .location_city,
+                    hint: "City",
+                    controller:
+                        _cityController),
+
+                _goldField(
+                    icon:
+                        Icons.map_outlined,
+                    hint: "State",
+                    controller:
+                        _stateController),
+
+                _goldField(
+                    icon:
+                        Icons.lock_outline,
+                    hint: "Password",
+                    controller:
+                        _passwordController,
+                    obscure: true),
+
+                const SizedBox(
+                    height: 30),
+
+                /// ✅ Gold Button
+                SizedBox(
+                  width:
+                      double.infinity,
+                  child:
+                      ElevatedButton(
+                    onPressed:
+                        loading
+                            ? null
+                            : _submit,
+                    style:
+                        ElevatedButton
+                            .styleFrom(
+                      backgroundColor:
+                          AppColors.primaryGold,
+                      foregroundColor:
+                          AppColors.onGold,
+                      padding:
+                          const EdgeInsets
+                              .symmetric(
+                                  vertical:
+                                      18),
+                      shape:
+                          RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius
+                                .circular(
+                                    22),
+                      ),
+                    ),
+                    child: loading
+                        ? const CircularProgressIndicator(
+                          color: AppColors.onGold)
+                        : const Text(
+                            "Submit for Verification",
+                            style:
+                                TextStyle(
+                              fontWeight:
+                                  FontWeight
+                                      .bold,
+                            ),
+                          ),
+                  ),
+                ),
+
+                const SizedBox(
+                    height: 20),
+
+                Center(
+                  child: Text(
+                    "Your information is secure and encrypted",
+                    style: TextStyle(
+                        color: AppColors.textMuted),
+                  ),
                 ),
               ],
-            ],
+            ),
           ),
         ),
       ),

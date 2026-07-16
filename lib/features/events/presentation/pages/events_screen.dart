@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../core/localization/app_language.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../search/presentation/pages/search_explorer_screen.dart';
 
 const double _kGrid = 8;
 const String _fontFamily = 'Inter';

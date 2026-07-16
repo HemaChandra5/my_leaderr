@@ -184,269 +184,352 @@ class _LoginScreenState extends State<LoginScreen>
 
           return Scaffold(
             backgroundColor: _AuthColors.background,
-            body: SafeArea(
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
-                  child: Form(
-                    key: _formKey,
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 16),
-                        const Icon(
-                          Icons.workspace_premium_rounded,
-                          color: _AuthColors.gold,
-                          size: 48,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'MY LEADER',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.inter(
-                            color: _AuthColors.gold,
-                            fontSize: 26,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          const String.fromEnvironment('SUPABASE_URL').isEmpty
-                              ? 'Auth Mode: Mock'
-                              : 'Auth Mode: Supabase',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.inter(
-                            color: _AuthColors.textSecondary,
-                            fontSize: 11,
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-                        Text(
-                          'Mobile Number',
-                          style: GoogleFonts.inter(
-                            color: _AuthColors.textPrimary,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        _AnimatedInputShell(
-                          focused: _mobileFocus.hasFocus,
-                          hasError:
-                              _validateMobile(_mobileController.text) != null &&
-                              _mobileController.text.isNotEmpty,
-                          child: Row(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                ),
-                                child: Text(
-                                  '+91',
-                                  style: GoogleFonts.inter(
-                                    color: _AuthColors.textPrimary,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                width: 1,
-                                height: 24,
-                                color: _AuthColors.border,
-                              ),
-                              Expanded(
-                                child: TextFormField(
-                                  controller: _mobileController,
-                                  focusNode: _mobileFocus,
-                                  keyboardType: TextInputType.phone,
-                                  inputFormatters: [
-                                    FilteringTextInputFormatter.digitsOnly,
-                                  ],
-                                  style: GoogleFonts.inter(
-                                    color: _AuthColors.textPrimary,
-                                    fontSize: 15,
-                                  ),
-                                  maxLength: 10,
-                                  decoration: _inputDecoration(
-                                    hintText: 'Enter 10-digit mobile',
-                                    counterText: '',
-                                  ),
-                                  validator: _validateMobile,
-                                  onChanged: (_) => setState(() {}),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Password',
-                          style: GoogleFonts.inter(
-                            color: _AuthColors.textPrimary,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        _AnimatedInputShell(
-                          focused: _passwordFocus.hasFocus,
-                          hasError: false,
-                          child: TextFormField(
-                            controller: _passwordController,
-                            focusNode: _passwordFocus,
-                            obscureText: _obscurePassword,
-                            style: GoogleFonts.inter(
-                              color: _AuthColors.textPrimary,
-                              fontSize: 15,
-                            ),
-                            decoration: _inputDecoration(
-                              hintText: 'Enter your password',
-                              suffixIcon: IconButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _obscurePassword = !_obscurePassword;
-                                  });
-                                },
-                                icon: Icon(
-                                  _obscurePassword
-                                      ? Icons.visibility_off_rounded
-                                      : Icons.visibility_rounded,
-                                  color: _AuthColors.textSecondary,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Forgot password will be available soon.',
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Text(
-                              'Forgot Password?',
-                              style: GoogleFonts.inter(
-                                color: _AuthColors.gold,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        _ScaleTap(
-                          onTap: isBusy || !mobileIsValid ? null : _onSendOtp,
-                          child: Container(
-                            height: 52,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: isBusy || !mobileIsValid
-                                  ? _AuthColors.border
-                                  : _AuthColors.gold,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: _auth.isSendingOtp
-                                ? const SizedBox(
-                                    width: 22,
-                                    height: 22,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.black,
-                                      ),
-                                    ),
-                                  )
-                                : Text(
-                                    'Send OTP',
-                                    style: GoogleFonts.inter(
-                                      color: Colors.black,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        _ScaleTap(
-                          onTap: isBusy ? null : _onLoginWithPassword,
-                          child: Container(
-                            height: 52,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: Colors.transparent,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: _AuthColors.gold),
-                            ),
-                            child: _auth.isPasswordLoginLoading
-                                ? const SizedBox(
-                                    width: 22,
-                                    height: 22,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        _AuthColors.gold,
-                                      ),
-                                    ),
-                                  )
-                                : Text(
-                                    'Login with Password',
-                                    style: GoogleFonts.inter(
-                                      color: _AuthColors.gold,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                        const SizedBox(height: 26),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Don't have an account? ",
-                              style: GoogleFonts.inter(
-                                color: _AuthColors.textSecondary,
-                                fontSize: 14,
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Registration flow coming soon.',
-                                    ),
-                                  ),
-                                );
-                              },
-                              child: Text(
-                                'Register',
-                                style: GoogleFonts.inter(
-                                  color: _AuthColors.gold,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+            body: Stack(
+              children: [
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0xFF080A0E),
+                          Color(0xFF040507),
+                          Color(0xFF000000),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
+                Positioned(
+                  top: -90,
+                  left: -40,
+                  child: _GlowOrb(
+                    size: 220,
+                    color: _AuthColors.gold.withOpacity(0.13),
+                  ),
+                ),
+                Positioned(
+                  right: -70,
+                  top: 220,
+                  child: _GlowOrb(
+                    size: 180,
+                    color: const Color(0xFF3A6B9F).withOpacity(0.12),
+                  ),
+                ),
+                SafeArea(
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
+                      child: Form(
+                        key: _formKey,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const SizedBox(height: 10),
+                            Center(
+                              child: Image.asset(
+                                'assets/images/logo.png',
+                                width: 164,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              const String.fromEnvironment(
+                                    'SUPABASE_URL',
+                                  ).isEmpty
+                                  ? 'Auth Mode: Mock'
+                                  : 'Auth Mode: Supabase',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.inter(
+                                color: _AuthColors.textSecondary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 26),
+                            Container(
+                              padding: const EdgeInsets.fromLTRB(
+                                16,
+                                20,
+                                16,
+                                18,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _AuthColors.panel,
+                                borderRadius: BorderRadius.circular(22),
+                                border: Border.all(
+                                  color: _AuthColors.goldEdge,
+                                  width: 1.2,
+                                ),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x33000000),
+                                    blurRadius: 26,
+                                    offset: Offset(0, 16),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Text(
+                                    'Mobile Number',
+                                    style: GoogleFonts.inter(
+                                      color: _AuthColors.textPrimary,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _AnimatedInputShell(
+                                    focused: _mobileFocus.hasFocus,
+                                    hasError:
+                                        _validateMobile(
+                                              _mobileController.text,
+                                            ) !=
+                                            null &&
+                                        _mobileController.text.isNotEmpty,
+                                    child: Row(
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 14,
+                                          ),
+                                          child: Text(
+                                            '+91',
+                                            style: GoogleFonts.inter(
+                                              color: _AuthColors.textPrimary,
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 1,
+                                          height: 24,
+                                          color: _AuthColors.goldSoft,
+                                        ),
+                                        Expanded(
+                                          child: TextFormField(
+                                            controller: _mobileController,
+                                            focusNode: _mobileFocus,
+                                            keyboardType: TextInputType.phone,
+                                            inputFormatters: [
+                                              FilteringTextInputFormatter
+                                                  .digitsOnly,
+                                            ],
+                                            style: GoogleFonts.inter(
+                                              color: _AuthColors.textPrimary,
+                                              fontSize: 15,
+                                            ),
+                                            maxLength: 10,
+                                            decoration: _inputDecoration(
+                                              hintText: 'Enter 10-digit mobile',
+                                              counterText: '',
+                                            ),
+                                            validator: _validateMobile,
+                                            onChanged: (_) => setState(() {}),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Password',
+                                    style: GoogleFonts.inter(
+                                      color: _AuthColors.textPrimary,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _AnimatedInputShell(
+                                    focused: _passwordFocus.hasFocus,
+                                    hasError: false,
+                                    child: TextFormField(
+                                      controller: _passwordController,
+                                      focusNode: _passwordFocus,
+                                      obscureText: _obscurePassword,
+                                      style: GoogleFonts.inter(
+                                        color: _AuthColors.textPrimary,
+                                        fontSize: 15,
+                                      ),
+                                      decoration: _inputDecoration(
+                                        hintText: 'Enter your password',
+                                        suffixIcon: IconButton(
+                                          onPressed: () {
+                                            setState(() {
+                                              _obscurePassword =
+                                                  !_obscurePassword;
+                                            });
+                                          },
+                                          icon: Icon(
+                                            _obscurePassword
+                                                ? Icons.visibility_off_rounded
+                                                : Icons.visibility_rounded,
+                                            color: _AuthColors.textSecondary,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: TextButton(
+                                      onPressed: () {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Forgot password will be available soon.',
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      child: Text(
+                                        'Forgot Password?',
+                                        style: GoogleFonts.inter(
+                                          color: _AuthColors.gold,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _ScaleTap(
+                                    onTap: isBusy || !mobileIsValid
+                                        ? null
+                                        : _onSendOtp,
+                                    child: Container(
+                                      height: 54,
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        gradient: isBusy || !mobileIsValid
+                                            ? null
+                                            : const LinearGradient(
+                                                colors: [
+                                                  Color(0xFFF5A623),
+                                                  Color(0xFFF1B845),
+                                                ],
+                                              ),
+                                        color: isBusy || !mobileIsValid
+                                            ? _AuthColors.border
+                                            : null,
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(
+                                          color: _AuthColors.goldEdge,
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      child: _auth.isSendingOtp
+                                          ? const SizedBox(
+                                              width: 22,
+                                              height: 22,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2.2,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                      Color
+                                                    >(Colors.black),
+                                              ),
+                                            )
+                                          : Text(
+                                              'Send OTP',
+                                              style: GoogleFonts.inter(
+                                                color: Colors.black,
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  _ScaleTap(
+                                    onTap: isBusy ? null : _onLoginWithPassword,
+                                    child: Container(
+                                      height: 54,
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        color: _AuthColors.background,
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(
+                                          color: _AuthColors.goldEdge,
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      child: _auth.isPasswordLoginLoading
+                                          ? const SizedBox(
+                                              width: 22,
+                                              height: 22,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2.2,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                      Color
+                                                    >(_AuthColors.gold),
+                                              ),
+                                            )
+                                          : Text(
+                                              'Login with Password',
+                                              style: GoogleFonts.inter(
+                                                color: _AuthColors.gold,
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "Don't have an account? ",
+                                  style: GoogleFonts.inter(
+                                    color: _AuthColors.textSecondary,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Registration flow coming soon.',
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Text(
+                                    'Register',
+                                    style: GoogleFonts.inter(
+                                      color: _AuthColors.gold,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           );
         },
@@ -507,18 +590,39 @@ class _AnimatedInputShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final borderColor = hasError
         ? _AuthColors.error
-        : (focused ? _AuthColors.gold : _AuthColors.border);
+        : (focused ? _AuthColors.gold : _AuthColors.goldSoft);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOut,
-      height: 56,
+      height: 60,
       decoration: BoxDecoration(
         color: _AuthColors.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor, width: focused ? 1.5 : 1),
       ),
       child: child,
+    );
+  }
+}
+
+class _GlowOrb extends StatelessWidget {
+  const _GlowOrb({required this.size, required this.color});
+
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(colors: [color, color.withOpacity(0)]),
+        ),
+      ),
     );
   }
 }
@@ -566,10 +670,13 @@ class _ScaleTapState extends State<_ScaleTap> {
 
 class _AuthColors {
   static const Color background = Color(0xFF000000);
-  static const Color surface = Color(0xFF111111);
+  static const Color panel = Color(0xCC0E1117);
+  static const Color surface = Color(0xFF131821);
   static const Color gold = Color(0xFFF5A623);
+  static const Color goldEdge = Color(0xFFD6A847);
+  static const Color goldSoft = Color(0x807D6022);
   static const Color textPrimary = Color(0xFFFFFFFF);
-  static const Color textSecondary = Color(0xFF8B949E);
+  static const Color textSecondary = Color(0xFF93A0B6);
   static const Color error = Color(0xFFEF4444);
-  static const Color border = Color(0xFF30363D);
+  static const Color border = Color(0xFF2A3442);
 }

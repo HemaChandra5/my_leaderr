@@ -51,9 +51,10 @@ class _SplashScreenState extends State<SplashScreen>
     _language = AppLanguage.instance.language;
     AppLanguage.instance.addListener(_onLanguageChanged);
     AppThemeManager.instance.addListener(_onThemeChanged);
+
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 900),
     );
 
     final CurvedAnimation curve = CurvedAnimation(
@@ -104,9 +105,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   void _onLanguageChanged() {
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
     setState(() {
       _language = AppLanguage.instance.language;
     });

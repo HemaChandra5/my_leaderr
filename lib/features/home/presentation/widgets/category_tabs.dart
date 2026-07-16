@@ -92,9 +92,8 @@ class _CategoryTabPill extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: selected
-                  ? const Color(0xfff5a623)
-                  : inactiveBorder,
-              width: selected ? 1.2 : 1,
+                  ? const Color(0xffF8BE56)
+                  : const Color(0x66F5A623),
             ),
             gradient: selected
                 ? const LinearGradient(

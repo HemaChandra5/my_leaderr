@@ -8,6 +8,8 @@ class AppTheme {
   static const Color textPrimary = Color(0xFFFFFFFF);
   static const Color textSecondary = Color(0xFF8B949E);
   static const Color border = Color(0xFF30363D);
+  static const Color cardBorderDark = Color(0x66F5A623);
+  static const Color cardBorderLight = Color(0x99D6A848);
   static const Color success = Color(0xFF22C55E);
   static const Color inProgress = Color(0xFF3B82F6);
   static const Color error = Color(0xFFEF4444);
@@ -31,7 +33,7 @@ class AppTheme {
         color: surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusCard),
-          side: const BorderSide(color: border),
+          side: const BorderSide(color: cardBorderDark),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -117,7 +119,7 @@ class AppTheme {
         color: lightSurface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusCard),
-          side: const BorderSide(color: Color(0xFFE2E8F0)),
+          side: const BorderSide(color: cardBorderLight),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(

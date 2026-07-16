@@ -99,6 +99,22 @@ class FirestoreService {
     return AppUser.fromMap(data);
   }
 
+  Future<void> updateAppUserProfile({
+    required String uid,
+    required Map<String, dynamic> updates,
+  }) async {
+    if (updates.isEmpty) {
+      return;
+    }
+
+    final payload = <String, dynamic>{
+      ...updates,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+
+    await _users.doc(uid).set(payload, SetOptions(merge: true));
+  }
+
   Future<String> uploadFile({
     required String folder,
     required String uid,

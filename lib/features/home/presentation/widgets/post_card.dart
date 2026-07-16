@@ -231,8 +231,8 @@ class _PostCardState extends State<PostCard> {
                 Expanded(
                   child: Center(
                     child: _InteractivePostAction(
-                      icon: Icons.thumb_up_alt_outlined,
-                      activeIcon: Icons.thumb_up_alt_rounded,
+                      icon: Icons.volunteer_activism_outlined,
+                      activeIcon: Icons.volunteer_activism,
                       label: _formatCount(_likeCount),
                       active: _liked,
                       pulse: _likePulse,

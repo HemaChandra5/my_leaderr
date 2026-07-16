@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../../../../core/localization/app_language.dart';
 import '../../../../core/localization/app_localizations.dart';
@@ -9,6 +10,7 @@ import '../widgets/bottom_navigation.dart';
 import '../widgets/category_tabs.dart';
 import '../widgets/home_header.dart';
 import '../widgets/post_card.dart';
+import '../../../search/presentation/pages/search_explorer_screen.dart';
 
 const String _eventsRoute = '/events';
 const String _trackRoute = '/track';
@@ -25,8 +27,10 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedTabIndex = 0;
   int _selectedNavIndex = 0;
+  bool _showSearchBar = false;
   final ScrollController _feedScrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
 
   static const List<String> _localNames = [
     'Aarav Sharma',
@@ -120,20 +124,15 @@ class _HomePageState extends State<HomePage> {
     setState(() => _selectedNavIndex = index);
     _trackAction('nav_${BottomNavigation.items[index].toLowerCase()}');
 
-    if (index == 0) {
-      return;
-    }
-
+    if (index == 0) return;
     if (index == 1) {
       Navigator.of(context).pushReplacementNamed(_trackRoute);
       return;
     }
-
     if (index == 2) {
       Navigator.of(context).pushReplacementNamed(_communityRoute);
       return;
     }
-
     if (index == 3) {
       Navigator.of(context).pushReplacementNamed(_eventsRoute);
       return;
@@ -171,9 +170,47 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _toggleSearchBar() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => SearchExplorerScreen(
+          initialQuery: _searchController.text,
+          initialNavIndex: _selectedNavIndex,
+        ),
+      ),
+    );
+  }
+
+  void _closeSearchBar() {
+    if (!_showSearchBar) {
+      return;
+    }
+
+    setState(() {
+      _showSearchBar = false;
+      _searchController.clear();
+    });
+    _searchFocusNode.unfocus();
+  }
+
+  void _handleOutsideTap() {
+    if (_showSearchBar) {
+      _closeSearchBar();
+      return;
+    }
+    FocusScope.of(context).unfocus();
+  }
+
+  void _handleFeedScroll(UserScrollNotification notification) {
+    if (_showSearchBar && notification.direction != ScrollDirection.idle) {
+      _closeSearchBar();
+    }
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     _feedScrollController.dispose();
     super.dispose();
   }
@@ -437,6 +474,15 @@ class _HomePageState extends State<HomePage> {
                           HomeHeader(
                             onNotificationTap: _openNotificationsPanel,
                             onLogoTap: _scrollFeedToTop,
+                            onSearchTap: _toggleSearchBar,
+                            searchActive: _showSearchBar,
+                            searchController: _searchController,
+                            searchFocusNode: _searchFocusNode,
+                            onSearchChanged: (_) => setState(() {}),
+                            searchHintText: _tr('search_meetings'),
+                            searchFieldColor: fieldBg,
+                            searchTextColor: primaryText,
+                            searchHintColor: secondaryText,
                           ),
                           const SizedBox(height: 12),
 

@@ -75,6 +75,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: _email,
                 decoration: InputDecoration(
                   labelText: languageProvider.t('email'),
+                  filled: false,
+                  fillColor: Colors.transparent,
                 ),
                 validator: (v) => v == null || v.trim().isEmpty
                     ? languageProvider.t('required')
@@ -86,6 +88,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 obscureText: true,
                 decoration: InputDecoration(
                   labelText: languageProvider.t('password'),
+                  filled: false,
+                  fillColor: Colors.transparent,
                 ),
                 validator: (v) => v == null || v.trim().isEmpty
                     ? languageProvider.t('required')
