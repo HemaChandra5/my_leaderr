@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/constants/app_colors.dart';
 import '../../providers/user_provider.dart';
 import '../../widgets/profile_menu_tile.dart';
 import '../../widgets/role_guard.dart';
@@ -16,9 +17,9 @@ class LeaderProfileScreen extends StatelessWidget {
     return RoleGuard(
       allowedRole: 'leader',
       child: Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: AppColors.background,
         appBar: AppBar(
-          backgroundColor: Colors.black,
+          backgroundColor: AppColors.background,
           title: const Text('Leader Profile'),
           actions: [
             IconButton(
@@ -40,7 +41,7 @@ class LeaderProfileScreen extends StatelessWidget {
                         fit: BoxFit.cover,
                       )
                     : null,
-                color: const Color(0xFF151515),
+                color: AppColors.surface,
               ),
               child: const SizedBox.expand(),
             ),
@@ -54,9 +55,9 @@ class LeaderProfileScreen extends StatelessWidget {
                         ? NetworkImage(appUser!.profileImage!)
                         : null,
                     child: (appUser?.profileImage ?? '').isEmpty
-                        ? const Icon(
+                        ? Icon(
                             Icons.person_rounded,
-                            color: Color(0xFFF5A623),
+                            color: AppColors.primaryGold,
                           )
                         : null,
                   ),
@@ -67,15 +68,15 @@ class LeaderProfileScreen extends StatelessWidget {
                       children: [
                         Text(
                           appUser?.name ?? 'Leader',
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
                             fontSize: 22,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                         Text(
                           '${appUser?.constituency ?? '-'} • ${appUser?.party ?? '-'}',
-                          style: const TextStyle(color: Color(0xFFD2D2D2)),
+                          style: TextStyle(color: AppColors.textMuted),
                         ),
                         const SizedBox(height: 4),
                         Container(
@@ -84,13 +85,13 @@ class LeaderProfileScreen extends StatelessWidget {
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0x33F5A623),
+                            color: AppColors.primaryGold.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: const Color(0xFFF5A623)),
+                            border: Border.all(color: AppColors.primaryGold),
                           ),
                           child: Text(
                             verified ? 'Verified Leader' : 'Under Verification',
-                            style: const TextStyle(color: Color(0xFFF5A623)),
+                            style: TextStyle(color: AppColors.primaryGold),
                           ),
                         ),
                       ],
@@ -144,15 +145,15 @@ class _StatsRow extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 4),
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF131313),
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Column(
                   children: [
-                    const Text(
+                    Text(
                       '0',
                       style: TextStyle(
-                        color: Color(0xFFF5A623),
+                        color: AppColors.primaryGold,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -160,7 +161,10 @@ class _StatsRow extends StatelessWidget {
                     Text(
                       label,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/constants/app_colors.dart';
 import '../../providers/user_provider.dart';
 import '../../widgets/profile_menu_tile.dart';
 import '../../widgets/role_guard.dart';
@@ -15,9 +16,9 @@ class CitizenProfileScreen extends StatelessWidget {
     return RoleGuard(
       allowedRole: 'citizen',
       child: Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: AppColors.background,
         appBar: AppBar(
-          backgroundColor: Colors.black,
+          backgroundColor: AppColors.background,
           title: const Text('Citizen Profile'),
           actions: [
             IconButton(
@@ -37,9 +38,9 @@ class CitizenProfileScreen extends StatelessWidget {
                       ? NetworkImage(appUser!.profileImage!)
                       : null,
                   child: (appUser?.profileImage ?? '').isEmpty
-                      ? const Icon(
+                      ? Icon(
                           Icons.person_rounded,
-                          color: Color(0xFFF5A623),
+                          color: AppColors.primaryGold,
                         )
                       : null,
                 ),
@@ -50,8 +51,8 @@ class CitizenProfileScreen extends StatelessWidget {
                     children: [
                       Text(
                         appUser?.name ?? 'Citizen',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
                         ),
@@ -63,13 +64,13 @@ class CitizenProfileScreen extends StatelessWidget {
                           vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0x33F5A623),
+                          color: AppColors.primaryGold.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: const Color(0xFFF5A623)),
+                          border: Border.all(color: AppColors.primaryGold),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Active Citizen',
-                          style: TextStyle(color: Color(0xFFF5A623)),
+                          style: TextStyle(color: AppColors.primaryGold),
                         ),
                       ),
                     ],
@@ -124,15 +125,15 @@ class _StatsRow extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 3),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF131313),
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Column(
                   children: [
-                    const Text(
+                    Text(
                       '0',
                       style: TextStyle(
-                        color: Color(0xFFF5A623),
+                        color: AppColors.primaryGold,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -140,7 +141,10 @@ class _StatsRow extends StatelessWidget {
                     Text(
                       e,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white, fontSize: 11),
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 11,
+                      ),
                     ),
                   ],
                 ),

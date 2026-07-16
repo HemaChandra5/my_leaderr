@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/constants/app_colors.dart';
 import '../providers/user_provider.dart';
 
 class RoleGuard extends StatelessWidget {
@@ -19,7 +20,7 @@ class RoleGuard extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.background,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),

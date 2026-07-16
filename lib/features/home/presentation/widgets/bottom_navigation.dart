@@ -39,46 +39,77 @@ class BottomNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color navBg = isDark
+        ? const Color(0xff0d1117)
+        : const Color(0xffffffff);
+    final Color borderColor = isDark
+        ? const Color(0x2bf5a623)
+        : const Color(0xFFE9EEF4);
+
     return Container(
-      decoration: const BoxDecoration(color: Color(0xFF0D1117)),
+      decoration: BoxDecoration(
+        color: navBg,
+        border: Border(top: BorderSide(color: borderColor, width: 1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.32 : 0.06),
+            blurRadius: 14,
+            offset: const Offset(0, -3),
+          ),
+        ],
+      ),
       child: SafeArea(
         top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _NavItem(
-                icon: Icons.home_outlined,
-                label: _localizedLabel(0),
-                selected: currentIndex == 0,
-                onTap: () => onItemSelected(0),
-              ),
-              _NavItem(
-                icon: Icons.track_changes_rounded,
-                label: _localizedLabel(1),
-                selected: currentIndex == 1,
-                onTap: () => onItemSelected(1),
-              ),
-              _NavItem(
-                icon: Icons.groups_2_outlined,
-                label: _localizedLabel(2),
-                selected: currentIndex == 2,
-                onTap: () => onItemSelected(2),
-              ),
-              _NavItem(
-                icon: Icons.event_outlined,
-                label: _localizedLabel(3),
-                selected: currentIndex == 3,
-                onTap: () => onItemSelected(3),
-              ),
-              _NavItem(
-                icon: Icons.person_outline_rounded,
-                label: _localizedLabel(4),
-                selected: currentIndex == 4,
-                onTap: () => onItemSelected(4),
-              ),
-            ],
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 72),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: _NavItem(
+                    icon: Icons.home_rounded,
+                    label: _localizedLabel(0),
+                    selected: currentIndex == 0,
+                    onTap: () => onItemSelected(0),
+                  ),
+                ),
+                Expanded(
+                  child: _NavItem(
+                    icon: Icons.track_changes_rounded,
+                    label: _localizedLabel(1),
+                    selected: currentIndex == 1,
+                    onTap: () => onItemSelected(1),
+                  ),
+                ),
+                Expanded(
+                  child: _NavItem(
+                    icon: Icons.groups_2_rounded,
+                    label: _localizedLabel(2),
+                    selected: currentIndex == 2,
+                    onTap: () => onItemSelected(2),
+                  ),
+                ),
+                Expanded(
+                  child: _NavItem(
+                    icon: Icons.event_note_rounded,
+                    label: _localizedLabel(3),
+                    selected: currentIndex == 3,
+                    onTap: () => onItemSelected(3),
+                  ),
+                ),
+                Expanded(
+                  child: _NavItem(
+                    icon: Icons.person_rounded,
+                    label: _localizedLabel(4),
+                    selected: currentIndex == 4,
+                    onTap: () => onItemSelected(4),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -101,27 +132,51 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? const Color(0xFFF5A623) : const Color(0xFF8B949E);
-    return InkResponse(
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color activeColor = const Color(0xfff5a623);
+    final Color inactiveColor = isDark
+        ? const Color(0xff8b949e)
+        : const Color(0xff64748b);
+
+    return InkWell(
       onTap: onTap,
-      radius: 24,
-      child: SizedBox(
-        width: 58,
+      borderRadius: BorderRadius.circular(16),
+      splashColor: activeColor.withValues(alpha: 0.1),
+      highlightColor: Colors.transparent,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: color, size: 22),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: selected
+                    ? activeColor.withValues(alpha: isDark ? 0.13 : 0.1)
+                    : Colors.transparent,
+              ),
+              child: Icon(
+                icon,
+                color: selected ? activeColor : inactiveColor,
+                size: 22,
+              ),
+            ),
             const SizedBox(height: 4),
             Text(
               label,
               maxLines: 1,
               softWrap: false,
               overflow: TextOverflow.fade,
+              textAlign: TextAlign.center,
               style: TextStyle(
-                color: color,
-                fontSize: 12,
+                color: selected ? activeColor : inactiveColor,
+                fontSize: 11,
                 fontFamily: 'Inter',
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+                letterSpacing: selected ? 0.2 : 0,
               ),
             ),
           ],

@@ -12,7 +12,8 @@ class ProfileAvatar extends StatelessWidget {
   final String initials;
   final double size;
 
-  static const String _fallbackBrandImage = 'assets/images/my_logo.jpg';
+  static const String _fallbackBrandImage =
+      'assets/images/logo_transparent.png';
 
   @override
   Widget build(BuildContext context) {

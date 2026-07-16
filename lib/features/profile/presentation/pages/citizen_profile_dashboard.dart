@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../core/constants/app_colors.dart';
 import '../../../../core/localization/app_language.dart';
 import '../../../../core/localization/app_localizations.dart';
 
@@ -126,11 +127,13 @@ class _CitizenProfileDashboardState extends State<CitizenProfileDashboard>
       animation: AppLanguage.instance,
       builder: (context, _) {
         return AnnotatedRegion<SystemUiOverlayStyle>(
-          value: SystemUiOverlayStyle.light,
+          value: Theme.of(context).brightness == Brightness.dark
+              ? SystemUiOverlayStyle.light
+              : SystemUiOverlayStyle.dark,
           child: GestureDetector(
             onTap: () => FocusScope.of(context).unfocus(),
             child: Scaffold(
-              backgroundColor: const Color(0xFF000000),
+              backgroundColor: AppColors.background,
               body: SafeArea(
                 child: FadeTransition(
                   opacity: _screenFade,
@@ -148,7 +151,7 @@ class _CitizenProfileDashboardState extends State<CitizenProfileDashboard>
                             children: [
                               const Spacer(),
                               Image.asset(
-                                'assets/images/logo.png',
+                                'assets/images/logo_transparent.png',
                                 width: 120,
                                 fit: BoxFit.contain,
                               ),
@@ -156,9 +159,9 @@ class _CitizenProfileDashboardState extends State<CitizenProfileDashboard>
                               IconButton(
                                 onPressed: () =>
                                     _handleMenuTap(_tr('settings')),
-                                icon: const Icon(
+                                icon: Icon(
                                   Icons.settings_outlined,
-                                  color: Color(0xFF8B949E),
+                                  color: AppColors.textMuted,
                                   size: 22,
                                 ),
                               ),
@@ -176,10 +179,12 @@ class _CitizenProfileDashboardState extends State<CitizenProfileDashboard>
                               horizontal: 12,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF111111),
+                              color: AppColors.surface,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: const Color(0x66F5A623),
+                                color: AppColors.primaryGold.withValues(
+                                  alpha: 0.4,
+                                ),
                                 width: 1,
                               ),
                             ),
@@ -187,8 +192,8 @@ class _CitizenProfileDashboardState extends State<CitizenProfileDashboard>
                               children: [
                                 Text(
                                   _tr('boost_citizen'),
-                                  style: const TextStyle(
-                                    color: Color(0xFFF5A623),
+                                  style: TextStyle(
+                                    color: AppColors.primaryGold,
                                     fontSize: 17,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -196,8 +201,8 @@ class _CitizenProfileDashboardState extends State<CitizenProfileDashboard>
                                 const SizedBox(height: 3),
                                 Text(
                                   _tr('unlock_premium_features'),
-                                  style: const TextStyle(
-                                    color: Color(0xFF8B949E),
+                                  style: TextStyle(
+                                    color: AppColors.textMuted,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                   ),

@@ -345,41 +345,38 @@ class _OverlayBottomNavBar extends StatelessWidget {
       return;
     }
 
-    Navigator.of(context).pop();
+    final NavigatorState navigator = Navigator.of(context);
+    final ScaffoldMessengerState? messenger = ScaffoldMessenger.maybeOf(context);
+    navigator.pop();
 
     if (route == _homeRoute || route == '/home') {
-      Future<void>.microtask(() {
-        Navigator.of(context).pushReplacementNamed(_homeRoute);
-      });
+      navigator.pushReplacementNamed(_homeRoute);
       return;
     }
 
     if (route == _eventsRoute || route == _trackRoute) {
-      Future<void>.microtask(() {
-        Navigator.of(context).pushReplacementNamed(route);
-      });
+      navigator.pushReplacementNamed(route);
       return;
     }
 
     if (route == _profileRoute) {
-      Future<void>.microtask(() {
-        Navigator.of(context).pushReplacementNamed(_profileRoute);
-      });
+      navigator.pushReplacementNamed(_profileRoute);
       return;
     }
 
-    Future<void>.microtask(() {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            behavior: SnackBarBehavior.floating,
-            content: Text(
-              AppLocalizations.translate('coming_soon', language: language),
-            ),
+    if (messenger == null) {
+      return;
+    }
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          content: Text(
+            AppLocalizations.translate('coming_soon', language: language),
           ),
-        );
-    });
+        ),
+      );
   }
 
   @override

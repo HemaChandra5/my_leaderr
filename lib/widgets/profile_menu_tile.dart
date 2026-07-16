@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/constants/app_colors.dart';
+
 class ProfileMenuTile extends StatelessWidget {
   const ProfileMenuTile({super.key, required this.title, required this.onTap});
 
@@ -12,17 +14,17 @@ class ProfileMenuTile extends StatelessWidget {
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      tileColor: const Color(0xFF141414),
+      tileColor: AppColors.surface,
       title: Text(
         title,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: AppColors.textPrimary,
           fontWeight: FontWeight.w600,
         ),
       ),
-      trailing: const Icon(
+      trailing: Icon(
         Icons.chevron_right_rounded,
-        color: Color(0xFFF5A623),
+        color: AppColors.primaryGold,
       ),
     );
   }

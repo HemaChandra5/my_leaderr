@@ -19,9 +19,15 @@ class SegmentedToggle extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceAlt,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.border),
+        color: const Color(0xFF151515),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.gold.withValues(alpha: 0.2), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 8,
+          ),
+        ],
       ),
       child: Row(
         children: List<Widget>.generate(items.length, (index) {
@@ -30,19 +36,41 @@ class SegmentedToggle extends StatelessWidget {
             child: GestureDetector(
               onTap: () => onSelected(index),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
+                duration: const Duration(milliseconds: 220),
                 curve: Curves.easeOutCubic,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: selected ? AppTheme.gold : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
+                  gradient: selected
+                      ? const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFFF5A623), Color(0xFFD4831A)],
+                        )
+                      : null,
+                  color: selected ? null : Colors.transparent,
+                  boxShadow: selected
+                      ? [
+                          BoxShadow(
+                            color: AppTheme.gold.withValues(alpha: 0.30),
+                            blurRadius: 12,
+                            spreadRadius: 0,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
                 ),
                 child: Text(
                   items[index],
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: selected ? Colors.black : AppTheme.textSecondary,
-                    fontWeight: FontWeight.w700,
+                    color: selected
+                        ? Colors.black
+                        : AppTheme.textSecondary,
+                    fontWeight:
+                        selected ? FontWeight.w800 : FontWeight.w500,
+                    fontSize: 14,
+                    letterSpacing: selected ? 0.4 : 0.0,
                   ),
                 ),
               ),

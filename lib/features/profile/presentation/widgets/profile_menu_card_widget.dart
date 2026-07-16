@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/constants/app_colors.dart';
 import '../../../../core/localization/app_language.dart';
 import '../../../../core/localization/app_localizations.dart';
 
@@ -41,9 +42,9 @@ class ProfileMenuCardWidget extends StatelessWidget {
       margin: EdgeInsets.zero,
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF111111),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF1F242C)),
+        border: Border.all(color: AppColors.divider),
       ),
       child: Column(
         children: List<Widget>.generate(items.length, (index) {
@@ -70,7 +71,7 @@ class ProfileMenuCardWidget extends StatelessWidget {
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        splashColor: const Color(0xFF161B22),
+                        splashColor: AppColors.surfaceElevated,
                         onTap: () => onItemTap(item.title),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -78,23 +79,23 @@ class ProfileMenuCardWidget extends StatelessWidget {
                             children: [
                               Icon(
                                 item.icon,
-                                color: const Color(0xFF8B949E),
+                                color: AppColors.textMuted,
                                 size: 20,
                               ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
                                   item.title,
-                                  style: const TextStyle(
-                                    color: Color(0xFFFFFFFF),
+                                  style: TextStyle(
+                                    color: AppColors.textPrimary,
                                     fontSize: 15,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
                               ),
-                              const Icon(
+                              Icon(
                                 Icons.chevron_right_rounded,
-                                color: Color(0xFF8B949E),
+                                color: AppColors.textMuted,
                                 size: 20,
                               ),
                             ],
@@ -105,12 +106,12 @@ class ProfileMenuCardWidget extends StatelessWidget {
                   ),
                 ),
                 if (index != items.length - 1)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.only(left: 46, right: 14),
                     child: Divider(
                       height: 1,
                       thickness: 1,
-                      color: Color(0xFF1F242C),
+                      color: AppColors.divider,
                     ),
                   ),
               ],

@@ -710,7 +710,7 @@ class _RsvpButtonState extends State<_RsvpButton> {
   Widget build(BuildContext context) {
     final language = AppLanguage.instance.language;
     final Matrix4 transform = _pressed
-        ? (Matrix4.identity()..scale(0.97))
+      ? (Matrix4.identity()..scaleByDouble(0.97, 0.97, 1.0, 1.0))
         : Matrix4.identity();
 
     return GestureDetector(
@@ -1117,7 +1117,7 @@ class _AddButtonState extends State<_AddButton> {
   @override
   Widget build(BuildContext context) {
     final Matrix4 transform = _pressed
-        ? (Matrix4.identity()..scale(0.94))
+      ? (Matrix4.identity()..scaleByDouble(0.94, 0.94, 1.0, 1.0))
         : Matrix4.identity();
 
     return GestureDetector(
@@ -1153,7 +1153,7 @@ class _LeaderLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Image(
-      image: AssetImage('assets/images/my_logo.jpg'),
+      image: AssetImage('assets/images/logo_transparent.png'),
       height: 66,
       fit: BoxFit.contain,
     );

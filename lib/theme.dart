@@ -54,11 +54,34 @@ class AppTheme {
           ),
         ),
       ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: surfaceAlt,
+        labelStyle: const TextStyle(color: gold),
+        hintStyle: const TextStyle(color: textSecondary),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: gold, width: 1.2),
+        ),
+      ),
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: gold,
+        selectionColor: Color(0x66F5A623),
+        selectionHandleColor: gold,
+      ),
     );
   }
 
   static ThemeData get light {
-    const Color lightBg = Color(0xFFF8FAFC);
+    const Color lightBg = Color(0xFFFFFFFF);
     const Color lightSurface = Colors.white;
 
     return ThemeData(
@@ -70,6 +93,25 @@ class AppTheme {
         primary: gold,
         secondary: gold,
         surface: lightSurface,
+        onSurface: Color(0xFF15171B),
+        outline: Color(0xFFE9EEF4),
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Color(0xFFFFFFFF),
+        surfaceTintColor: Color(0x00000000),
+        elevation: 0,
+      ),
+      dialogTheme: const DialogThemeData(
+        backgroundColor: Color(0xFFFFFFFF),
+        surfaceTintColor: Color(0x00000000),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: Color(0xFFFFFFFF),
+        surfaceTintColor: Color(0x00000000),
+      ),
+      navigationBarTheme: const NavigationBarThemeData(
+        backgroundColor: Color(0xFFFFFFFF),
+        surfaceTintColor: Color(0x00000000),
       ),
       cardTheme: CardThemeData(
         color: lightSurface,
@@ -97,6 +139,29 @@ class AppTheme {
             borderRadius: BorderRadius.circular(radiusButton),
           ),
         ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: const Color(0xFFF1F5F9),
+        labelStyle: const TextStyle(color: Color(0xFFB9790E)),
+        hintStyle: const TextStyle(color: Color(0xFF6B7280)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: gold, width: 1.2),
+        ),
+      ),
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: gold,
+        selectionColor: Color(0x66F5A623),
+        selectionHandleColor: gold,
       ),
     );
   }

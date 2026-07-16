@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/constants/app_colors.dart';
 import '../../../../core/localization/app_language.dart';
 import '../../../../core/localization/app_localizations.dart';
 
@@ -25,16 +26,16 @@ class ProfileHeaderWidget extends StatelessWidget {
           height: 58,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFFF5A623), width: 1.2),
+            border: Border.all(color: AppColors.primaryGold, width: 1.2),
           ),
-          child: const Hero(
+          child: Hero(
             tag: 'citizen-profile-avatar',
             child: CircleAvatar(
-              backgroundColor: Color(0xFF161B22),
+              backgroundColor: AppColors.surfaceElevated,
               child: Icon(
                 Icons.person_rounded,
                 size: 30,
-                color: Color(0xFFFFFFFF),
+                color: AppColors.textPrimary,
               ),
             ),
           ),
@@ -51,17 +52,17 @@ class ProfileHeaderWidget extends StatelessWidget {
                       profile.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFFFFFFFF),
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
                   if (profile.isVerified)
-                    const Icon(
+                    Icon(
                       Icons.verified_rounded,
-                      color: Color(0xFFF5A623),
+                      color: AppColors.primaryGold,
                       size: 18,
                     ),
                 ],
@@ -69,8 +70,8 @@ class ProfileHeaderWidget extends StatelessWidget {
               const SizedBox(height: 3),
               Text(
                 '$localizedRole • ${profile.location}',
-                style: const TextStyle(
-                  color: Color(0xFFB0B5BD),
+                style: TextStyle(
+                  color: AppColors.textMuted,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                 ),
@@ -82,7 +83,7 @@ class ProfileHeaderWidget extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0x3322C55E),
+                  color: const Color(0xFF22C55E).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(

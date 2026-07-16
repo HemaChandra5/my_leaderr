@@ -10,10 +10,9 @@ import '../services/firestore_service.dart';
 
 class UserProvider extends ChangeNotifier {
   UserProvider({
-    required AuthService authService,
-    required FirestoreService firestoreService,
-  }) : _authService = authService,
-       _firestoreService = firestoreService {
+    required this._authService,
+    required this._firestoreService,
+  }) {
     _authSub = _authService.authStateChanges.listen(_handleAuthChanged);
     _firebaseUser = _authService.currentUser;
     if (_firebaseUser != null) {

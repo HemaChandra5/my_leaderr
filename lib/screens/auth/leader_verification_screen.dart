@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/constants/app_colors.dart';
 import '../../providers/user_provider.dart';
 import '../leader/leader_profile_screen.dart';
 
@@ -92,11 +93,14 @@ class _LeaderVerificationScreenState extends State<LeaderVerificationScreen> {
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
-          backgroundColor: const Color(0xFF161616),
-          title: const Text('Success', style: TextStyle(color: Colors.white)),
-          content: const Text(
+          backgroundColor: AppColors.surface,
+          title: Text(
+            'Success',
+            style: TextStyle(color: AppColors.textPrimary),
+          ),
+          content: Text(
             'Profile submitted for verification',
-            style: TextStyle(color: Color(0xFFD8D8D8)),
+            style: TextStyle(color: AppColors.textMuted),
           ),
           actions: [
             TextButton(
@@ -128,10 +132,23 @@ class _LeaderVerificationScreenState extends State<LeaderVerificationScreen> {
   InputDecoration _decor(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: Color(0xFFF5A623)),
+      labelStyle: TextStyle(color: AppColors.primaryGold),
+      floatingLabelStyle: TextStyle(color: AppColors.primaryGold),
+      hintStyle: TextStyle(color: AppColors.textMuted),
       filled: true,
-      fillColor: const Color(0xFF101010),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      fillColor: AppColors.surface,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppColors.divider),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppColors.divider),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppColors.primaryGold, width: 1.2),
+      ),
     );
   }
 
@@ -142,6 +159,8 @@ class _LeaderVerificationScreenState extends State<LeaderVerificationScreen> {
         controller: _controllers[key],
         maxLines: maxLines,
         obscureText: key == 'password',
+        style: TextStyle(color: AppColors.textPrimary),
+        cursorColor: AppColors.primaryGold,
         decoration: _decor(label),
         validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
       ),
@@ -152,13 +171,13 @@ class _LeaderVerificationScreenState extends State<LeaderVerificationScreen> {
     return ListTile(
       onTap: onTap,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      tileColor: const Color(0xFF121212),
-      title: Text(title, style: const TextStyle(color: Colors.white)),
+      tileColor: AppColors.surface,
+      title: Text(title, style: TextStyle(color: AppColors.textPrimary)),
       subtitle: Text(
         file == null ? 'Tap to upload (required)' : file.path.split('\\').last,
-        style: const TextStyle(color: Color(0xFFB7B7B7)),
+        style: TextStyle(color: AppColors.textMuted),
       ),
-      trailing: const Icon(Icons.upload_file_rounded, color: Color(0xFFF5A623)),
+      trailing: Icon(Icons.upload_file_rounded, color: AppColors.primaryGold),
     );
   }
 
@@ -167,9 +186,9 @@ class _LeaderVerificationScreenState extends State<LeaderVerificationScreen> {
     final loading = context.watch<UserProvider>().isLoading;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: AppColors.background,
         title: const Text('Leader Verification'),
       ),
       body: SingleChildScrollView(
@@ -208,11 +227,11 @@ class _LeaderVerificationScreenState extends State<LeaderVerificationScreen> {
               CheckboxListTile(
                 value: _confirmed,
                 onChanged: (v) => setState(() => _confirmed = v ?? false),
-                title: const Text(
+                title: Text(
                   'I confirm details are accurate',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: AppColors.textPrimary),
                 ),
-                activeColor: const Color(0xFFF5A623),
+                activeColor: AppColors.primaryGold,
               ),
               const SizedBox(height: 8),
               SizedBox(

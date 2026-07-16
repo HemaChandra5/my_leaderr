@@ -3,12 +3,12 @@ import 'package:my_leaderr/auth/login_screen.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/localization/app_language.dart';
+import '../../../../role_screen.dart';
 import '../widgets/action_buttons.dart';
 import '../widgets/app_logo.dart';
 import '../widgets/hero_globe.dart';
 import '../widgets/tagline_text.dart';
 import '../widgets/welcome_heading.dart';
-import 'choose_role_page.dart';
 
 class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
@@ -90,7 +90,7 @@ class _WelcomePageState extends State<WelcomePage>
   void _openChooseRole() {
     Navigator.of(
       context,
-    ).push(MaterialPageRoute<void>(builder: (_) => const ChooseRolePage()));
+    ).push(MaterialPageRoute<void>(builder: (_) => const RoleScreen()));
   }
 
   void _openLogin() {
@@ -195,7 +195,7 @@ class _WelcomePageState extends State<WelcomePage>
                             SizedBox(height: globeToHeadingSpace),
                             FadeTransition(
                               opacity: _headingFade,
-                              child: WelcomeHeading(fontSize: headingSize, language: _language),
+                              child: WelcomeHeading(fontSize: headingSize),
                             ),
                             SizedBox(height: headingToSubtitleSpace),
                             FadeTransition(

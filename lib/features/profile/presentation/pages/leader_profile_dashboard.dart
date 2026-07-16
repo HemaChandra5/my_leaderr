@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../core/constants/app_colors.dart';
 import '../widgets/bottom_nav_bar_widget.dart';
 
 const String _homeRoute = '/home';
@@ -38,10 +39,13 @@ class LeaderProfileDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light,
+      value: isDarkMode
+          ? SystemUiOverlayStyle.light
+          : SystemUiOverlayStyle.dark,
       child: Scaffold(
-        backgroundColor: const Color(0xFF000000),
+        backgroundColor: AppColors.background,
         body: SafeArea(
           child: ListView(
             physics: const BouncingScrollPhysics(),
@@ -51,14 +55,14 @@ class LeaderProfileDashboard extends StatelessWidget {
                 children: [
                   const Spacer(),
                   Image.asset(
-                    'assets/images/logo.png',
+                    'assets/images/logo_transparent.png',
                     width: 124,
                     fit: BoxFit.contain,
                   ),
                   const Spacer(),
-                  const Icon(
+                  Icon(
                     Icons.settings_outlined,
-                    color: Color(0xFF8B949E),
+                    color: AppColors.textMuted,
                     size: 22,
                   ),
                 ],
@@ -72,7 +76,7 @@ class LeaderProfileDashboard extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: const Color(0xFFF5A623),
+                        color: AppColors.primaryGold,
                         width: 1.2,
                       ),
                     ),
@@ -86,32 +90,32 @@ class LeaderProfileDashboard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          children: const [
+                          children: [
                             Expanded(
                               child: Text(
                                 'Danam Nagender',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: AppColors.textPrimary,
                                   fontSize: 21,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ),
-                            SizedBox(width: 4),
+                            const SizedBox(width: 4),
                             Icon(
                               Icons.verified_rounded,
-                              color: Color(0xFFF5A623),
+                              color: AppColors.primaryGold,
                               size: 18,
                             ),
                           ],
                         ),
                         const SizedBox(height: 3),
-                        const Text(
+                        Text(
                           'MLA • Khairatabad',
                           style: TextStyle(
-                            color: Color(0xFFB0B5BD),
+                            color: AppColors.textMuted,
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
                           ),
@@ -123,13 +127,13 @@ class LeaderProfileDashboard extends StatelessWidget {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0x1AF5A623),
+                            color: AppColors.primaryGold.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(999),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Official Leader',
                             style: TextStyle(
-                              color: Color(0xFFF5A623),
+                              color: AppColors.primaryGold,
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                             ),
@@ -147,25 +151,28 @@ class LeaderProfileDashboard extends StatelessWidget {
                   horizontal: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF111111),
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0x66F5A623), width: 1),
+                  border: Border.all(
+                    color: AppColors.primaryGold.withValues(alpha: 0.4),
+                    width: 1,
+                  ),
                 ),
                 child: Column(
-                  children: const [
+                  children: [
                     Text(
                       'Boost • Leader',
                       style: TextStyle(
-                        color: Color(0xFFF5A623),
+                        color: AppColors.primaryGold,
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    SizedBox(height: 3),
+                    const SizedBox(height: 3),
                     Text(
                       'Unlock premium features',
                       style: TextStyle(
-                        color: Color(0xFF8B949E),
+                        color: AppColors.textMuted,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
@@ -175,12 +182,12 @@ class LeaderProfileDashboard extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               Row(
-                children: const [
+                children: [
                   Expanded(
                     child: _LeaderStatCard(
                       label: 'Total Issues',
                       value: '1,256',
-                      valueColor: Colors.white,
+                      valueColor: AppColors.textPrimary,
                     ),
                   ),
                   SizedBox(width: 8),
@@ -204,9 +211,9 @@ class LeaderProfileDashboard extends StatelessWidget {
               const SizedBox(height: 12),
               Container(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF111111),
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFF1F242C)),
+                  border: Border.all(color: AppColors.divider),
                 ),
                 child: Column(
                   children: const [
@@ -269,9 +276,9 @@ class _LeaderStatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
       decoration: BoxDecoration(
-        color: const Color(0xFF111111),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(11),
-        border: Border.all(color: const Color(0xFF1F242C)),
+        border: Border.all(color: AppColors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,8 +287,8 @@ class _LeaderStatCard extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Color(0xFF8B949E),
+            style: TextStyle(
+              color: AppColors.textMuted,
               fontSize: 11,
               fontWeight: FontWeight.w500,
             ),
@@ -315,21 +322,21 @@ class _LeaderMenuItem extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         child: Row(
           children: [
-            Icon(icon, color: const Color(0xFF9EA4AC), size: 21),
+            Icon(icon, color: AppColors.textMuted, size: 21),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
-                  color: Color(0xFFE8EAEC),
+                style: TextStyle(
+                  color: AppColors.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ),
-            const Icon(
+            Icon(
               Icons.chevron_right_rounded,
-              color: Color(0xFF8B949E),
+              color: AppColors.textMuted,
               size: 21,
             ),
           ],
@@ -344,9 +351,9 @@ class _LeaderMenuDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
+    return Padding(
       padding: EdgeInsets.only(left: 46, right: 14),
-      child: Divider(height: 1, color: Color(0xFF1F242C)),
+      child: Divider(height: 1, color: AppColors.divider),
     );
   }
 }

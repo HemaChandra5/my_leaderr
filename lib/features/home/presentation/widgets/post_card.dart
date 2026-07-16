@@ -5,10 +5,15 @@ import 'video_thumbnail.dart';
 
 class PostCardData {
   const PostCardData({
+    required this.userId,
     required this.category,
     required this.leaderName,
     required this.role,
+    required this.ward,
+    required this.city,
+    required this.state,
     required this.timeAgo,
+    required this.joinDate,
     required this.description,
     required this.likeCount,
     required this.commentCount,
@@ -22,10 +27,15 @@ class PostCardData {
     this.isVerified = false,
   });
 
+  final String userId;
   final String category;
   final String leaderName;
   final String role;
+  final String ward;
+  final String city;
+  final String state;
   final String timeAgo;
+  final DateTime joinDate;
   final String description;
   final int likeCount;
   final int commentCount;
@@ -49,6 +59,7 @@ class PostCard extends StatefulWidget {
     required this.onShareTap,
     required this.onBoostTap,
     required this.onBookmarkTap,
+    required this.onProfileTap,
   });
 
   final PostCardData data;
@@ -58,6 +69,7 @@ class PostCard extends StatefulWidget {
   final VoidCallback onShareTap;
   final VoidCallback onBoostTap;
   final VoidCallback onBookmarkTap;
+  final VoidCallback onProfileTap;
 
   @override
   State<PostCard> createState() => _PostCardState();
@@ -116,73 +128,104 @@ class _PostCardState extends State<PostCard> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color cardBg = isDark
+        ? const Color(0xff121212)
+        : const Color(0xffffffff);
+    final Color borderColor = isDark
+        ? const Color(0x18f5a623)
+        : const Color(0xffe2e8f0);
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
-        color: const Color(0xff161616),
-        border: Border.all(color: const Color(0xff2C2C2C)),
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: const [
+        color: cardBg,
+        border: Border.all(color: borderColor, width: 1.2),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x18000000),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
             blurRadius: 16,
-            offset: Offset(0, 6),
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header info
           Row(
             children: [
-              ProfileAvatar(
-                initials: widget.data.avatarInitials ?? 'LD',
-                imageAsset: widget.data.avatarAsset,
-                size: 44,
+              InkWell(
+                onTap: widget.onProfileTap,
+                borderRadius: BorderRadius.circular(24),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xfff5a623).withValues(alpha: 0.3),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Hero(
+                    tag: 'profile_avatar_${widget.data.userId}',
+                    child: ProfileAvatar(
+                      initials: widget.data.avatarInitials ?? 'LD',
+                      imageAsset: widget.data.avatarAsset,
+                      size: 42,
+                    ),
+                  ),
+                ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: _PostIdentity(
                   leaderName: widget.data.leaderName,
                   role: widget.data.role,
                   timeAgo: widget.data.timeAgo,
                   isVerified: widget.data.isVerified,
+                  onTap: widget.onProfileTap,
                 ),
               ),
               IconButton(
                 onPressed: widget.onMenuTap,
-                splashRadius: 18,
-                icon: const Icon(
+                splashRadius: 20,
+                icon: Icon(
                   Icons.more_horiz_rounded,
-                  color: Colors.white,
+                  color: isDark
+                      ? const Color(0xff8b949e)
+                      : const Color(0xff64748b),
                   size: 20,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
+
+          // Description
           Text(
             widget.data.description,
-            style: const TextStyle(
-              color: Color(0xffF4F4F4),
-              fontSize: 15,
+            style: TextStyle(
+              color: isDark ? const Color(0xffe6edf3) : const Color(0xff334155),
+              fontSize: 14.5,
               fontFamily: 'Inter',
-              height: 1.5,
+              height: 1.55,
               fontWeight: FontWeight.w400,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
+
+          // Video / Media Cover
           VideoThumbnail(
             imageAsset: widget.data.mediaAsset,
             duration: widget.data.mediaDuration,
           ),
           const SizedBox(height: 14),
+
+          // Custom Action Row Container
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xff161616),
-              borderRadius: BorderRadius.circular(12),
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 6),
+            decoration: const BoxDecoration(color: Colors.transparent),
             child: Row(
               children: [
                 Expanded(
@@ -295,56 +338,72 @@ class _PostIdentity extends StatelessWidget {
     required this.role,
     required this.timeAgo,
     required this.isVerified,
+    required this.onTap,
   });
 
   final String leaderName;
   final String role;
   final String timeAgo;
   final bool isVerified;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Flexible(
-              child: Text(
-                leaderName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontFamily: 'Inter',
-                  fontWeight: FontWeight.w700,
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color nameColor = isDark
+        ? const Color(0xffffffff)
+        : const Color(0xff0f172a);
+    final Color subColor = isDark
+        ? const Color(0xff8b949e)
+        : const Color(0xff64748b);
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  leaderName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: nameColor,
+                    fontSize: 15,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.1,
+                  ),
                 ),
               ),
-            ),
-            if (isVerified) ...[
-              const SizedBox(width: 4),
-              const Icon(
-                Icons.verified_rounded,
-                size: 14,
-                color: Color(0xffF5A623),
-              ),
+              if (isVerified) ...[
+                const SizedBox(width: 4),
+                const Icon(
+                  Icons.verified_rounded,
+                  size: 15,
+                  color: Color(0xfff5a623),
+                ),
+              ],
             ],
-          ],
-        ),
-        const SizedBox(height: 3),
-        Text(
-          '$role • $timeAgo',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: Color(0xff9E9E9E),
-            fontSize: 12,
-            fontFamily: 'Inter',
-            fontWeight: FontWeight.w500,
           ),
-        ),
-      ],
+          const SizedBox(height: 3),
+          Text(
+            '$role • $timeAgo',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: subColor,
+              fontSize: 12,
+              fontFamily: 'Inter',
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -368,16 +427,21 @@ class _InteractivePostAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = const Color(0xffF5A623);
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final activeColor = const Color(0xfff5a623);
+    final Color normalColor = isDark
+        ? const Color(0xffc9d1d9)
+        : const Color(0xff475569);
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
         child: AnimatedScale(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOutCubic,
-          scale: pulse ? 1.12 : 1,
+          scale: pulse ? 1.15 : 1,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -392,11 +456,11 @@ class _InteractivePostAction extends StatelessWidget {
                 child: Icon(
                   active ? activeIcon : icon,
                   key: ValueKey<bool>(active),
-                  color: active ? activeColor : Colors.white,
-                  size: 20,
+                  color: active ? activeColor : normalColor,
+                  size: 19,
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 5),
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 180),
                 transitionBuilder: (child, animation) =>
@@ -405,11 +469,10 @@ class _InteractivePostAction extends StatelessWidget {
                   label,
                   key: ValueKey<String>(label),
                   style: TextStyle(
-                    color: active ? activeColor : Colors.white,
-                    fontSize: 13,
+                    color: active ? activeColor : normalColor,
+                    fontSize: 12.5,
                     fontFamily: 'Inter',
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.1,
+                    fontWeight: active ? FontWeight.w700 : FontWeight.w600,
                   ),
                 ),
               ),

@@ -10,15 +10,25 @@ class VideoThumbnail extends StatelessWidget {
   final String imageAsset;
   final String duration;
 
-  static const String _fallbackBrandImage = 'assets/images/my_logo.jpg';
+  static const String _fallbackBrandImage =
+      'assets/images/logo_transparent.png';
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return Container(
       height: 220,
       width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? const Color(0xff2a2a2a) : const Color(0xffe2e8f0),
+          width: 0.8,
+        ),
+      ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(15),
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -28,47 +38,84 @@ class VideoThumbnail extends StatelessWidget {
               errorBuilder: (context, error, stackTrace) =>
                   const _BrandImageFallback(),
             ),
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0x1A000000), Color(0x66000000)],
+            
+            // Premium dark overlay
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.15),
+                      Colors.black.withValues(alpha: 0.65),
+                    ],
+                  ),
                 ),
               ),
             ),
+            
+            // Clean play icon design
             Center(
               child: Container(
-                width: 56,
-                height: 56,
+                width: 54,
+                height: 54,
                 decoration: BoxDecoration(
-                  color: const Color(0x8A000000),
+                  color: Colors.black.withValues(alpha: 0.65),
                   shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0xfff5a623).withValues(alpha: 0.8),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xfff5a623).withValues(alpha: 0.2),
+                      blurRadius: 12,
+                    ),
+                  ],
                 ),
                 child: const Icon(
                   Icons.play_arrow_rounded,
-                  color: Colors.white,
-                  size: 30,
+                  color: Color(0xfff5a623),
+                  size: 32,
                 ),
               ),
             ),
+            
+            // Duration indicator
             Positioned(
-              right: 10,
-              bottom: 10,
+              right: 12,
+              bottom: 12,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: const Color(0xBF111111),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  duration,
-                  style: const TextStyle(
-                    color: Color(0xffFFFFFF),
-                    fontSize: 12,
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w600,
+                  color: Colors.black.withValues(alpha: 0.8),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    width: 0.8,
                   ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.play_circle_fill_rounded,
+                      color: Color(0xfff5a623),
+                      size: 13,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      duration,
+                      style: const TextStyle(
+                        color: Color(0xffffffff),
+                        fontSize: 11.5,
+                        fontFamily: 'Inter',
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

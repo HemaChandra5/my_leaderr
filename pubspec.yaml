@@ -70,6 +70,8 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/light/
+    - assets/images/dark/
     - assets/images/logo.png
     - assets/images/welcome_earth2.jpg
     - assets/images/dark_gradient_overlay.png

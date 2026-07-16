@@ -3,10 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/constants/app_colors.dart';
-import 'core/localization/app_language.dart';
 import 'core/localization/app_localizations.dart';
 import 'core/theme/app_theme_manager.dart';
-import 'features/welcome/presentation/widgets/hero_globe.dart';
+import 'features/welcome/presentation/widgets/premium_hero_image.dart';
 import 'features/welcome/presentation/widgets/welcome_heading.dart';
 import 'screens/auth/citizen_details_screen.dart';
 import 'screens/auth/leader_verification_screen.dart';
@@ -22,7 +21,6 @@ class _RoleScreenState extends State<RoleScreen>
     with SingleTickerProviderStateMixin {
   static const String _roleKey = 'selected_role';
   String _selectedRole = 'Citizen';
-  String _language = 'English';
   late final AnimationController _controller;
 
   // Staggered animations – same pattern as splash_screen.dart
@@ -31,14 +29,17 @@ class _RoleScreenState extends State<RoleScreen>
   late final Animation<double> _globeScale;
   late final Animation<double> _headingFade;
   late final Animation<double> _cardsFade;
-  late final Animation<double> _footerFade;
+  late final Animation<Offset> _logoSlide;
+  late final Animation<Offset> _headingSlide;
+  late final Animation<Offset> _cardsSlide;
+  bool _didPrecacheThemeImages = false;
+
+  static const Duration _themeImageFade = Duration(milliseconds: 280);
 
   @override
   void initState() {
     super.initState();
     _loadSavedRole();
-    _language = AppLanguage.instance.language;
-    AppLanguage.instance.addListener(_onLanguageChanged);
     AppThemeManager.instance.addListener(_onThemeChanged);
 
     _controller = AnimationController(
@@ -55,23 +56,31 @@ class _RoleScreenState extends State<RoleScreen>
       begin: 0,
       end: 1,
     ).animate(CurvedAnimation(parent: curve, curve: const Interval(0.0, 0.5)));
+    _logoSlide = Tween<Offset>(
+      begin: const Offset(0, -0.15),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: curve, curve: const Interval(0.0, 0.5)));
     _globeFade = Tween<double>(
       begin: 0,
       end: 1,
     ).animate(CurvedAnimation(parent: curve, curve: const Interval(0.1, 0.6)));
-    _globeScale = Tween<double>(begin: 1.05, end: 1).animate(curve);
+    _globeScale = Tween<double>(begin: 0.95, end: 1).animate(curve);
     _headingFade = Tween<double>(
       begin: 0,
       end: 1,
+    ).animate(CurvedAnimation(parent: curve, curve: const Interval(0.3, 0.75)));
+    _headingSlide = Tween<Offset>(
+      begin: const Offset(0, 0.12),
+      end: Offset.zero,
     ).animate(CurvedAnimation(parent: curve, curve: const Interval(0.3, 0.75)));
     _cardsFade = Tween<double>(
       begin: 0,
       end: 1,
     ).animate(CurvedAnimation(parent: curve, curve: const Interval(0.45, 0.9)));
-    _footerFade = Tween<double>(
-      begin: 0,
-      end: 1,
-    ).animate(CurvedAnimation(parent: curve, curve: const Interval(0.6, 1.0)));
+    _cardsSlide = Tween<Offset>(
+      begin: const Offset(0, 0.18),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: curve, curve: const Interval(0.45, 0.9)));
 
     _controller.forward();
   }
@@ -91,18 +100,25 @@ class _RoleScreenState extends State<RoleScreen>
     if (mounted) setState(() {});
   }
 
-  void _onLanguageChanged() {
-    if (!mounted) {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didPrecacheThemeImages) {
       return;
     }
-    setState(() {
-      _language = AppLanguage.instance.language;
-    });
+    _didPrecacheThemeImages = true;
+    precacheImage(
+      const AssetImage('assets/images/light/lightimage.png'),
+      context,
+    );
+    precacheImage(
+      const AssetImage('assets/images/dark/earth_space.png'),
+      context,
+    );
   }
 
   @override
   void dispose() {
-    AppLanguage.instance.removeListener(_onLanguageChanged);
     AppThemeManager.instance.removeListener(_onThemeChanged);
     _controller.dispose();
     super.dispose();
@@ -123,231 +139,190 @@ class _RoleScreenState extends State<RoleScreen>
     );
   }
 
-  // ─── Build ──────────────────────────────────────────────────────────────────
+  String _logoAsset(bool isDarkMode) {
+    return isDarkMode
+        ? 'assets/images/dark/logo.png'
+        : 'assets/images/light/logo.png';
+  }
+
+  String _roleSelectionImageAsset(bool isDarkMode) {
+    return isDarkMode
+        ? 'assets/images/dark/earth_space.png'
+        : 'assets/images/light/lightimage.png';
+  }
+
+  // ─── Build ────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: isDarkMode
+          ? AppColors.background
+          : const Color(0xFFFFFFFF),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
             final double h = constraints.maxHeight;
             final double w = constraints.maxWidth;
+            final bool isCompactHeight = h < 760;
+            final bool isVeryCompactHeight = h < 700;
 
             final double horizontalPadding = (w * 0.07)
                 .clamp(18, 28)
                 .toDouble();
-            final double logoSize = (w * 0.45).clamp(150, 220).toDouble();
-            final double headingSize = (w * 0.078).clamp(27, 31).toDouble();
-            final double globeHeight = (h * 0.42).clamp(260, 400).toDouble();
+            final double logoSize = (w * (isCompactHeight ? 0.34 : 0.42))
+                .clamp(120, 208)
+                .toDouble();
+            final double headingSize = (w * (isCompactHeight ? 0.060 : 0.072))
+                .clamp(20, 29)
+                .toDouble();
 
-            const double postGlobeOffset = -110.0;
+            final double sectionGap = isVeryCompactHeight
+                ? 6
+                : (isCompactHeight ? 10 : 16);
+            final double topGap = isVeryCompactHeight ? 4 : 8;
+            final double bottomGap = isVeryCompactHeight ? 6 : 12;
 
-            return SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: h),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: <Widget>[
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: horizontalPadding,
+            return Padding(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+              child: Column(
+                children: <Widget>[
+                  SizedBox(height: topGap),
+                  SlideTransition(
+                    position: _logoSlide,
+                    child: FadeTransition(
+                      opacity: _logoFade,
+                      child: AnimatedSwitcher(
+                        duration: _themeImageFade,
+                        switchInCurve: Curves.easeOut,
+                        switchOutCurve: Curves.easeIn,
+                        transitionBuilder:
+                            (Widget child, Animation<double> animation) {
+                              return FadeTransition(
+                                opacity: animation,
+                                child: child,
+                              );
+                            },
+                        child: Image.asset(
+                          _logoAsset(isDarkMode),
+                          key: ValueKey<String>(_logoAsset(isDarkMode)),
+                          width: logoSize,
+                          height: logoSize,
+                          fit: BoxFit.contain,
+                          filterQuality: FilterQuality.high,
+                        ),
                       ),
-                      child: Column(
-                        children: <Widget>[
-                          // ── Logo ─────────────────────────────────────────
-                          FadeTransition(
-                            opacity: _logoFade,
-                            child: Image.asset(
-                              'assets/images/logo.png',
-                              width: logoSize,
-                              height: logoSize,
-                              fit: BoxFit.contain,
-                              filterQuality: FilterQuality.high,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-
-                          // ── Globe (full-bleed overflow, same as splash) ──
-                          FadeTransition(
-                            opacity: _globeFade,
-                            child: ScaleTransition(
-                              scale: _globeScale,
-                              child: SizedBox(
-                                height: globeHeight,
-                                child: OverflowBox(
-                                  alignment: const Alignment(-0.1, 0),
-                                  minWidth: w,
-                                  maxWidth: w * 1.65,
-                                  child: HeroGlobe(
-                                    height: globeHeight,
-                                    maxWidth: w * 1.65,
-                                  ),
-                                ),
+                    ),
+                  ),
+                  SizedBox(height: sectionGap * 0.6),
+                  Flexible(
+                    flex: isVeryCompactHeight ? 2 : 3,
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: FadeTransition(
+                        opacity: _globeFade,
+                        child: ScaleTransition(
+                          scale: _globeScale,
+                          child: AnimatedSwitcher(
+                            duration: _themeImageFade,
+                            switchInCurve: Curves.easeOut,
+                            switchOutCurve: Curves.easeIn,
+                            transitionBuilder:
+                                (Widget child, Animation<double> animation) {
+                                  return FadeTransition(
+                                    opacity: animation,
+                                    child: child,
+                                  );
+                                },
+                            child: PremiumHeroImage(
+                              key: ValueKey<String>(
+                                _roleSelectionImageAsset(isDarkMode),
                               ),
+                              imageAsset: _roleSelectionImageAsset(isDarkMode),
+                              alignment: const Alignment(0.0, -0.08),
+                              heightFactor: 0.55,
+                              widthFactor: 1.8,
+                              visibleFraction: 0.68,
+                              upwardShift: 0.028,
+                              fadeColor: isDarkMode
+                                  ? Colors.black
+                                  : const Color(0xFFFFFFFF),
                             ),
                           ),
-
-                          // ── Content pulled up over the globe ─────────────
-                          Transform.translate(
-                            offset: const Offset(0, postGlobeOffset),
-                            child: Column(
-                              children: <Widget>[
-                                // Heading
-                                FadeTransition(
-                                  opacity: _headingFade,
-                                  child: WelcomeHeading(
-                                    fontSize: headingSize,
-                                    language: _language,
-                                  ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: sectionGap),
+                  SlideTransition(
+                    position: _headingSlide,
+                    child: FadeTransition(
+                      opacity: _headingFade,
+                      child: WelcomeHeading(fontSize: headingSize),
+                    ),
+                  ),
+                  SizedBox(height: sectionGap),
+                  SlideTransition(
+                    position: _cardsSlide,
+                    child: FadeTransition(
+                      opacity: _cardsFade,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Expanded(
+                            child: _RoleCard(
+                              title: AppLocalizations.translate('citizen'),
+                              icon: Icons.groups_rounded,
+                              isDarkMode: isDarkMode,
+                              compact: isCompactHeight,
+                              veryCompact: isVeryCompactHeight,
+                              lines: <String>[
+                                AppLocalizations.translate(
+                                  'role_citizen_line_1',
                                 ),
-                                SizedBox(
-                                  height: (h * 0.018).clamp(8, 18).toDouble(),
+                                AppLocalizations.translate(
+                                  'role_citizen_line_2',
                                 ),
-
-                                // Role cards
-                                FadeTransition(
-                                  opacity: _cardsFade,
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: _RoleCard(
-                                          title: AppLocalizations.translate(
-                                            'citizen',
-                                            language: _language,
-                                          ),
-                                          icon: Icons.groups_rounded,
-                                          lines: [
-                                            AppLocalizations.translate(
-                                              'role_citizen_line_1',
-                                              language: _language,
-                                            ),
-                                            AppLocalizations.translate(
-                                              'role_citizen_line_2',
-                                              language: _language,
-                                            ),
-                                            AppLocalizations.translate(
-                                              'role_citizen_line_3',
-                                              language: _language,
-                                            ),
-                                          ],
-                                          selected: _selectedRole == 'Citizen',
-                                          onSelect: () =>
-                                              _continueWithRole('Citizen'),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: _RoleCard(
-                                          title: AppLocalizations.translate(
-                                            'leader',
-                                            language: _language,
-                                          ),
-                                          icon: Icons.workspace_premium_rounded,
-                                          lines: [
-                                            AppLocalizations.translate(
-                                              'role_leader_line_1',
-                                              language: _language,
-                                            ),
-                                            AppLocalizations.translate(
-                                              'role_leader_line_2',
-                                              language: _language,
-                                            ),
-                                            AppLocalizations.translate(
-                                              'role_leader_line_3',
-                                              language: _language,
-                                            ),
-                                          ],
-                                          selected: _selectedRole == 'Leader',
-                                          onSelect: () =>
-                                              _continueWithRole('Leader'),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                SizedBox(
-                                  height: (h * 0.014).clamp(6, 14).toDouble(),
-                                ),
-
-                                // Footer tagline
-                                FadeTransition(
-                                  opacity: _footerFade,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(
-                                        Icons.verified_user_rounded,
-                                        color: AppColors.primaryGold,
-                                        size: 14,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      RichText(
-                                        text: TextSpan(
-                                          style: GoogleFonts.inter(
-                                            fontSize: 11.5,
-                                            color: const Color(0xFF888888),
-                                          ),
-                                          children: [
-                                            TextSpan(
-                                              text: AppLocalizations.translate(
-                                                'footer_connecting',
-                                                language: _language,
-                                              ),
-                                            ),
-                                            TextSpan(
-                                              text: AppLocalizations.translate(
-                                                'footer_citizens',
-                                                language: _language,
-                                              ),
-                                              style: TextStyle(
-                                                color: AppColors.primaryGold,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                            TextSpan(
-                                              text: AppLocalizations.translate(
-                                                'footer_empowering',
-                                                language: _language,
-                                              ),
-                                            ),
-                                            TextSpan(
-                                              text: AppLocalizations.translate(
-                                                'footer_leaders',
-                                                language: _language,
-                                              ),
-                                              style: TextStyle(
-                                                color: AppColors.primaryGold,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                            TextSpan(
-                                              text: AppLocalizations.translate(
-                                                'footer_dot',
-                                                language: _language,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                SizedBox(
-                                  height: (h * 0.03).clamp(12, 24).toDouble(),
+                                AppLocalizations.translate(
+                                  'role_citizen_line_3',
                                 ),
                               ],
+                              selected: _selectedRole == 'Citizen',
+                              onSelect: () => _continueWithRole('Citizen'),
+                            ),
+                          ),
+                          SizedBox(width: isCompactHeight ? 8 : 12),
+                          Expanded(
+                            child: _RoleCard(
+                              title: AppLocalizations.translate('leader'),
+                              icon: Icons.workspace_premium_rounded,
+                              showCrown: true,
+                              isDarkMode: isDarkMode,
+                              compact: isCompactHeight,
+                              veryCompact: isVeryCompactHeight,
+                              lines: <String>[
+                                AppLocalizations.translate(
+                                  'role_leader_line_1',
+                                ),
+                                AppLocalizations.translate(
+                                  'role_leader_line_2',
+                                ),
+                                AppLocalizations.translate(
+                                  'role_leader_line_3',
+                                ),
+                              ],
+                              selected: _selectedRole == 'Leader',
+                              onSelect: () => _continueWithRole('Leader'),
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  const Spacer(),
+                  SizedBox(height: bottomGap),
+                ],
               ),
             );
           },
@@ -357,7 +332,7 @@ class _RoleScreenState extends State<RoleScreen>
   }
 }
 
-// ─── Role Card ────────────────────────────────────────────────────────────────
+// ─── Role Card ──────────────────────────────────────────────────────────
 
 class _RoleCard extends StatefulWidget {
   const _RoleCard({
@@ -366,6 +341,10 @@ class _RoleCard extends StatefulWidget {
     required this.lines,
     required this.selected,
     required this.onSelect,
+    required this.isDarkMode,
+    this.compact = false,
+    this.veryCompact = false,
+    this.showCrown = false,
   });
 
   final String title;
@@ -373,9 +352,122 @@ class _RoleCard extends StatefulWidget {
   final List<String> lines;
   final bool selected;
   final VoidCallback onSelect;
+  final bool isDarkMode;
+  final bool compact;
+  final bool veryCompact;
+  final bool showCrown;
 
   @override
   State<_RoleCard> createState() => _RoleCardState();
+}
+
+// ─── Crown Painter (5-point crown matching app style) ──────────────────
+
+class _CrownPainter extends CustomPainter {
+  const _CrownPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double w = size.width;
+    final double h = size.height;
+
+    final Rect rect = Rect.fromLTWH(0, 0, w, h);
+    final Paint paint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: <Color>[
+          Color(0xFFFFE566),
+          Color(0xFFC9A84C),
+          Color(0xFF8B6914),
+        ],
+      ).createShader(rect)
+      ..style = PaintingStyle.fill;
+
+    final Path path = Path()
+      ..moveTo(w * 0.12, h * 0.80)
+      ..quadraticBezierTo(w * 0.5, h * 0.88, w * 0.88, h * 0.80)
+      ..quadraticBezierTo(w * 0.91, h * 0.65, w * 0.94, h * 0.45)
+      ..lineTo(w * 0.78, h * 0.60) // valley 4
+      ..lineTo(w * 0.68, h * 0.26) // peak 4
+      ..lineTo(w * 0.58, h * 0.52) // valley 3
+      ..lineTo(w * 0.50, h * 0.08) // peak 3 (center)
+      ..lineTo(w * 0.42, h * 0.52) // valley 2
+      ..lineTo(w * 0.32, h * 0.26) // peak 2
+      ..lineTo(w * 0.22, h * 0.60) // valley 1
+      ..lineTo(w * 0.06, h * 0.45) // peak 1
+      ..quadraticBezierTo(w * 0.09, h * 0.65, w * 0.12, h * 0.80)
+      ..close();
+
+    canvas.drawPath(path, paint);
+
+    // Bottom base band
+    final Path baseBand = Path()
+      ..moveTo(w * 0.12, h * 0.81)
+      ..quadraticBezierTo(w * 0.5, h * 0.89, w * 0.88, h * 0.81)
+      ..lineTo(w * 0.86, h * 0.92)
+      ..quadraticBezierTo(w * 0.5, h * 1.0, w * 0.14, h * 0.92)
+      ..close();
+
+    canvas.drawPath(baseBand, paint);
+  }
+
+  @override
+  bool shouldRepaint(_CrownPainter old) => false;
+}
+
+// ─── Citizen Group Painter ──────────────────────────────────────────────
+
+class _CitizenPainter extends CustomPainter {
+  const _CitizenPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double w = size.width;
+    final double h = size.height;
+
+    final Paint paint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: <Color>[
+          Color(0xFFFFE566),
+          Color(0xFFC9A84C),
+          Color(0xFF8B6914),
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, w, h))
+      ..style = PaintingStyle.fill;
+
+    // Left person (behind)
+    canvas.drawCircle(Offset(w * 0.22, h * 0.42), w * 0.13, paint);
+    final Path leftBody = Path()
+      ..moveTo(w * 0.02, h * 0.88)
+      ..quadraticBezierTo(w * 0.02, h * 0.60, w * 0.22, h * 0.60)
+      ..quadraticBezierTo(w * 0.42, h * 0.60, w * 0.42, h * 0.88)
+      ..close();
+    canvas.drawPath(leftBody, paint);
+
+    // Right person (behind)
+    canvas.drawCircle(Offset(w * 0.78, h * 0.42), w * 0.13, paint);
+    final Path rightBody = Path()
+      ..moveTo(w * 0.58, h * 0.88)
+      ..quadraticBezierTo(w * 0.58, h * 0.60, w * 0.78, h * 0.60)
+      ..quadraticBezierTo(w * 0.98, h * 0.60, w * 0.98, h * 0.88)
+      ..close();
+    canvas.drawPath(rightBody, paint);
+
+    // Center person (front)
+    canvas.drawCircle(Offset(w * 0.5, h * 0.30), w * 0.18, paint);
+    final Path centerBody = Path()
+      ..moveTo(w * 0.20, h * 0.88)
+      ..quadraticBezierTo(w * 0.20, h * 0.48, w * 0.5, h * 0.48)
+      ..quadraticBezierTo(w * 0.80, h * 0.48, w * 0.80, h * 0.88)
+      ..close();
+    canvas.drawPath(centerBody, paint);
+  }
+
+  @override
+  bool shouldRepaint(_CitizenPainter old) => false;
 }
 
 class _RoleCardState extends State<_RoleCard> {
@@ -383,17 +475,24 @@ class _RoleCardState extends State<_RoleCard> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppThemeManager.instance.isDarkMode;
-
-    final Color cardBg = isDark
-        ? const Color(0xFF111111)
-        : const Color(0xFFF8F9FA);
-    final Color borderIdle = isDark
-        ? const Color(0xFF2A2A2A)
-        : const Color(0xFFDDE1E7);
-    final Color subtitleColor = isDark
-        ? const Color(0xFF888888)
-        : const Color(0xFF6B7280);
+    final double horizontalPadding = widget.veryCompact
+        ? 9
+        : (widget.compact ? 11 : 14);
+    final double verticalPadding = widget.veryCompact
+        ? 10
+        : (widget.compact ? 12 : 18);
+    final double iconSize = widget.veryCompact
+        ? 42
+        : (widget.compact ? 46 : 54);
+    final double titleSize = widget.veryCompact
+        ? 14
+        : (widget.compact ? 15 : 17);
+    final double bodySize = widget.veryCompact
+        ? 9.5
+        : (widget.compact ? 10.2 : 11);
+    final double arrowSize = widget.veryCompact
+        ? 28
+        : (widget.compact ? 30 : 34);
 
     return GestureDetector(
       onTap: widget.onSelect,
@@ -401,76 +500,166 @@ class _RoleCardState extends State<_RoleCard> {
       onTapUp: (_) => setState(() => _pressed = false),
       onTapCancel: () => setState(() => _pressed = false),
       child: AnimatedScale(
-        scale: _pressed ? 0.97 : 1.0,
-        duration: const Duration(milliseconds: 100),
+        scale: _pressed ? 0.96 : 1.0,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.symmetric(
+            horizontal: horizontalPadding,
+            vertical: verticalPadding,
+          ),
           decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: widget.selected ? AppColors.primaryGold : borderIdle,
-              width: widget.selected ? 1.5 : 1,
+              color: widget.selected
+                  ? AppColors.primaryGold
+                  : AppColors.primaryGold.withValues(alpha: 0.32),
+              width: widget.selected ? 1.4 : 1,
             ),
-            boxShadow: widget.selected
-                ? [
-                    BoxShadow(
-                      color: AppColors.primaryGold.withValues(alpha: 0.15),
-                      blurRadius: 14,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : null,
+            boxShadow: [
+              if (widget.selected)
+                BoxShadow(
+                  color: AppColors.primaryGold.withValues(alpha: 0.22),
+                  blurRadius: 22,
+                  spreadRadius: 1,
+                  offset: const Offset(0, 6),
+                )
+              else
+                BoxShadow(
+                  color: widget.isDarkMode
+                      ? Colors.black.withValues(alpha: 0.35)
+                      : AppColors.divider.withValues(alpha: 0.55),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
+                ),
+            ],
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: widget.selected
+                  ? <Color>[
+                      AppColors.primaryGold.withValues(
+                        alpha: widget.isDarkMode ? 0.22 : 0.14,
+                      ),
+                      widget.isDarkMode
+                          ? const Color(0xFF1A1610)
+                          : AppColors.surface,
+                    ]
+                  : <Color>[
+                      widget.isDarkMode
+                          ? const Color(0xFF14161C)
+                          : AppColors.surface,
+                      widget.isDarkMode
+                          ? const Color(0xFF0B0C10)
+                          : AppColors.surfaceElevated,
+                    ],
+            ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(widget.icon, color: AppColors.primaryGold, size: 28),
-              const SizedBox(height: 8),
+              // Icon with soft gold glow behind it, like the reference
+              SizedBox(
+                height: iconSize,
+                width: iconSize,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      width: iconSize,
+                      height: iconSize,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            AppColors.primaryGold.withValues(alpha: 0.20),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                    widget.showCrown
+                        ? CustomPaint(
+                            size: Size(iconSize * 0.92, iconSize * 0.70),
+                            painter: _CrownPainter(),
+                          )
+                        : CustomPaint(
+                            size: Size(iconSize * 0.89, iconSize * 0.70),
+                            painter: _CitizenPainter(),
+                          ),
+                  ],
+                ),
+              ),
+              SizedBox(height: widget.compact ? 7 : 10),
               Text(
                 widget.title,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
-                  fontSize: 17,
+                  fontSize: titleSize,
                   fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : const Color(0xFF111827),
+                  letterSpacing: 0.2,
+                  color: AppColors.textPrimary,
                 ),
               ),
               Container(
-                width: 28,
+                width: 26,
                 height: 2,
-                margin: const EdgeInsets.symmetric(vertical: 6),
+                margin: EdgeInsets.symmetric(vertical: widget.compact ? 5 : 7),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryGold,
+                  gradient: LinearGradient(
+                    colors: <Color>[AppColors.primaryGold, AppColors.goldLight],
+                  ),
                   borderRadius: BorderRadius.circular(1),
                 ),
               ),
               for (final line in widget.lines)
-                Text(
-                  line,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 11.5,
-                    color: subtitleColor,
-                    height: 1.45,
+                Padding(
+                  padding: EdgeInsets.only(bottom: widget.compact ? 1.4 : 2),
+                  child: Text(
+                    line,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: bodySize,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textMuted,
+                      height: widget.compact ? 1.26 : 1.45,
+                    ),
                   ),
                 ),
-              const SizedBox(height: 10),
+              SizedBox(height: widget.compact ? 8 : 12),
               Container(
-                width: 34,
-                height: 34,
+                width: arrowSize,
+                height: arrowSize,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: AppColors.primaryGold.withValues(alpha: 0.5),
+                    color: widget.selected
+                        ? AppColors.primaryGold
+                        : AppColors.primaryGold.withValues(alpha: 0.45),
+                    width: 1.5,
                   ),
-                  color: AppColors.primaryGold.withValues(alpha: 0.10),
+                  gradient: widget.selected
+                      ? LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: <Color>[
+                            AppColors.primaryGold,
+                            AppColors.goldDeep,
+                          ],
+                        )
+                      : null,
+                  color: widget.selected
+                      ? null
+                      : AppColors.primaryGold.withValues(alpha: 0.06),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.arrow_forward_rounded,
-                  color: AppColors.primaryGold,
-                  size: 17,
+                  color: widget.selected
+                      ? AppColors.onGold
+                      : AppColors.primaryGold,
+                  size: widget.compact ? 14 : 16,
                 ),
               ),
             ],

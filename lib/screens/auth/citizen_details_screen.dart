@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/constants/app_colors.dart';
 import '../../providers/user_provider.dart';
 import '../../features/profile/presentation/pages/profile_dashboard_gate.dart';
 
@@ -53,15 +54,19 @@ class _CitizenDetailsScreenState extends State<CitizenDetailsScreen> {
     return showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF161616),
-        title: const Text('Enter OTP', style: TextStyle(color: Colors.white)),
+        backgroundColor: AppColors.surface,
+        title: Text(
+          'Enter OTP',
+          style: TextStyle(color: AppColors.textPrimary),
+        ),
         content: TextField(
           controller: otpController,
           keyboardType: TextInputType.number,
-          style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(
+          style: TextStyle(color: AppColors.textPrimary),
+          cursorColor: AppColors.primaryGold,
+          decoration: InputDecoration(
             hintText: '6-digit code',
-            hintStyle: TextStyle(color: Color(0xFF979797)),
+            hintStyle: TextStyle(color: AppColors.textMuted),
           ),
         ),
         actions: [
@@ -86,10 +91,9 @@ class _CitizenDetailsScreenState extends State<CitizenDetailsScreen> {
 
     final provider = context.read<UserProvider>();
     try {
-      final String phone = _phoneController.text.trim();
-      final String normalizedPhone = phone.startsWith('+')
-          ? phone
-          : '+91$phone';
+      final String normalizedPhone = _normalizeIndianPhone(
+        _phoneController.text,
+      );
       final String verificationId = await provider.sendCitizenOtp(
         normalizedPhone,
       );
@@ -135,19 +139,40 @@ class _CitizenDetailsScreenState extends State<CitizenDetailsScreen> {
     }
   }
 
+  String _normalizeIndianPhone(String rawInput) {
+    final String compact = rawInput.replaceAll(RegExp(r'\s+|-'), '');
+    if (compact.startsWith('+')) {
+      return compact;
+    }
+    String digitsOnly = compact.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digitsOnly.startsWith('0')) {
+      digitsOnly = digitsOnly.replaceFirst(RegExp(r'^0+'), '');
+    }
+    if (digitsOnly.startsWith('91') && digitsOnly.length > 10) {
+      return '+$digitsOnly';
+    }
+    return '+91$digitsOnly';
+  }
+
   InputDecoration _decor(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: Color(0xFFF5A623)),
+      labelStyle: TextStyle(color: AppColors.primaryGold),
+      floatingLabelStyle: TextStyle(color: AppColors.primaryGold),
+      hintStyle: TextStyle(color: AppColors.textMuted),
       filled: true,
-      fillColor: const Color(0xFF101010),
+      fillColor: AppColors.surface,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF2A2A2A)),
+        borderSide: BorderSide(color: AppColors.divider),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF2A2A2A)),
+        borderSide: BorderSide(color: AppColors.divider),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: AppColors.primaryGold, width: 1.2),
       ),
     );
   }
@@ -158,9 +183,9 @@ class _CitizenDetailsScreenState extends State<CitizenDetailsScreen> {
     final loading = userProvider.isLoading;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: AppColors.background,
         title: const Text('Citizen Details'),
       ),
       body: SingleChildScrollView(
@@ -173,14 +198,14 @@ class _CitizenDetailsScreenState extends State<CitizenDetailsScreen> {
                 onTap: _pickImage,
                 child: CircleAvatar(
                   radius: 44,
-                  backgroundColor: const Color(0xFF1A1A1A),
+                  backgroundColor: AppColors.surface,
                   backgroundImage: _profileImage == null
                       ? null
                       : FileImage(_profileImage!),
                   child: _profileImage == null
-                      ? const Icon(
+                      ? Icon(
                           Icons.camera_alt_rounded,
-                          color: Color(0xFFF5A623),
+                          color: AppColors.primaryGold,
                         )
                       : null,
                 ),
@@ -188,6 +213,8 @@ class _CitizenDetailsScreenState extends State<CitizenDetailsScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _nameController,
+                style: TextStyle(color: AppColors.textPrimary),
+                cursorColor: AppColors.primaryGold,
                 decoration: _decor('Full Name'),
                 validator: (v) =>
                     v == null || v.trim().isEmpty ? 'Required' : null,
@@ -195,6 +222,8 @@ class _CitizenDetailsScreenState extends State<CitizenDetailsScreen> {
               const SizedBox(height: 10),
               TextFormField(
                 controller: _phoneController,
+                style: TextStyle(color: AppColors.textPrimary),
+                cursorColor: AppColors.primaryGold,
                 decoration: _decor('Phone Number'),
                 keyboardType: TextInputType.phone,
                 validator: (v) => v == null || v.trim().length < 10
@@ -204,11 +233,15 @@ class _CitizenDetailsScreenState extends State<CitizenDetailsScreen> {
               const SizedBox(height: 10),
               TextFormField(
                 controller: _emailController,
+                style: TextStyle(color: AppColors.textPrimary),
+                cursorColor: AppColors.primaryGold,
                 decoration: _decor('Email (Optional)'),
               ),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _cityController,
+                style: TextStyle(color: AppColors.textPrimary),
+                cursorColor: AppColors.primaryGold,
                 decoration: _decor('City'),
                 validator: (v) =>
                     v == null || v.trim().isEmpty ? 'Required' : null,
@@ -216,6 +249,8 @@ class _CitizenDetailsScreenState extends State<CitizenDetailsScreen> {
               const SizedBox(height: 10),
               TextFormField(
                 controller: _stateController,
+                style: TextStyle(color: AppColors.textPrimary),
+                cursorColor: AppColors.primaryGold,
                 decoration: _decor('State'),
                 validator: (v) =>
                     v == null || v.trim().isEmpty ? 'Required' : null,
@@ -224,6 +259,8 @@ class _CitizenDetailsScreenState extends State<CitizenDetailsScreen> {
               TextFormField(
                 controller: _passwordController,
                 obscureText: true,
+                style: TextStyle(color: AppColors.textPrimary),
+                cursorColor: AppColors.primaryGold,
                 decoration: _decor('Password'),
                 validator: (v) =>
                     v == null || v.length < 6 ? 'Min 6 chars' : null,
@@ -253,7 +290,7 @@ class _CitizenDetailsScreenState extends State<CitizenDetailsScreen> {
                   userProvider.loadingMessage.isEmpty
                       ? 'Please wait...'
                       : userProvider.loadingMessage,
-                  style: const TextStyle(color: Color(0xFFD0D0D0)),
+                  style: TextStyle(color: AppColors.textMuted),
                   textAlign: TextAlign.center,
                 ),
               ],

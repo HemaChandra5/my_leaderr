@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/localization/app_language.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../main.dart';
+import '../../../messaging/models/public_user_profile.dart';
 
 import '../widgets/bottom_navigation.dart';
 import '../widgets/category_tabs.dart';
@@ -147,6 +149,17 @@ class _HomePageState extends State<HomePage> {
     }());
   }
 
+  void _openPublicProfile(PostCardData post) {
+    Navigator.of(context).pushNamed(
+      AppRoutes.publicProfile,
+      arguments: PublicProfileRouteArgs(
+        userId: post.userId,
+        displayName: post.leaderName,
+        heroTag: 'profile_avatar_${post.userId}',
+      ),
+    );
+  }
+
   void _scrollFeedToTop() {
     if (!_feedScrollController.hasClients) {
       return;
@@ -176,7 +189,7 @@ class _HomePageState extends State<HomePage> {
   void _openNotificationsPanel() {
     _trackAction('notifications_open');
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color sheetBg = isDark ? const Color(0xff141414) : Colors.white;
+    final Color sheetBg = isDark ? const Color(0xff121212) : Colors.white;
     final Color grip = isDark
         ? const Color(0xff3A3A3A)
         : const Color(0xFFD0D7E2);
@@ -188,7 +201,7 @@ class _HomePageState extends State<HomePage> {
       context: context,
       backgroundColor: sheetBg,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
         final alerts = <String>[
@@ -208,42 +221,67 @@ class _HomePageState extends State<HomePage> {
                 Center(
                   child: Container(
                     width: 40,
-                    height: 4,
+                    height: 5,
                     decoration: BoxDecoration(
                       color: grip,
                       borderRadius: BorderRadius.circular(999),
                     ),
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 18),
                 Text(
                   _tr('notifications'),
                   style: TextStyle(
                     color: titleColor,
                     fontSize: 18,
-                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 14),
                 ...alerts.map(
-                  (item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
+                  (item) => Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xff1a1a1a)
+                          : const Color(0xfff8fafc),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isDark
+                            ? const Color(0xff2a2a2a)
+                            : const Color(0xffe2e8f0),
+                        width: 0.8,
+                      ),
+                    ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(
-                          Icons.notifications_active_rounded,
-                          color: Color(0xffF5A623),
-                          size: 18,
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xfff5a623,
+                            ).withValues(alpha: 0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.notifications_active_rounded,
+                            color: Color(0xfff5a623),
+                            size: 16,
+                          ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             item,
                             style: TextStyle(
                               color: alertText,
                               fontSize: 14,
-                              height: 1.35,
+                              fontFamily: 'Inter',
+                              height: 1.4,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
@@ -296,6 +334,8 @@ class _HomePageState extends State<HomePage> {
       final leaderName = names[index % names.length];
       final role = roles[index % roles.length];
       final description = messages[index % messages.length];
+      final String userId =
+          'user_${leaderName.toLowerCase().replaceAll(' ', '_')}';
       final initials = leaderName
           .split(' ')
           .where((part) => part.isNotEmpty)
@@ -313,10 +353,15 @@ class _HomePageState extends State<HomePage> {
       final seconds = (index * 13) % 60;
 
       return PostCardData(
+        userId: userId,
         category: category,
         leaderName: leaderName,
         role: role,
+        ward: 'Ward ${(index % 32) + 1}',
+        city: 'Hyderabad',
+        state: 'Telangana',
         timeAgo: '${(index % 8) + 1}h',
+        joinDate: DateTime(2021 + (index % 3), ((index % 12) + 1), 5),
         description: description,
         likeCount: likes,
         commentCount: comments,
@@ -348,8 +393,8 @@ class _HomePageState extends State<HomePage> {
             ? const Color(0xFF8B949E)
             : const Color(0xFF64748B);
         final Color fieldBg = isDark
-            ? const Color(0xFF161B22)
-            : const Color(0xFFEFF3F8);
+            ? const Color(0xFF121212)
+            : const Color(0xFFF1F5F9);
         final selectedTab = CategoryTabs.tabs[_selectedTabIndex];
         final query = _searchController.text.trim();
         final filteredFeed = feed
@@ -367,134 +412,167 @@ class _HomePageState extends State<HomePage> {
         return Scaffold(
           backgroundColor: pageBg,
           resizeToAvoidBottomInset: false,
-          body: SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final contentWidth = constraints.maxWidth >= 600
-                    ? 390.0
-                    : constraints.maxWidth;
+          body: Container(
+            decoration: isDark
+                ? const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFF0A0A0A), Color(0xFF000000)],
+                    ),
+                  )
+                : null,
+            child: SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final contentWidth = constraints.maxWidth >= 600
+                      ? 390.0
+                      : constraints.maxWidth;
 
-                return Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: contentWidth),
-                    child: Column(
-                      children: [
-                        HomeHeader(
-                          onNotificationTap: _openNotificationsPanel,
-                          onLogoTap: _scrollFeedToTop,
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                          child: SizedBox(
-                            height: 48,
-                            child: TextField(
-                              controller: _searchController,
-                              onChanged: (_) => setState(() {}),
-                              style: TextStyle(
-                                color: primaryText,
-                                fontSize: 14,
-                                fontFamily: 'Inter',
+                  return Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: contentWidth),
+                      child: Column(
+                        children: [
+                          HomeHeader(
+                            onNotificationTap: _openNotificationsPanel,
+                            onLogoTap: _scrollFeedToTop,
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Upgraded Search bar container
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Container(
+                              height: 50,
+                              decoration: BoxDecoration(
+                                color: fieldBg,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: const Color(
+                                    0xFFF5A623,
+                                  ).withValues(alpha: 0.15),
+                                  width: 1,
+                                ),
                               ),
-                              decoration: InputDecoration(
-                                hintText: _tr('search_meetings'),
-                                hintStyle: TextStyle(
-                                  color: secondaryText,
+                              child: TextField(
+                                controller: _searchController,
+                                onChanged: (_) => setState(() {}),
+                                style: TextStyle(
+                                  color: primaryText,
                                   fontSize: 14,
                                   fontFamily: 'Inter',
                                 ),
-                                prefixIcon: Icon(
-                                  Icons.search,
-                                  color: secondaryText,
-                                  size: 20,
-                                ),
-                                filled: true,
-                                fillColor: fieldBg,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                  borderSide: BorderSide.none,
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                  borderSide: BorderSide.none,
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                  borderSide: BorderSide.none,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 8,
+                                decoration: InputDecoration(
+                                  hintText: _tr('search_meetings'),
+                                  hintStyle: TextStyle(
+                                    color: secondaryText,
+                                    fontSize: 14,
+                                    fontFamily: 'Inter',
+                                  ),
+                                  prefixIcon: Icon(
+                                    Icons.search_rounded,
+                                    color: const Color(
+                                      0xfff5a623,
+                                    ).withValues(alpha: 0.8),
+                                    size: 20,
+                                  ),
+                                  suffixIcon: _searchController.text.isNotEmpty
+                                      ? IconButton(
+                                          onPressed: () {
+                                            _searchController.clear();
+                                            setState(() {});
+                                          },
+                                          icon: Icon(
+                                            Icons.close_rounded,
+                                            color: secondaryText,
+                                            size: 18,
+                                          ),
+                                        )
+                                      : null,
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 18),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: CategoryTabs(
-                            selectedIndex: _selectedTabIndex,
-                            onTabSelected: (index) {
-                              setState(() => _selectedTabIndex = index);
-                              _trackAction(
-                                'tab_${CategoryTabs.tabs[index].toLowerCase()}',
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        Expanded(
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 300),
-                            switchInCurve: Curves.easeOutCubic,
-                            switchOutCurve: Curves.easeInCubic,
-                            transitionBuilder: (child, animation) {
-                              final offsetAnimation = Tween<Offset>(
-                                begin: const Offset(0.02, 0),
-                                end: Offset.zero,
-                              ).animate(animation);
-                              return FadeTransition(
-                                opacity: animation,
-                                child: SlideTransition(
-                                  position: offsetAnimation,
-                                  child: child,
-                                ),
-                              );
-                            },
-                            child: ListView.separated(
-                              key: ValueKey<String>(selectedTab),
-                              controller: _feedScrollController,
-                              physics: const BouncingScrollPhysics(
-                                parent: AlwaysScrollableScrollPhysics(),
-                              ),
-                              padding: const EdgeInsets.fromLTRB(
-                                16,
-                                2,
-                                16,
-                                112,
-                              ),
-                              itemBuilder: (context, index) => PostCard(
-                                data: filteredFeed[index],
-                                onMenuTap: () => _trackAction('post_menu'),
-                                onLikeTap: () => _trackAction('post_like'),
-                                onCommentTap: () =>
-                                    _trackAction('post_comment'),
-                                onShareTap: () => _trackAction('post_share'),
-                                onBoostTap: () => _trackAction('post_boost'),
-                                onBookmarkTap: () =>
-                                    _trackAction('post_bookmark'),
-                              ),
-                              separatorBuilder: (_, index) =>
-                                  const SizedBox(height: 18),
-                              itemCount: filteredFeed.length,
+                          const SizedBox(height: 14),
+
+                          // Category tabs
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: CategoryTabs(
+                              selectedIndex: _selectedTabIndex,
+                              onTabSelected: (index) {
+                                setState(() => _selectedTabIndex = index);
+                                _trackAction(
+                                  'tab_${CategoryTabs.tabs[index].toLowerCase()}',
+                                );
+                              },
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 14),
+
+                          // Feed List View
+                          Expanded(
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 300),
+                              switchInCurve: Curves.easeOutCubic,
+                              switchOutCurve: Curves.easeInCubic,
+                              transitionBuilder: (child, animation) {
+                                final offsetAnimation = Tween<Offset>(
+                                  begin: const Offset(0.02, 0),
+                                  end: Offset.zero,
+                                ).animate(animation);
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: SlideTransition(
+                                    position: offsetAnimation,
+                                    child: child,
+                                  ),
+                                );
+                              },
+                              child: ListView.separated(
+                                key: ValueKey<String>(selectedTab),
+                                controller: _feedScrollController,
+                                physics: const BouncingScrollPhysics(
+                                  parent: AlwaysScrollableScrollPhysics(),
+                                ),
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  2,
+                                  16,
+                                  24,
+                                ),
+                                itemBuilder: (context, index) => PostCard(
+                                  data: filteredFeed[index],
+                                  onMenuTap: () => _trackAction('post_menu'),
+                                  onProfileTap: () =>
+                                      _openPublicProfile(filteredFeed[index]),
+                                  onLikeTap: () => _trackAction('post_like'),
+                                  onCommentTap: () =>
+                                      _trackAction('post_comment'),
+                                  onShareTap: () => _trackAction('post_share'),
+                                  onBoostTap: () => _trackAction('post_boost'),
+                                  onBookmarkTap: () =>
+                                      _trackAction('post_bookmark'),
+                                ),
+                                separatorBuilder: (_, index) =>
+                                    const SizedBox(height: 16),
+                                itemCount: filteredFeed.length,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
           bottomNavigationBar: BottomNavigation(
