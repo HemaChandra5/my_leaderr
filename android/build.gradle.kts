@@ -25,6 +25,15 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
+
+subprojects {
+    tasks.withType<org.gradle.api.tasks.compile.JavaCompile>().configureEach {
+        // Third-party plugins may still compile with source/target 8; suppress
+        // the obsolete-options warning until those dependencies are updated.
+        options.compilerArgs.add("-Xlint:-options")
+    }
+}
+
 subprojects {
     project.evaluationDependsOn(":app")
 }

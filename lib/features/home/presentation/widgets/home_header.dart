@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-class HomeHeader extends StatelessWidget {
+class HomeHeader extends StatefulWidget {
   const HomeHeader({
     super.key,
     required this.onNotificationTap,
@@ -29,6 +29,13 @@ class HomeHeader extends StatelessWidget {
   final Color searchFieldColor;
   final Color searchTextColor;
   final Color searchHintColor;
+
+  @override
+  State<HomeHeader> createState() => _HomeHeaderState();
+}
+
+class _HomeHeaderState extends State<HomeHeader> {
+  final bool _bellPressed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -60,16 +67,17 @@ class HomeHeader extends StatelessWidget {
                   AnimatedAlign(
                     duration: const Duration(milliseconds: 280),
                     curve: Curves.easeOutCubic,
-                    alignment: searchActive
+                    alignment: widget.searchActive
                         ? Alignment.centerLeft
                         : Alignment.center,
                     child: AnimatedSlide(
                       duration: const Duration(milliseconds: 280),
                       curve: Curves.easeOutCubic,
-                      offset:
-                          searchActive ? const Offset(-0.02, 0) : Offset.zero,
+                      offset: widget.searchActive
+                          ? const Offset(-0.02, 0)
+                          : Offset.zero,
                       child: InkWell(
-                        onTap: onLogoTap,
+                        onTap: widget.onLogoTap,
                         borderRadius: BorderRadius.circular(10),
                         child: const Padding(
                           padding: EdgeInsets.symmetric(
@@ -93,93 +101,78 @@ class HomeHeader extends StatelessWidget {
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 280),
                           curve: Curves.easeOutCubic,
-                          width: searchActive
+                          width: widget.searchActive
                               ? resolvedExpandedWidth
                               : collapsedSearchWidth,
                           height: 42,
                           decoration: BoxDecoration(
-                            color: searchActive
-                                ? searchFieldColor
+                            color: widget.searchActive
+                                ? widget.searchFieldColor
                                 : const Color(0xff17191C),
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          child: searchActive
-                              ? Row(
-                                  children: [
-                                    IconButton(
-                                      onPressed: onSearchTap,
-                                      splashRadius: 20,
-                                      padding: EdgeInsets.zero,
-                                      constraints:
-                                          const BoxConstraints.tightFor(
-                                            width: 44,
-                                            height: 42,
-                                          ),
-                                      icon: const Icon(
-                                        Icons.close_rounded,
-                                        size: 21,
-                                        color: Color(0xffFFFFFF),
-                                      ),
+                          child: Row(
+                            children: [
+                              InkWell(
+                                borderRadius: BorderRadius.circular(16),
+                                onTap: widget.onSearchTap,
+                                child: SizedBox(
+                                  width: 44,
+                                  height: 42,
+                                  child: Icon(
+                                    widget.searchActive
+                                        ? Icons.close_rounded
+                                        : Icons.search_rounded,
+                                    size: 21,
+                                    color: const Color(0xffFFFFFF),
+                                  ),
+                                ),
+                              ),
+                              if (widget.searchActive)
+                                Expanded(
+                                  child: TextField(
+                                    controller: widget.searchController,
+                                    focusNode: widget.searchFocusNode,
+                                    onChanged: widget.onSearchChanged,
+                                    style: TextStyle(
+                                      color: widget.searchTextColor,
+                                      fontSize: 14,
+                                      fontFamily: 'Inter',
                                     ),
-                                    Expanded(
-                                      child: TextField(
-                                        controller: searchController,
-                                        focusNode: searchFocusNode,
-                                        onChanged: onSearchChanged,
-                                        style: TextStyle(
-                                          color: searchTextColor,
-                                          fontSize: 14,
-                                          fontFamily: 'Inter',
-                                        ),
-                                        decoration: InputDecoration(
-                                          hintText: searchHintText,
-                                          hintStyle: TextStyle(
-                                            color: searchHintColor,
-                                            fontSize: 14,
-                                            fontFamily: 'Inter',
-                                          ),
-                                          isDense: true,
-                                          border: InputBorder.none,
-                                          contentPadding: const EdgeInsets.only(
-                                            right: 12,
-                                            bottom: 2,
-                                          ),
-                                        ),
+                                    decoration: InputDecoration(
+                                      hintText: widget.searchHintText,
+                                      hintStyle: TextStyle(
+                                        color: widget.searchHintColor,
+                                        fontSize: 14,
+                                        fontFamily: 'Inter',
                                       ),
-                                    ),
-                                  ],
-                                )
-                              : Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: onSearchTap,
-                                    borderRadius: BorderRadius.circular(16),
-                                    child: const Center(
-                                      child: Icon(
-                                        Icons.search_rounded,
-                                        size: 21,
-                                        color: Color(0xffFFFFFF),
+                                      isDense: true,
+                                      border: InputBorder.none,
+                                      contentPadding: const EdgeInsets.only(
+                                        right: 12,
+                                        bottom: 2,
                                       ),
                                     ),
                                   ),
                                 ),
+                            ],
+                          ),
                         ),
                         const SizedBox(width: 8),
                         Material(
                           color: const Color(0xff17191C),
                           shape: const CircleBorder(),
-                          child: IconButton(
-                            onPressed: onNotificationTap,
-                            splashRadius: 20,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints.tightFor(
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: widget.onNotificationTap,
+                            child: const SizedBox(
                               width: 44,
                               height: 42,
-                            ),
-                            icon: const Icon(
-                              Icons.notifications_none_rounded,
-                              size: 21,
-                              color: Color(0xffFFFFFF),
+                              child: Icon(
+                                Icons.notifications_none_rounded,
+                                size: 21,
+                                color: Color(0xffFFFFFF),
+                              ),
                             ),
                           ),
                         ),

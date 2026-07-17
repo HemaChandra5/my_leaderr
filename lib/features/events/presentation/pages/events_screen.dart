@@ -154,7 +154,24 @@ class _EventsScreenState extends State<EventsScreen>
       ..showSnackBar(
         SnackBar(
           behavior: SnackBarBehavior.floating,
-          content: Text(_tr('notifications_enabled')),
+          backgroundColor: const Color(0xff121212),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          content: Row(
+            children: [
+              const Icon(
+                Icons.notifications_active_rounded,
+                color: Color(0xfff5a623),
+                size: 18,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                _tr('notifications_enabled'),
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+              ),
+            ],
+          ),
         ),
       );
   }
@@ -202,7 +219,7 @@ class _EventsScreenState extends State<EventsScreen>
         final bool isDark = Theme.of(context).brightness == Brightness.dark;
         final Color background = Theme.of(context).scaffoldBackgroundColor;
         final Color surfaceAlt = isDark
-            ? const Color(0xFF161B22)
+            ? const Color(0xFF121212)
             : const Color(0xFFEFF3F8);
         final Color primaryText = isDark
             ? const Color(0xFFFFFFFF)
@@ -211,10 +228,10 @@ class _EventsScreenState extends State<EventsScreen>
             ? const Color(0xFF8B949E)
             : const Color(0xFF64748B);
         final Color border = isDark
-            ? const Color(0xFF30363D)
+            ? const Color(0xFF222427)
             : const Color(0xFFD7DEE8);
         final Color iconChip = isDark
-            ? const Color(0xFF17191C)
+            ? const Color(0xFF1a1a1a)
             : const Color(0xFFE7ECF3);
 
         return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -223,180 +240,223 @@ class _EventsScreenState extends State<EventsScreen>
               : SystemUiOverlayStyle.dark,
           child: Scaffold(
             backgroundColor: background,
-            appBar: AppBar(
-              backgroundColor: background,
-              elevation: 0,
-              surfaceTintColor: Colors.transparent,
-              automaticallyImplyLeading: false,
-              centerTitle: true,
-              toolbarHeight: 80,
-              title: const Image(
-                image: AssetImage('assets/images/logo.png'),
-                height: 74,
-                fit: BoxFit.contain,
-              ),
-              actions: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: Material(
-                    color: iconChip,
-                    shape: const CircleBorder(),
-                    child: IconButton(
-                      onPressed: _showNotificationSnackbar,
-                      splashRadius: 22,
-                      icon: Icon(
-                        Icons.notifications_none_rounded,
-                        size: 22,
-                        color: primaryText,
+            body: Container(
+              decoration: isDark
+                  ? const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Color(0xFF0A0A0A), Color(0xFF000000)],
+                      ),
+                    )
+                  : null,
+              child: SafeArea(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    // ── Premium App Bar ──
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                      child: Container(
+                        height: 80,
+                        decoration: const BoxDecoration(
+                          color: Colors.transparent,
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 0),
+                        child: Row(
+                          children: [
+                            Hero(
+                              tag: 'app_logo_events',
+                              child: Image(
+                                image: const AssetImage(
+                                  'assets/images/logo_transparent.png',
+                                ),
+                                height: 52,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const SizedBox(),
+                              ),
+                            ),
+                            const Spacer(),
+                            Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: iconChip,
+                              ),
+                              child: IconButton(
+                                onPressed: _showNotificationSnackbar,
+                                splashRadius: 20,
+                                icon: Icon(
+                                  Icons.notifications_none_rounded,
+                                  size: 20,
+                                  color: primaryText,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              ],
-            ),
-            body: SafeArea(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  const SizedBox(height: _kGrid),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: _kGrid * 2),
-                    child: SizedBox(
-                      height: 48,
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: (_) => setState(() {}),
-                        style: TextStyle(
-                          color: primaryText,
-                          fontSize: 14,
-                          fontFamily: _fontFamily,
+                    const SizedBox(height: 14),
+
+                    // ── Search bar ──
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Container(
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: surfaceAlt,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: const Color(
+                              0xfff5a623,
+                            ).withValues(alpha: isDark ? 0.15 : 0.4),
+                            width: 1,
+                          ),
                         ),
-                        decoration: InputDecoration(
-                          hintText: _tr('search_meetings'),
-                          hintStyle: TextStyle(
-                            color: secondaryText,
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: (_) => setState(() {}),
+                          style: TextStyle(
+                            color: primaryText,
                             fontSize: 14,
                             fontFamily: _fontFamily,
                           ),
-                          prefixIcon: Icon(
-                            Icons.search,
-                            color: secondaryText,
-                            size: 20,
-                          ),
-                          filled: true,
-                          fillColor: surfaceAlt,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: BorderSide.none,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: BorderSide.none,
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 8,
+                          decoration: InputDecoration(
+                            hintText: _tr('search_meetings'),
+                            hintStyle: TextStyle(
+                              color: secondaryText,
+                              fontSize: 14,
+                              fontFamily: _fontFamily,
+                            ),
+                            prefixIcon: Icon(
+                              Icons.search_rounded,
+                              color: const Color(
+                                0xfff5a623,
+                              ).withValues(alpha: 0.8),
+                              size: 20,
+                            ),
+                            suffixIcon: _searchController.text.isNotEmpty
+                                ? IconButton(
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      setState(() {});
+                                    },
+                                    icon: Icon(
+                                      Icons.close_rounded,
+                                      color: secondaryText,
+                                      size: 18,
+                                    ),
+                                  )
+                                : null,
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 14,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: _kGrid * 1.5),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: _kGrid * 2),
-                    child: SegmentedToggle(
-                      selected: _selectedFilter,
-                      background: surfaceAlt,
-                      borderColor: border,
-                      inactiveTextColor: secondaryText,
-                      onChanged: (EventFilter value) {
-                        if (value == EventFilter.upcoming) {
-                          Navigator.of(
-                            context,
-                          ).pushReplacementNamed(_upcomingMeetingsRoute);
-                          return;
-                        }
+                    const SizedBox(height: 14),
 
-                        setState(() {
-                          _selectedFilter = value;
-                          _staggerController
-                            ..reset()
-                            ..forward();
-                        });
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: _kGrid * 2),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: _kGrid * 2),
-                    child: Text(
-                      _tr('all_events'),
-                      style: TextStyle(
-                        color: primaryText,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: _fontFamily,
+                    // ── Segmented Toggle Filter ──
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: SegmentedToggle(
+                        selected: _selectedFilter,
+                        background: surfaceAlt,
+                        borderColor: border,
+                        inactiveTextColor: secondaryText,
+                        onChanged: (EventFilter value) {
+                          if (value == EventFilter.upcoming) {
+                            Navigator.of(
+                              context,
+                            ).pushReplacementNamed(_upcomingMeetingsRoute);
+                            return;
+                          }
+
+                          setState(() {
+                            _selectedFilter = value;
+                            _staggerController
+                              ..reset()
+                              ..forward();
+                          });
+                        },
                       ),
                     ),
-                  ),
-                  const SizedBox(height: _kGrid * 2),
-                  Expanded(
-                    child: ListView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: _kGrid * 2,
+                    const SizedBox(height: 18),
+
+                    // ── Title Section ──
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        _tr('all_events'),
+                        style: TextStyle(
+                          color: primaryText,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: _fontFamily,
+                          letterSpacing: 0.2,
+                        ),
                       ),
-                      itemCount: _filteredEvents.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        final EventModel event = _filteredEvents[index];
-                        final int beginMs = index * 150;
-                        final int endMs = beginMs + 500;
-                        final Duration total =
-                            _staggerController.duration ??
-                            const Duration(milliseconds: 850);
-                        final double start = (beginMs / total.inMilliseconds)
-                            .clamp(0.0, 1.0);
-                        final double end = (endMs / total.inMilliseconds).clamp(
-                          0.0,
-                          1.0,
-                        );
+                    ),
+                    const SizedBox(height: 12),
 
-                        final CurvedAnimation animation = CurvedAnimation(
-                          parent: _staggerController,
-                          curve: Interval(
-                            start,
-                            end,
-                            curve: Curves.easeOutCubic,
-                          ),
-                        );
+                    // ── List of Events ──
+                    Expanded(
+                      child: ListView.builder(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                        itemCount: _filteredEvents.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          final EventModel event = _filteredEvents[index];
+                          final int beginMs = index * 150;
+                          final int endMs = beginMs + 500;
+                          final Duration total =
+                              _staggerController.duration ??
+                              const Duration(milliseconds: 850);
+                          final double start = (beginMs / total.inMilliseconds)
+                              .clamp(0.0, 1.0);
+                          final double end = (endMs / total.inMilliseconds)
+                              .clamp(0.0, 1.0);
 
-                        return AnimatedBuilder(
-                          animation: animation,
-                          builder: (BuildContext context, Widget? child) {
-                            final double t = animation.value;
-                            return Opacity(
-                              opacity: t,
-                              child: Transform.translate(
-                                offset: Offset(0, (1 - t) * 22),
-                                child: child,
-                              ),
-                            );
-                          },
-                          child: EventCard(
-                            key: ValueKey<String>(
-                              '${event.title}_${event.date.toIso8601String()}',
+                          final CurvedAnimation animation = CurvedAnimation(
+                            parent: _staggerController,
+                            curve: Interval(
+                              start,
+                              end,
+                              curve: Curves.easeOutCubic,
                             ),
-                            event: event,
-                          ),
-                        );
-                      },
+                          );
+
+                          return AnimatedBuilder(
+                            animation: animation,
+                            builder: (BuildContext context, Widget? child) {
+                              final double t = animation.value;
+                              return Opacity(
+                                opacity: t,
+                                child: Transform.translate(
+                                  offset: Offset(0, (1 - t) * 22),
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: EventCard(
+                              key: ValueKey<String>(
+                                '${event.title}_${event.date.toIso8601String()}',
+                              ),
+                              event: event,
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             bottomNavigationBar: BottomNavBar(
@@ -429,12 +489,21 @@ class SegmentedToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final language = AppLanguage.instance.language;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: <Widget>[
@@ -475,26 +544,49 @@ class _SegmentButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color activeText = isDark
+        ? const Color(0xff000000)
+        : const Color(0xffffffff);
+
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 100),
-      curve: Curves.easeOut,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
       height: _kGrid * 5.5,
       decoration: BoxDecoration(
-        color: active ? const Color(0xFFF5A623) : Colors.transparent,
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(12),
+        gradient: active
+            ? const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xfff5a623), Color(0xffd4831a)],
+              )
+            : null,
+        color: active ? null : Colors.transparent,
+        boxShadow: active
+            ? [
+                BoxShadow(
+                  color: const Color(
+                    0xfff5a623,
+                  ).withValues(alpha: isDark ? 0.3 : 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(26),
+          borderRadius: BorderRadius.circular(12),
           child: Center(
             child: Text(
               label,
               style: TextStyle(
-                color: active ? const Color(0xFF000000) : inactiveTextColor,
-                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                fontSize: 14,
+                color: active ? activeText : inactiveTextColor,
+                fontWeight: active ? FontWeight.w800 : FontWeight.w600,
+                fontSize: 13.5,
                 fontFamily: _fontFamily,
               ),
             ),
@@ -593,43 +685,47 @@ class _EventCardState extends State<EventCard> {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color cardColor = Theme.of(context).colorScheme.surface;
+    final Color cardBg = isDark
+        ? const Color(0xff121212)
+        : const Color(0xffffffff);
     final Color borderColor = isDark
-      ? const Color(0x66F5A623)
-      : const Color(0x99D6A848);
+        ? const Color(0x18f5a623)
+        : const Color(0xFFe2e8f0);
     final Color inactiveText = isDark
         ? const Color(0xFF8B949E)
         : const Color(0xFF64748B);
     final bool isCompleted = widget.event.status == 'completed';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: _kGrid * 2),
+      margin: const EdgeInsets.only(bottom: _kGrid * 2.5),
       decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(_kGrid * 2),
-        border: Border.all(color: borderColor),
-        boxShadow: const <BoxShadow>[
+        color: cardBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: borderColor, width: 1.2),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x66000000),
-            blurRadius: 6,
-            offset: Offset(0, 2),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Column(
         children: <Widget>[
+          // Image and overlays
           ClipRRect(
             borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(_kGrid * 2),
-              topRight: Radius.circular(_kGrid * 2),
+              topLeft: Radius.circular(19),
+              topRight: Radius.circular(19),
             ),
             child: SizedBox(
-              height: 180,
+              height: 190,
               width: double.infinity,
               child: Stack(
                 fit: StackFit.expand,
                 children: <Widget>[
                   Image.network(widget.event.imageUrl, fit: BoxFit.cover),
+                  // Dark bottom gradient overlay
                   DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -642,33 +738,94 @@ class _EventCardState extends State<EventCard> {
                       ),
                     ),
                   ),
+
+                  // Video duration indicator if video
                   if (widget.event.isVideo)
                     Positioned(
-                      top: _kGrid,
-                      right: _kGrid,
+                      top: 12,
+                      left: 12,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: _kGrid,
-                          vertical: _kGrid / 2,
+                          horizontal: 8,
+                          vertical: 4,
                         ),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.7),
-                          borderRadius: BorderRadius.circular(_kGrid),
-                        ),
-                        child: Text(
-                          widget.event.duration ?? '00:00',
-                          style: const TextStyle(
-                            color: Color(0xFFFFFFFF),
-                            fontSize: 12,
-                            fontFamily: _fontFamily,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.1),
+                            width: 0.8,
                           ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.play_circle_fill_rounded,
+                              color: Color(0xfff5a623),
+                              size: 13,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              widget.event.duration ?? '00:00',
+                              style: const TextStyle(
+                                color: Color(0xFFFFFFFF),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: _fontFamily,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
+
+                  // Status Badge
                   Positioned(
-                    left: _kGrid * 1.5,
-                    right: _kGrid * 1.5,
-                    bottom: _kGrid * 1.5,
+                    top: 12,
+                    right: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isCompleted
+                            ? const Color(0xFF161B22)
+                            : _statusColor(widget.event.status),
+                        borderRadius: BorderRadius.circular(20),
+                        border: isCompleted
+                            ? Border.all(color: const Color(0xFFF5A623))
+                            : null,
+                        boxShadow: [
+                          BoxShadow(
+                            color: _statusColor(
+                              widget.event.status,
+                            ).withValues(alpha: isCompleted ? 0 : 0.35),
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        _statusLabel(widget.event.status),
+                        style: TextStyle(
+                          color: isCompleted
+                              ? const Color(0xFFF5A623)
+                              : const Color(0xFFFFFFFF),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: _fontFamily,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Bottom title & subtitle details
+                  Positioned(
+                    left: 16,
+                    right: 16,
+                    bottom: 14,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
@@ -676,81 +833,54 @@ class _EventCardState extends State<EventCard> {
                           widget.event.title,
                           style: const TextStyle(
                             color: Color(0xFFFFFFFF),
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
                             fontFamily: _fontFamily,
+                            height: 1.3,
                           ),
                         ),
-                        const SizedBox(height: _kGrid),
+                        const SizedBox(height: 8),
                         Row(
                           children: <Widget>[
                             const Icon(
-                              Icons.calendar_today_outlined,
-                              color: Color(0xFF8B949E),
-                              size: 15,
+                              Icons.calendar_today_rounded,
+                              color: Color(0xfff5a623),
+                              size: 13,
                             ),
-                            const SizedBox(width: _kGrid / 2),
+                            const SizedBox(width: 6),
                             Expanded(
                               child: Text(
                                 _formatDate(widget.event.date),
                                 style: const TextStyle(
-                                  color: Color(0xFF8B949E),
+                                  color: Color(0xffe6edf3),
                                   fontSize: 12,
                                   fontFamily: _fontFamily,
+                                  fontWeight: FontWeight.w500,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: _kGrid / 2),
+                        const SizedBox(height: 4),
                         Row(
                           children: <Widget>[
                             const Icon(
-                              Icons.location_on_outlined,
-                              color: Color(0xFF8B949E),
-                              size: 15,
+                              Icons.location_on_rounded,
+                              color: Color(0xfff5a623),
+                              size: 13,
                             ),
-                            const SizedBox(width: _kGrid / 2),
+                            const SizedBox(width: 6),
                             Expanded(
                               child: Text(
                                 widget.event.location,
                                 style: const TextStyle(
-                                  color: Color(0xFF8B949E),
+                                  color: Color(0xffe6edf3),
                                   fontSize: 12,
                                   fontFamily: _fontFamily,
+                                  fontWeight: FontWeight.w500,
                                 ),
                                 overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: _kGrid),
-                            Container(
-                              constraints: const BoxConstraints(minHeight: 24),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: _kGrid,
-                                vertical: _kGrid / 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isCompleted
-                                    ? const Color(0xFF161B22)
-                                    : _statusColor(widget.event.status),
-                                borderRadius: BorderRadius.circular(
-                                  _kGrid * 1.5,
-                                ),
-                                border: isCompleted
-                                    ? Border.all(color: const Color(0xFFF5A623))
-                                    : null,
-                              ),
-                              child: Text(
-                                _statusLabel(widget.event.status),
-                                style: TextStyle(
-                                  color: isCompleted
-                                      ? const Color(0xFFF5A623)
-                                      : const Color(0xFFFFFFFF),
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: _fontFamily,
-                                ),
                               ),
                             ),
                           ],
@@ -762,18 +892,15 @@ class _EventCardState extends State<EventCard> {
               ),
             ),
           ),
+
+          // Action Row
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-              _kGrid * 1.5,
-              _kGrid * 1.25,
-              _kGrid * 1.5,
-              _kGrid * 1.5,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: <Widget>[
                 _CountAction(
-                  icon: Icons.favorite_border_rounded,
-                  activeIcon: Icons.favorite_rounded,
+                  icon: Icons.thumb_up_alt_outlined,
+                  activeIcon: Icons.thumb_up_alt_rounded,
                   count: _likeCount,
                   active: _liked,
                   onTap: () {
@@ -783,7 +910,7 @@ class _EventCardState extends State<EventCard> {
                     });
                   },
                 ),
-                const SizedBox(width: _kGrid * 2),
+                const SizedBox(width: 16),
                 _CountAction(
                   icon: Icons.mode_comment_outlined,
                   activeIcon: Icons.mode_comment_rounded,
@@ -796,7 +923,7 @@ class _EventCardState extends State<EventCard> {
                     });
                   },
                 ),
-                const SizedBox(width: _kGrid * 2),
+                const SizedBox(width: 16),
                 _CountAction(
                   icon: Icons.reply_outlined,
                   activeIcon: Icons.reply_rounded,
@@ -818,7 +945,7 @@ class _EventCardState extends State<EventCard> {
                     });
                   },
                   child: Padding(
-                    padding: const EdgeInsets.all(4),
+                    padding: const EdgeInsets.all(6),
                     child: Icon(
                       _bookmarked
                           ? Icons.bookmark_rounded
@@ -826,6 +953,7 @@ class _EventCardState extends State<EventCard> {
                       color: _bookmarked
                           ? const Color(0xFFF5A623)
                           : inactiveText,
+                      size: 20,
                     ),
                   ),
                 ),
@@ -862,20 +990,21 @@ class _CountAction extends StatelessWidget {
     final Color color = active ? const Color(0xFFF5A623) : inactive;
 
     return InkWell(
-      borderRadius: BorderRadius.circular(999),
+      borderRadius: BorderRadius.circular(8),
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Icon(active ? activeIcon : icon, color: color, size: 18),
-            const SizedBox(width: _kGrid / 2),
+            Icon(active ? activeIcon : icon, color: color, size: 19),
+            const SizedBox(width: 5),
             Text(
               '$count',
               style: TextStyle(
                 color: color,
-                fontSize: 12,
+                fontSize: 12.5,
+                fontWeight: active ? FontWeight.w700 : FontWeight.w600,
                 fontFamily: _fontFamily,
               ),
             ),
@@ -895,22 +1024,35 @@ class BottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color navBackground = isDark ? const Color(0xFF0D1117) : Colors.white;
+    final Color navBg = isDark
+        ? const Color(0xff0d1117)
+        : const Color(0xffffffff);
+    final Color borderColor = isDark
+        ? const Color(0x2bf5a623)
+        : const Color(0xffe2e8f0);
+
     return Container(
-      color: navBackground,
+      decoration: BoxDecoration(
+        color: navBg,
+        border: Border(top: BorderSide(color: borderColor, width: 1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: _kGrid * 2,
-            vertical: _kGrid,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               Expanded(
                 child: _NavItem(
-                  icon: Icons.home_outlined,
+                  icon: Icons.home_rounded,
                   label: AppLocalizations.translate('home', language: language),
                   active: false,
                   onTap: () => onTap(_homeRoute),
@@ -929,7 +1071,7 @@ class BottomNavBar extends StatelessWidget {
               ),
               Expanded(
                 child: _NavItem(
-                  icon: Icons.groups_2_outlined,
+                  icon: Icons.groups_2_rounded,
                   label: AppLocalizations.translate(
                     'community',
                     language: language,
@@ -940,7 +1082,7 @@ class BottomNavBar extends StatelessWidget {
               ),
               Expanded(
                 child: _NavItem(
-                  icon: Icons.event_outlined,
+                  icon: Icons.event_note_rounded,
                   label: AppLocalizations.translate(
                     'events',
                     language: language,
@@ -951,7 +1093,7 @@ class BottomNavBar extends StatelessWidget {
               ),
               Expanded(
                 child: _NavItem(
-                  icon: Icons.person_outline_rounded,
+                  icon: Icons.person_rounded,
                   label: AppLocalizations.translate(
                     'profile',
                     language: language,
@@ -984,32 +1126,54 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color inactive = isDark
-        ? const Color(0xFF8B949E)
-        : const Color(0xFF64748B);
-    final Color color = active ? const Color(0xFFF5A623) : inactive;
+    final Color activeColor = const Color(0xfff5a623);
+    final Color inactiveColor = isDark
+        ? const Color(0xff8b949e)
+        : const Color(0xff64748b);
 
-    return InkResponse(
+    return InkWell(
       onTap: onTap,
-      radius: _kGrid * 3,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: _kGrid / 2),
-          Text(
-            label,
-            maxLines: 1,
-            softWrap: false,
-            overflow: TextOverflow.fade,
-            style: TextStyle(
-              color: color,
-              fontSize: 12,
-              fontWeight: active ? FontWeight.w600 : FontWeight.w500,
-              fontFamily: _fontFamily,
+      borderRadius: BorderRadius.circular(16),
+      splashColor: activeColor.withValues(alpha: 0.1),
+      highlightColor: Colors.transparent,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: active
+                    ? activeColor.withValues(alpha: isDark ? 0.13 : 0.1)
+                    : Colors.transparent,
+              ),
+              child: Icon(
+                icon,
+                color: active ? activeColor : inactiveColor,
+                size: 22,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 4),
+            Text(
+              label,
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.fade,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: active ? activeColor : inactiveColor,
+                fontSize: 11,
+                fontWeight: active ? FontWeight.w800 : FontWeight.w500,
+                fontFamily: _fontFamily,
+                letterSpacing: active ? 0.2 : 0,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

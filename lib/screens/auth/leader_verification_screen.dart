@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/constants/app_colors.dart';
 import '../../providers/user_provider.dart';
 import '../leader/leader_profile_screen.dart';
 
@@ -12,12 +13,12 @@ class LeaderVerificationScreen extends StatefulWidget {
   const LeaderVerificationScreen({super.key});
 
   @override
-  State<LeaderVerificationScreen> createState() =>
-      _LeaderVerificationScreenState();
+  State<LeaderVerificationScreen> createState() {
+    return _LeaderVerificationScreenState();
+  }
 }
 
-class _LeaderVerificationScreenState
-    extends State<LeaderVerificationScreen> {
+class _LeaderVerificationScreenState extends State<LeaderVerificationScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   final Map<String, TextEditingController> _controllers = {
@@ -39,6 +40,34 @@ class _LeaderVerificationScreenState
   File? _coverImage;
 
   @override
+  void initState() {
+    super.initState();
+    _prefillSampleDetails();
+  }
+
+  void _prefillSampleDetails() {
+    final sampleDetails = <String, String>{
+      'name': 'Aarav Sharma',
+      'designation': 'State Youth President',
+      'party': 'National Progressive Party',
+      'constituency': 'North District Constituency',
+      'officeAddress': '12, Gulmohar Lane, New Town, Delhi',
+      'email': 'aarav.sharma@leaderr.in',
+      'phone': '+91 98765 43210',
+      'bio':
+          'Community organizer, youth mentor, and civic policy advocate focused on education and public service.',
+      'yearsInService': '12',
+      'password': 'Sample@1234',
+    };
+
+    for (final entry in sampleDetails.entries) {
+      _controllers[entry.key]?.text = entry.value;
+    }
+
+    _confirmed = true;
+  }
+
+  @override
   void dispose() {
     for (final c in _controllers.values) {
       c.dispose();
@@ -47,8 +76,7 @@ class _LeaderVerificationScreenState
   }
 
   Future<void> _pickFile(ValueSetter<File> setter) async {
-    final picked =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (picked == null) return;
     setter(File(picked.path));
   }
@@ -56,13 +84,11 @@ class _LeaderVerificationScreenState
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_governmentId == null ||
-        _profilePhoto == null ||
-        _coverImage == null ||
-        !_confirmed) {
+    if (!_confirmed) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text("All images and confirmation are required")),
+          content: Text("Please confirm the details are accurate"),
+        ),
       );
       return;
     }
@@ -75,15 +101,15 @@ class _LeaderVerificationScreenState
         designation: _controllers['designation']!.text.trim(),
         party: _controllers['party']!.text.trim(),
         constituency: _controllers['constituency']!.text.trim(),
-        governmentIdPath: _governmentId!.path,
+        governmentIdPath: _governmentId?.path ?? '',
         officeAddress: _controllers['officeAddress']!.text.trim(),
         officialEmail: _controllers['email']!.text.trim(),
         officialPhone: _controllers['phone']!.text.trim(),
         shortBio: _controllers['bio']!.text.trim(),
         yearsInService: _controllers['yearsInService']!.text.trim(),
         password: _controllers['password']!.text,
-        profilePhoto: _profilePhoto!,
-        coverImage: _coverImage!,
+        profilePhoto: _profilePhoto,
+        coverImage: _coverImage,
       );
 
       if (!mounted) return;
@@ -94,46 +120,56 @@ class _LeaderVerificationScreenState
         (_) => false,
       );
     } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? 'Auth failed')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message ?? 'Auth failed')));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed: $e')));
     }
   }
 
   /// ✅ GOLD FIELD
-  Widget _goldField(String key, String hint,
-      {int maxLines = 1, IconData icon = Icons.person}) {
+  Widget _goldField(
+    String key,
+    String hint, {
+    int maxLines = 1,
+    IconData icon = Icons.person,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFFD4AF37),
-          width: 1.2,
-        ),
+        border: Border.all(color: AppColors.primaryGold, width: 1.2),
       ),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFFD4AF37)),
+          Icon(icon, color: AppColors.primaryGold),
           const SizedBox(width: 12),
           Expanded(
             child: TextFormField(
               controller: _controllers[key],
               maxLines: maxLines,
               obscureText: key == 'password',
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: AppColors.textPrimary),
               validator: (v) =>
                   v == null || v.trim().isEmpty ? "Required" : null,
               decoration: InputDecoration(
                 hintText: hint,
-                hintStyle: const TextStyle(color: Colors.white38),
+                hintStyle: TextStyle(color: AppColors.textMuted),
+                filled: false,
+                fillColor: Colors.transparent,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(vertical: 16),
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                focusedErrorBorder: InputBorder.none,
               ),
             ),
           ),
@@ -143,33 +179,27 @@ class _LeaderVerificationScreenState
   }
 
   /// ✅ GOLD FILE PICKER
-  Widget _goldPicker(
-      String title, File? file, VoidCallback onTap) {
+  Widget _goldPicker(String title, File? file, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 18),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.black,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: const Color(0xFFD4AF37),
-            width: 1.2,
-          ),
+          border: Border.all(color: AppColors.primaryGold, width: 1.2),
         ),
         child: Row(
           children: [
-            const Icon(Icons.upload_file,
-                color: Color(0xFFD4AF37)),
+            Icon(Icons.upload_file, color: AppColors.primaryGold),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 file == null
                     ? "$title (Tap to upload)"
                     : file.path.split('/').last,
-                style: const TextStyle(
-                    color: Colors.white),
+                style: TextStyle(color: AppColors.textPrimary),
               ),
             ),
           ],
@@ -180,25 +210,22 @@ class _LeaderVerificationScreenState
 
   @override
   Widget build(BuildContext context) {
-    final loading =
-        context.watch<UserProvider>().isLoading;
+    final loading = context.watch<UserProvider>().isLoading;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(22),
           child: Form(
             key: _formKey,
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
-                const Text(
+                Text(
                   "Leader Verification",
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
@@ -206,77 +233,87 @@ class _LeaderVerificationScreenState
 
                 const SizedBox(height: 6),
 
-                const Text(
+                Text(
                   "Please provide your official details",
-                  style: TextStyle(color: Colors.white54),
+                  style: TextStyle(color: AppColors.textMuted),
                 ),
 
                 const SizedBox(height: 30),
 
-                _goldField('name', 'Full Name',
-                    icon: Icons.person_outline),
-                _goldField('designation',
-                    'Official Designation',
-                    icon: Icons.work_outline),
-                _goldField('party', 'Political Party',
-                    icon: Icons.flag_outlined),
-                _goldField('constituency',
-                    'Constituency',
-                    icon: Icons.location_on_outlined),
-                _goldField('officeAddress',
-                    'Office Address',
-                    maxLines: 2,
-                    icon: Icons.home_work_outlined),
-                _goldField('email', 'Official Email',
-                    icon: Icons.email_outlined),
-                _goldField('phone', 'Official Phone',
-                    icon: Icons.phone_outlined),
-                _goldField('bio', 'Short Bio',
-                    maxLines: 3,
-                    icon: Icons.description_outlined),
-                _goldField('yearsInService',
-                    'Years in Service',
-                    icon: Icons.calendar_today_outlined),
-                _goldField('password', 'Password',
-                    icon: Icons.lock_outline),
+                _goldField('name', 'Full Name', icon: Icons.person_outline),
+                _goldField(
+                  'designation',
+                  'Official Designation',
+                  icon: Icons.work_outline,
+                ),
+                _goldField(
+                  'party',
+                  'Political Party',
+                  icon: Icons.flag_outlined,
+                ),
+                _goldField(
+                  'constituency',
+                  'Constituency',
+                  icon: Icons.location_on_outlined,
+                ),
+                _goldField(
+                  'officeAddress',
+                  'Office Address',
+                  maxLines: 2,
+                  icon: Icons.home_work_outlined,
+                ),
+                _goldField(
+                  'email',
+                  'Official Email',
+                  icon: Icons.email_outlined,
+                ),
+                _goldField(
+                  'phone',
+                  'Official Phone',
+                  icon: Icons.phone_outlined,
+                ),
+                _goldField(
+                  'bio',
+                  'Short Bio',
+                  maxLines: 3,
+                  icon: Icons.description_outlined,
+                ),
+                _goldField(
+                  'yearsInService',
+                  'Years in Service',
+                  icon: Icons.calendar_today_outlined,
+                ),
+                _goldField('password', 'Password', icon: Icons.lock_outline),
 
                 _goldPicker(
                   "Government ID Upload",
                   _governmentId,
-                  () => _pickFile(
-                      (f) => setState(() => _governmentId = f)),
+                  () => _pickFile((f) => setState(() => _governmentId = f)),
                 ),
 
                 _goldPicker(
                   "Profile Photo",
                   _profilePhoto,
-                  () => _pickFile(
-                      (f) => setState(() => _profilePhoto = f)),
+                  () => _pickFile((f) => setState(() => _profilePhoto = f)),
                 ),
 
                 _goldPicker(
                   "Cover Image",
                   _coverImage,
-                  () => _pickFile(
-                      (f) => setState(() => _coverImage = f)),
+                  () => _pickFile((f) => setState(() => _coverImage = f)),
                 ),
 
                 Row(
                   children: [
                     Checkbox(
                       value: _confirmed,
-                      activeColor:
-                          const Color(0xFFD4AF37),
-                      onChanged: (v) =>
-                          setState(() =>
-                              _confirmed =
-                                  v ?? false),
+                      activeColor: AppColors.primaryGold,
+                      onChanged: (v) => setState(() => _confirmed = v ?? false),
                     ),
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         "I confirm details are accurate",
-                        style: TextStyle(
-                            color: Colors.white),
+                        style: TextStyle(color: AppColors.textPrimary),
                       ),
                     ),
                   ],
@@ -287,37 +324,20 @@ class _LeaderVerificationScreenState
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed:
-                        loading ? null : _submit,
-                    style:
-                        ElevatedButton.styleFrom(
-                      backgroundColor:
-                          const Color(0xFFD4AF37),
-                      foregroundColor:
-                          Colors.black,
-                      padding:
-                          const EdgeInsets
-                              .symmetric(
-                                  vertical: 18),
-                      shape:
-                          RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(
-                                22),
+                    onPressed: loading ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryGold,
+                      foregroundColor: AppColors.onGold,
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(22),
                       ),
                     ),
                     child: loading
-                        ? const CircularProgressIndicator(
-                            color:
-                                Colors.black)
+                        ? CircularProgressIndicator(color: AppColors.onGold)
                         : const Text(
                             "Submit for Verification",
-                            style:
-                                TextStyle(
-                              fontWeight:
-                                  FontWeight
-                                      .bold,
-                            ),
+                            style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                   ),
                 ),

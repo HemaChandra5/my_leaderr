@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
+import '../../../../core/constants/app_colors.dart';
 import '../../../../core/localization/app_language.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../providers/user_provider.dart';
 
 import '../../domain/models/citizen_profile.dart';
-import 'my_reported_issues_page.dart';
+import 'settings_screen.dart';
 import '../widgets/bottom_nav_bar_widget.dart';
 import '../widgets/profile_header_widget.dart';
 import '../widgets/profile_menu_card_widget.dart';
@@ -31,16 +34,42 @@ class _CitizenProfileDashboardState extends State<CitizenProfileDashboard>
   late final Animation<Offset> _headerSlide;
   late final Animation<double> _statsScale;
 
-  final CitizenProfile _profile = const CitizenProfile(
-    name: 'Priya Sharma',
-    role: 'Citizen',
-    location: 'Kukatpally',
-    isVerified: true,
-    posts: 24,
-    issuesReported: 18,
-    issuesResolved: 15,
-    eventsAttended: 12,
-  );
+  CitizenProfile _resolvedProfile(UserProvider provider) {
+    final user = provider.appUser;
+
+    if (user == null) {
+      return const CitizenProfile(
+        name: 'Citizen',
+        role: 'Citizen',
+        location: 'Not set',
+        isVerified: true,
+        posts: 24,
+        issuesReported: 18,
+        issuesResolved: 15,
+        eventsAttended: 12,
+      );
+    }
+
+    final city = (user.city ?? '').trim();
+    final state = (user.state ?? '').trim();
+    final location = city.isNotEmpty && state.isNotEmpty
+        ? '$city, $state'
+        : (city.isNotEmpty
+              ? city
+              : (state.isNotEmpty ? state : 'Location not set'));
+
+    return CitizenProfile(
+      name: user.name.isNotEmpty ? user.name : 'Citizen',
+      role: 'Citizen',
+      location: location,
+      isVerified: user.verificationStatus == 'verified',
+      posts: 24,
+      issuesReported: 18,
+      issuesResolved: 15,
+      eventsAttended: 12,
+      profileImage: user.profileImage,
+    );
+  }
 
   String get _language => AppLanguage.instance.language;
   String _tr(String key) =>
@@ -81,12 +110,11 @@ class _CitizenProfileDashboardState extends State<CitizenProfileDashboard>
     super.dispose();
   }
 
-  void _handleMenuTap(String item) {
-    if (item == _tr('my_reported_issues')) {
-      Navigator.of(context).push<void>(
-        MaterialPageRoute<void>(
-          builder: (_) => const MyReportedIssuesPage(),
-        ),
+  void _handleMenuTap(String itemKey) {
+    if (itemKey == 'settings') {
+      Navigator.push(
+        context,
+        MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
       );
       return;
     }
@@ -96,7 +124,7 @@ class _CitizenProfileDashboardState extends State<CitizenProfileDashboard>
       ..showSnackBar(
         SnackBar(
           behavior: SnackBarBehavior.floating,
-          content: Text('$item tapped'),
+          content: Text('${_tr(itemKey)} tapped'),
         ),
       );
   }
@@ -128,6 +156,8 @@ class _CitizenProfileDashboardState extends State<CitizenProfileDashboard>
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<UserProvider>();
+    final profile = _resolvedProfile(provider);
     final minWidth = MediaQuery.sizeOf(context).width < 360
         ? 360.0
         : MediaQuery.sizeOf(context).width;
@@ -136,11 +166,13 @@ class _CitizenProfileDashboardState extends State<CitizenProfileDashboard>
       animation: AppLanguage.instance,
       builder: (context, _) {
         return AnnotatedRegion<SystemUiOverlayStyle>(
-          value: SystemUiOverlayStyle.light,
+          value: Theme.of(context).brightness == Brightness.dark
+              ? SystemUiOverlayStyle.light
+              : SystemUiOverlayStyle.dark,
           child: GestureDetector(
             onTap: () => FocusScope.of(context).unfocus(),
             child: Scaffold(
-              backgroundColor: const Color(0xFF000000),
+              backgroundColor: AppColors.background,
               body: SafeArea(
                 child: FadeTransition(
                   opacity: _screenFade,
@@ -158,26 +190,17 @@ class _CitizenProfileDashboardState extends State<CitizenProfileDashboard>
                             children: [
                               const Spacer(),
                               Image.asset(
-                                'assets/images/logo.png',
+                                'assets/images/logo_transparent.png',
                                 width: 120,
                                 fit: BoxFit.contain,
                               ),
                               const Spacer(),
-                              IconButton(
-                                onPressed: () =>
-                                    _handleMenuTap(_tr('settings')),
-                                icon: const Icon(
-                                  Icons.settings_outlined,
-                                  color: Color(0xFF8B949E),
-                                  size: 22,
-                                ),
-                              ),
                             ],
                           ),
                           const SizedBox(height: 8),
                           SlideTransition(
                             position: _headerSlide,
-                            child: ProfileHeaderWidget(profile: _profile),
+                            child: ProfileHeaderWidget(profile: profile),
                           ),
                           const SizedBox(height: 14),
                           Container(
@@ -186,10 +209,12 @@ class _CitizenProfileDashboardState extends State<CitizenProfileDashboard>
                               horizontal: 12,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF111111),
+                              color: AppColors.surface,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: const Color(0x66F5A623),
+                                color: AppColors.primaryGold.withValues(
+                                  alpha: 0.4,
+                                ),
                                 width: 1,
                               ),
                             ),
@@ -197,8 +222,8 @@ class _CitizenProfileDashboardState extends State<CitizenProfileDashboard>
                               children: [
                                 Text(
                                   _tr('boost_citizen'),
-                                  style: const TextStyle(
-                                    color: Color(0xFFF5A623),
+                                  style: TextStyle(
+                                    color: AppColors.primaryGold,
                                     fontSize: 17,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -206,8 +231,8 @@ class _CitizenProfileDashboardState extends State<CitizenProfileDashboard>
                                 const SizedBox(height: 3),
                                 Text(
                                   _tr('unlock_premium_features'),
-                                  style: const TextStyle(
-                                    color: Color(0xFF8B949E),
+                                  style: TextStyle(
+                                    color: AppColors.textMuted,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -218,7 +243,7 @@ class _CitizenProfileDashboardState extends State<CitizenProfileDashboard>
                           const SizedBox(height: 14),
                           ScaleTransition(
                             scale: _statsScale,
-                            child: StatsRowWidget(profile: _profile),
+                            child: StatsRowWidget(profile: profile),
                           ),
                           const SizedBox(height: 12),
                           ProfileMenuCardWidget(onItemTap: _handleMenuTap),

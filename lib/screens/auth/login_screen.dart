@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/constants/app_colors.dart';
 import '../../providers/language_provider.dart';
 import '../../services/auth_service.dart';
 
@@ -59,9 +60,9 @@ class _LoginScreenState extends State<LoginScreen> {
     final LanguageProvider languageProvider = context.watch<LanguageProvider>();
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: AppColors.background,
         title: Text(languageProvider.t('login')),
       ),
       body: Padding(
@@ -74,6 +75,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: _email,
                 decoration: InputDecoration(
                   labelText: languageProvider.t('email'),
+                  filled: false,
+                  fillColor: Colors.transparent,
                 ),
                 validator: (v) => v == null || v.trim().isEmpty
                     ? languageProvider.t('required')
@@ -85,6 +88,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 obscureText: true,
                 decoration: InputDecoration(
                   labelText: languageProvider.t('password'),
+                  filled: false,
+                  fillColor: Colors.transparent,
                 ),
                 validator: (v) => v == null || v.trim().isEmpty
                     ? languageProvider.t('required')

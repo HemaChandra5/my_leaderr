@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/constants/app_colors.dart';
 import '../../../../core/localization/app_language.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../domain/models/citizen_profile.dart';
@@ -59,7 +60,7 @@ class _StatItem extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
         decoration: BoxDecoration(
-          color: const Color(0xFF111111),
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: const Color(0x66F5A623)),
         ),
@@ -73,8 +74,8 @@ class _StatItem extends StatelessWidget {
               builder: (context, animatedValue, _) {
                 return Text(
                   animatedValue.round().toString(),
-                  style: const TextStyle(
-                    color: Color(0xFFFFFFFF),
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
                   ),
@@ -85,8 +86,8 @@ class _StatItem extends StatelessWidget {
             Text(
               label,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Color(0xFF8B949E),
+              style: TextStyle(
+                color: AppColors.textMuted,
                 fontSize: 10,
                 fontWeight: FontWeight.w500,
               ),

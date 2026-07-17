@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/constants/app_colors.dart';
 import '../../../../core/localization/app_language.dart';
 import '../../../../core/localization/app_localizations.dart';
 
@@ -13,9 +14,9 @@ class BottomNavBarWidget extends StatelessWidget {
     final language = AppLanguage.instance.language;
     return Container(
       height: 78,
-      decoration: const BoxDecoration(
-        color: Color(0xFF0D1117),
-        border: Border(top: BorderSide(color: Color(0xFF1F242C))),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border(top: BorderSide(color: AppColors.divider)),
       ),
       child: Row(
         children: [
@@ -65,7 +66,7 @@ class BottomNavBarWidget extends StatelessWidget {
   }
 
   Widget _item(int index, IconData icon, String label, bool active) {
-    final color = active ? const Color(0xFFF5A623) : const Color(0xFF8B949E);
+    final color = active ? AppColors.primaryGold : AppColors.textMuted;
     return InkWell(
       onTap: () => onTabTap(index),
       child: Column(

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../core/constants/app_colors.dart';
 import '../core/localization/app_language.dart';
 import '../core/localization/app_localizations.dart';
+import '../core/theme/app_theme_manager.dart';
 import '../theme.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -36,7 +38,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   late final AnimationController _controller;
   late final Animation<double> _fade;
   late final Animation<Offset> _slide;
-  bool _isDarkMode = true;
 
   @override
   void initState() {
@@ -51,22 +52,29 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       begin: const Offset(0, 0.12),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+
+    AppThemeManager.instance.addListener(_onThemeChanged);
+  }
+
+  void _onThemeChanged() {
+    if (!mounted) {
+      return;
+    }
+    setState(() {});
   }
 
   @override
   void dispose() {
+    AppThemeManager.instance.removeListener(_onThemeChanged);
     _controller.dispose();
     super.dispose();
   }
 
-  Widget _buildLanguageSelector(String currentLanguage, bool isDarkMode) {
-    final Color chipBg = isDarkMode
-        ? const Color(0xFF141619)
-        : const Color(0xFFF4F6F8);
-    final Color chipBorder = isDarkMode
-        ? const Color(0xFF2B2B2B)
-        : const Color(0xFFCFD8E1);
-    final Color chipText = isDarkMode ? Colors.white : const Color(0xFF111827);
+  Widget _buildLanguageSelector(String currentLanguage) {
+    final bool isDarkMode = AppThemeManager.instance.isDarkMode;
+    final Color chipBg = AppColors.surfaceElevated;
+    final Color chipBorder = AppColors.divider;
+    final Color chipText = AppColors.textPrimary;
 
     return Theme(
       data: Theme.of(context).copyWith(
@@ -93,9 +101,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       style: TextStyle(
                         color: isSelected
                             ? AppTheme.gold
-                            : (isDarkMode
-                                  ? AppTheme.textPrimary
-                                  : const Color(0xFF0F172A)),
+                            : AppColors.textPrimary,
                         fontWeight: isSelected
                             ? FontWeight.w700
                             : FontWeight.w500,
@@ -147,22 +153,19 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   }
 
   Widget _buildThemeToggle() {
+    final bool isDarkMode = AppThemeManager.instance.isDarkMode;
     return IconButton.filledTonal(
-      onPressed: () => setState(() => _isDarkMode = !_isDarkMode),
+      onPressed: () => AppThemeManager.instance.toggleTheme(),
       icon: Icon(
-        _isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+        isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
         size: 20,
       ),
-      tooltip: _isDarkMode ? 'Switch to light mode' : 'Switch to dark mode',
+      tooltip: isDarkMode ? 'Switch to light mode' : 'Switch to dark mode',
       style: IconButton.styleFrom(
-        backgroundColor: _isDarkMode
-            ? const Color(0xFF141619)
-            : const Color(0xFFE5E7EB),
-        foregroundColor: _isDarkMode ? AppTheme.gold : const Color(0xFF111827),
+        backgroundColor: AppColors.surfaceElevated,
+        foregroundColor: isDarkMode ? AppTheme.gold : AppColors.textPrimary,
         side: BorderSide(
-          color: _isDarkMode
-              ? const Color(0xFF2B2B2B)
-              : const Color(0xFFCFD8E1),
+          color: AppColors.divider,
           width: 1,
         ),
       ),
@@ -178,17 +181,11 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     return AnimatedBuilder(
       animation: AppLanguage.instance,
       builder: (context, _) {
+        final bool isDarkMode = AppThemeManager.instance.isDarkMode;
         final currentLanguage = AppLanguage.instance.language;
-        final Color pageBg = _isDarkMode
-            ? AppTheme.background
-            : const Color(0xFFF8FAFC);
-        final Color primaryText = _isDarkMode
-            ? AppTheme.textPrimary
-            : const Color(0xFF0F172A);
-        final Color secondaryText = _isDarkMode
-            ? AppTheme.textSecondary
-            : const Color(0xFF475569);
-        final Color heroFade = _isDarkMode
+        final Color pageBg = AppColors.background;
+        final Color primaryText = AppColors.textPrimary;
+        final Color heroFade = isDarkMode
             ? Colors.black.withValues(alpha: 0.82)
             : Colors.white.withValues(alpha: 0.72);
 
@@ -203,7 +200,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   Positioned(
                     top: 0,
                     left: 8,
-                    child: _buildLanguageSelector(currentLanguage, _isDarkMode),
+                    child: _buildLanguageSelector(currentLanguage),
                   ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(24, 58, 24, 24),
@@ -211,7 +208,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Image.asset(
-                          'assets/images/logo.png',
+                          'assets/images/logo_transparent.png',
                           width: logoWidth,
                           fit: BoxFit.contain,
                         ),

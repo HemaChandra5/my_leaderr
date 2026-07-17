@@ -24,10 +24,27 @@ class BottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 84,
-      decoration: const BoxDecoration(
+      height: 88,
+      decoration: BoxDecoration(
         color: AppTheme.surface,
-        border: Border(top: BorderSide(color: AppTheme.border)),
+        border: Border(
+          top: BorderSide(
+            color: AppTheme.gold.withValues(alpha: 0.18),
+            width: 1,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.30),
+            blurRadius: 20,
+            offset: const Offset(0, -6),
+          ),
+          BoxShadow(
+            color: AppTheme.gold.withValues(alpha: 0.04),
+            blurRadius: 40,
+            offset: const Offset(0, -2),
+          ),
+        ],
       ),
       child: Stack(
         clipBehavior: Clip.none,
@@ -41,28 +58,47 @@ class BottomNavBar extends StatelessWidget {
               Expanded(child: _item(3, 3)),
             ],
           ),
+          // ── FAB ─────────────────────────────────────────────────────────
           Positioned(
-            top: 12,
+            top: -16,
             left: 0,
             right: 0,
             child: Center(
               child: GestureDetector(
                 onTap: onAddPressed,
                 child: Container(
-                  width: 60,
-                  height: 60,
+                  width: 62,
+                  height: 62,
                   decoration: BoxDecoration(
-                    color: AppTheme.gold,
                     shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFFF5A623), Color(0xFFD4831A)],
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.gold.withValues(alpha: 0.35),
-                        blurRadius: 16,
+                        color: AppTheme.gold.withValues(alpha: 0.45),
+                        blurRadius: 20,
+                        spreadRadius: 0,
                         offset: const Offset(0, 6),
                       ),
+                      BoxShadow(
+                        color: AppTheme.gold.withValues(alpha: 0.15),
+                        blurRadius: 32,
+                        spreadRadius: 4,
+                      ),
                     ],
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      width: 1,
+                    ),
                   ),
-                  child: const Icon(Icons.add, color: Colors.black, size: 34),
+                  child: const Icon(
+                    Icons.add_rounded,
+                    color: Colors.black,
+                    size: 32,
+                  ),
                 ),
               ),
             ),
@@ -78,17 +114,31 @@ class BottomNavBar extends StatelessWidget {
     final color = selected ? AppTheme.gold : AppTheme.textSecondary;
     return InkWell(
       onTap: () => onTabSelected(index),
+      splashColor: AppTheme.gold.withValues(alpha: 0.08),
+      highlightColor: Colors.transparent,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(data.icon, color: color, size: 22),
-          const SizedBox(height: 4),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: selected
+                  ? AppTheme.gold.withValues(alpha: 0.12)
+                  : Colors.transparent,
+            ),
+            child: Icon(data.icon, color: color, size: 22),
+          ),
+          const SizedBox(height: 3),
           Text(
             data.label,
             style: TextStyle(
               color: color,
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              letterSpacing: selected ? 0.2 : 0.0,
             ),
           ),
         ],

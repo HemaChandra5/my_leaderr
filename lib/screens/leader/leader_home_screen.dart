@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_colors.dart';
 import '../../widgets/app_bottom_nav.dart';
 import '../../widgets/role_guard.dart';
 import 'leader_profile_screen.dart';
@@ -36,9 +37,9 @@ class _LeaderHomeScreenState extends State<LeaderHomeScreen> {
     return RoleGuard(
       allowedRole: 'leader',
       child: Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: AppColors.background,
         appBar: AppBar(
-          backgroundColor: Colors.black,
+          backgroundColor: AppColors.background,
           title: const Text('Leader Dashboard'),
         ),
         body: _buildBody(),

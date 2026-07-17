@@ -10,10 +10,9 @@ import '../services/firestore_service.dart';
 
 class UserProvider extends ChangeNotifier {
   UserProvider({
-    required AuthService authService,
-    required FirestoreService firestoreService,
-  }) : _authService = authService,
-       _firestoreService = firestoreService {
+    required this._authService,
+    required this._firestoreService,
+  }) {
     _authSub = _authService.authStateChanges.listen(_handleAuthChanged);
     _firebaseUser = _authService.currentUser;
     if (_firebaseUser != null) {
@@ -175,8 +174,8 @@ class UserProvider extends ChangeNotifier {
     required String shortBio,
     required String yearsInService,
     required String password,
-    required File profilePhoto,
-    required File coverImage,
+    File? profilePhoto,
+    File? coverImage,
   }) async {
     _setLoading(true);
     try {
@@ -186,21 +185,27 @@ class UserProvider extends ChangeNotifier {
       );
       final String uid = credential.user!.uid;
 
-      final String profileUrl = await _firestoreService.uploadFile(
-        folder: 'leader_profile_images',
-        uid: uid,
-        file: profilePhoto,
-      );
-      final String coverUrl = await _firestoreService.uploadFile(
-        folder: 'leader_cover_images',
-        uid: uid,
-        file: coverImage,
-      );
-      final String govIdUrl = await _firestoreService.uploadFile(
-        folder: 'leader_government_ids',
-        uid: uid,
-        file: File(governmentIdPath),
-      );
+      final String profileUrl = profilePhoto == null
+          ? ''
+          : await _firestoreService.uploadFile(
+              folder: 'leader_profile_images',
+              uid: uid,
+              file: profilePhoto,
+            );
+      final String coverUrl = coverImage == null
+          ? ''
+          : await _firestoreService.uploadFile(
+              folder: 'leader_cover_images',
+              uid: uid,
+              file: coverImage,
+            );
+      final String govIdUrl = governmentIdPath.isEmpty
+          ? ''
+          : await _firestoreService.uploadFile(
+              folder: 'leader_government_ids',
+              uid: uid,
+              file: File(governmentIdPath),
+            );
 
       await _firestoreService.saveLeaderProfile(
         uid: uid,
@@ -221,6 +226,80 @@ class UserProvider extends ChangeNotifier {
       final AppUser? savedUser = await _firestoreService.getAppUser(uid);
       _appUser = savedUser;
       _profileResolved = true;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> updateCurrentUserProfile({
+    required Map<String, String> fields,
+    File? profileImageFile,
+    File? coverImageFile,
+  }) async {
+    final currentUser = _firebaseUser;
+    if (currentUser == null) {
+      throw FirebaseAuthException(
+        code: 'not-authenticated',
+        message: 'Please login again to update profile.',
+      );
+    }
+
+    _setLoading(true);
+    try {
+      final updates = <String, dynamic>{};
+
+      fields.forEach((key, value) {
+        final trimmed = value.trim();
+        if (trimmed.isNotEmpty) {
+          updates[key] = trimmed;
+        }
+      });
+
+      if (profileImageFile != null) {
+        final profileUrl = await _firestoreService.uploadFile(
+          folder: 'profile_images',
+          uid: currentUser.uid,
+          file: profileImageFile,
+        );
+        updates['profileImage'] = profileUrl;
+      }
+
+      if (coverImageFile != null) {
+        final coverUrl = await _firestoreService.uploadFile(
+          folder: 'cover_images',
+          uid: currentUser.uid,
+          file: coverImageFile,
+        );
+        updates['coverImage'] = coverUrl;
+      }
+
+      await _firestoreService.updateAppUserProfile(
+        uid: currentUser.uid,
+        updates: updates,
+      );
+
+      final AppUser? refreshed = await _firestoreService.getAppUser(
+        currentUser.uid,
+      );
+      _appUser = refreshed;
+      _profileResolved = true;
+      _profileLoadError = null;
+      notifyListeners();
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> changeCurrentUserPassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    _setLoading(true);
+    try {
+      await _authService.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
     } finally {
       _setLoading(false);
     }

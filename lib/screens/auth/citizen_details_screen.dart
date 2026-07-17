@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'dart:async';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/constants/app_colors.dart';
 import '../../providers/user_provider.dart';
 import '../../features/profile/presentation/pages/profile_dashboard_gate.dart';
 
@@ -60,36 +60,35 @@ class _CitizenDetailsScreenState
     return showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor:
-            const Color(0xFF111111),
-        title: const Text("Enter OTP",
-            style:
-                TextStyle(color: Colors.white)),
+      backgroundColor: AppColors.surface,
+      title: Text("Enter OTP",
+        style:
+          TextStyle(color: AppColors.textPrimary)),
         content: TextField(
           controller: controller,
           keyboardType:
               TextInputType.number,
-          style: const TextStyle(
-              color: Colors.white),
-          decoration: const InputDecoration(
+        style: TextStyle(
+          color: AppColors.textPrimary),
+        decoration: InputDecoration(
             hintText: "6-digit code",
-            hintStyle: TextStyle(
-                color: Colors.white38),
+        hintStyle: TextStyle(
+          color: AppColors.textMuted),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () =>
                 Navigator.pop(context),
-            child: const Text("Cancel"),
+        child: Text("Cancel", style: TextStyle(color: AppColors.textMuted)),
           ),
           ElevatedButton(
             style: ElevatedButton
                 .styleFrom(
               backgroundColor:
-                  const Color(0xFFF5A623),
+            AppColors.primaryGold,
               foregroundColor:
-                  Colors.black,
+            AppColors.onGold,
             ),
             onPressed: () =>
                 Navigator.pop(
@@ -106,7 +105,9 @@ class _CitizenDetailsScreenState
 
   Future<void> _submit() async {
     if (!_formKey.currentState!
-        .validate()) return;
+        .validate()) {
+      return;
+    }
 
     final provider =
         context.read<UserProvider>();
@@ -114,10 +115,13 @@ class _CitizenDetailsScreenState
     try {
       final phone =
           _phoneController.text.trim();
+      final digitsOnly = phone
+        .replaceAll(RegExp(r'\D'), '');
       final normalized =
-          phone.startsWith('+')
-              ? phone
-              : '+91$phone';
+        digitsOnly.startsWith('91') &&
+            digitsOnly.length > 10
+          ? '+$digitsOnly'
+          : '+91$digitsOnly';
 
       final verificationId =
           await provider
@@ -128,7 +132,9 @@ class _CitizenDetailsScreenState
           await _askOtpCode();
 
       if (otp == null ||
-          otp.isEmpty) return;
+          otp.isEmpty) {
+        return;
+      }
 
       await provider
           .completeCitizenOnboarding(
@@ -186,54 +192,71 @@ class _CitizenDetailsScreenState
           const EdgeInsets.symmetric(
               horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: AppColors.surface,
         borderRadius:
             BorderRadius.circular(20),
         border: Border.all(
-          color:
-              const Color(0xFFD4AF37),
+          color: AppColors.primaryGold,
           width: 1.2,
         ),
       ),
       child: Row(
         children: [
           Icon(icon,
-              color:
-                  const Color(0xFFD4AF37)),
+              color: AppColors.primaryGold),
           const SizedBox(width: 12),
           Expanded(
             child: TextFormField(
               controller: controller,
               keyboardType: keyboard,
               obscureText: obscure,
-              style: const TextStyle(
-                  color: Colors.white),
+              style: TextStyle(
+                  color: AppColors.textPrimary),
               validator: (v) {
                 if (hint ==
-                    "Email (Optional)")
+                    "Email (Optional)") {
                   return null;
+                }
                 if (v == null ||
-                    v.isEmpty)
+                    v.isEmpty) {
                   return "Required";
+                }
                 if (hint ==
                         "Phone Number" &&
-                    v.length < 10)
+                    v.length < 10) {
                   return "Invalid phone";
+                }
                 if (hint ==
                         "Password" &&
-                    v.length < 6)
+                    v.length < 6) {
                   return "Min 6 chars";
+                }
                 return null;
               },
               decoration:
                   InputDecoration(
                 hintText: hint,
                 hintStyle:
-                    const TextStyle(
-                        color: Colors
-                            .white38),
+                  TextStyle(
+                    color: AppColors.textMuted),
+                filled: false,
+                fillColor: Colors.transparent,
+                isDense: true,
+                contentPadding:
+                  const EdgeInsets.symmetric(
+                    vertical: 16),
                 border:
                     InputBorder.none,
+                enabledBorder:
+                  InputBorder.none,
+                focusedBorder:
+                  InputBorder.none,
+                disabledBorder:
+                  InputBorder.none,
+                errorBorder:
+                  InputBorder.none,
+                focusedErrorBorder:
+                  InputBorder.none,
               ),
             ),
           ),
@@ -249,7 +272,7 @@ class _CitizenDetailsScreenState
             .isLoading;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child:
             SingleChildScrollView(
@@ -262,10 +285,10 @@ class _CitizenDetailsScreenState
                   CrossAxisAlignment.start,
               children: [
 
-                const Text(
+                Text(
                   "Citizen Verification",
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                     fontSize: 24,
                     fontWeight:
                         FontWeight.bold,
@@ -275,11 +298,10 @@ class _CitizenDetailsScreenState
                 const SizedBox(
                     height: 6),
 
-                const Text(
+                Text(
                   "Please provide your official details",
                   style: TextStyle(
-                      color:
-                          Colors.white54),
+                    color: AppColors.textMuted),
                 ),
 
                 const SizedBox(
@@ -311,7 +333,7 @@ class _CitizenDetailsScreenState
                           CircleAvatar(
                         radius: 46,
                         backgroundColor:
-                            Colors.black,
+                          AppColors.surface,
                         backgroundImage:
                             _profileImage ==
                                     null
@@ -319,15 +341,12 @@ class _CitizenDetailsScreenState
                                 : FileImage(
                                     _profileImage!),
                         child:
-                            _profileImage ==
-                                    null
-                                ? const Icon(
-                                    Icons
-                                        .camera_alt,
-                                    color: Color(
-                                        0xFFD4AF37),
-                                  )
-                                : null,
+                          _profileImage == null
+                            ? Icon(
+                              Icons.camera_alt,
+                              color: AppColors.primaryGold,
+                              )
+                            : null,
                       ),
                     ),
                   ),
@@ -401,10 +420,9 @@ class _CitizenDetailsScreenState
                         ElevatedButton
                             .styleFrom(
                       backgroundColor:
-                          const Color(
-                              0xFFD4AF37),
+                          AppColors.primaryGold,
                       foregroundColor:
-                          Colors.black,
+                          AppColors.onGold,
                       padding:
                           const EdgeInsets
                               .symmetric(
@@ -420,8 +438,7 @@ class _CitizenDetailsScreenState
                     ),
                     child: loading
                         ? const CircularProgressIndicator(
-                            color: Colors
-                                .black)
+                          color: AppColors.onGold)
                         : const Text(
                             "Submit for Verification",
                             style:
@@ -437,12 +454,11 @@ class _CitizenDetailsScreenState
                 const SizedBox(
                     height: 20),
 
-                const Center(
+                Center(
                   child: Text(
                     "Your information is secure and encrypted",
                     style: TextStyle(
-                        color: Colors
-                            .white38),
+                        color: AppColors.textMuted),
                   ),
                 ),
               ],

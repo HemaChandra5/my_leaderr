@@ -135,7 +135,7 @@ class _ChooseRoleScreenState extends State<ChooseRoleScreen> {
                                   width: w + (horizontal * 2),
                                   height: heroHeight * 1.95,
                                   child: Image.asset(
-                                    'assets/images/welcome_earth2.jpg',
+                                    'assets/images/welcome_earth2.png',
                                     fit: BoxFit.cover,
                                   ),
                                 ),
