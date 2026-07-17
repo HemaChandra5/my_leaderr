@@ -8,6 +8,7 @@ import 'features/events/presentation/pages/events_screen.dart';
 import 'features/events/presentation/pages/upcoming_meetings_screen.dart';
 import 'features/home/presentation/pages/home_page.dart';
 import 'features/profile/presentation/pages/profile_dashboard_gate.dart';
+import 'features/report_issue/presentation/screens/report_issue_screen.dart';
 import 'features/track_issue/presentation/pages/track_issue_screen.dart';
 import 'providers/user_provider.dart';
 import 'services/auth_service.dart';
@@ -25,6 +26,7 @@ class AppRoutes {
   static const String events = '/events';
   static const String upcomingMeetings = '/events/upcoming';
   static const String track = '/track';
+  static const String trackStatus = '/track/status';
   static const String profile = '/profile';
 }
 
@@ -33,10 +35,108 @@ const bool _forceDebugTest = false;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  await AppLanguage.instance.load();
-  await AppThemeManager.instance.load();
-  runApp(const MyLeaderApp());
+  runApp(const _AppBootstrap());
+}
+
+class _AppBootstrap extends StatefulWidget {
+  const _AppBootstrap();
+
+  @override
+  State<_AppBootstrap> createState() => _AppBootstrapState();
+}
+
+class _AppBootstrapState extends State<_AppBootstrap> {
+  late Future<void> _initializeFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeFuture = _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    await Firebase.initializeApp();
+    await AppLanguage.instance.load();
+    await AppThemeManager.instance.load();
+  }
+
+  void _retry() {
+    setState(() {
+      _initializeFuture = _initializeApp();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<void>(
+      future: _initializeFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: Scaffold(
+              backgroundColor: Color(0xFF07090D),
+              body: Center(
+                child: CircularProgressIndicator(strokeWidth: 2.5),
+              ),
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: Scaffold(
+              backgroundColor: const Color(0xFF07090D),
+              body: SafeArea(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.error_outline_rounded,
+                          size: 40,
+                          color: Colors.redAccent,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'App initialization failed',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${snapshot.error}',
+                          style: const TextStyle(
+                            color: Color(0xFFB9C0CC),
+                            fontSize: 13,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 18),
+                        ElevatedButton(
+                          onPressed: _retry,
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+
+        return const MyLeaderApp();
+      },
+    );
+  }
 }
 
 class MyLeaderApp extends StatelessWidget {
@@ -77,7 +177,8 @@ class MyLeaderApp extends StatelessWidget {
               AppRoutes.createMenu: (_) => const CreateMenuOverlay(),
               AppRoutes.events: (_) => const EventsScreen(),
               AppRoutes.upcomingMeetings: (_) => const UpcomingMeetingsScreen(),
-              AppRoutes.track: (_) => const TrackIssueScreen(),
+              AppRoutes.track: (_) => const ReportIssueScreen(),
+              AppRoutes.trackStatus: (_) => const TrackIssueScreen(),
               AppRoutes.profile: (_) => const ProfileDashboardGate(),
             },
           );
@@ -88,7 +189,7 @@ class MyLeaderApp extends StatelessWidget {
 }
 
 class _DebugTestPage extends StatelessWidget {
-  const _DebugTestPage({super.key});
+  const _DebugTestPage();
 
   @override
   Widget build(BuildContext context) {

@@ -5,6 +5,7 @@ import '../../../../core/localization/app_language.dart';
 import '../../../../core/localization/app_localizations.dart';
 
 import '../../domain/models/citizen_profile.dart';
+import 'my_reported_issues_page.dart';
 import '../widgets/bottom_nav_bar_widget.dart';
 import '../widgets/profile_header_widget.dart';
 import '../widgets/profile_menu_card_widget.dart';
@@ -81,6 +82,15 @@ class _CitizenProfileDashboardState extends State<CitizenProfileDashboard>
   }
 
   void _handleMenuTap(String item) {
+    if (item == _tr('my_reported_issues')) {
+      Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => const MyReportedIssuesPage(),
+        ),
+      );
+      return;
+    }
+
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(

@@ -437,7 +437,7 @@ class _HomePageState extends State<HomePage> {
                             searchTextColor: primaryText,
                             searchHintColor: secondaryText,
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 0),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: CategoryTabs(

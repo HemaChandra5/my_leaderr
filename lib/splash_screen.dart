@@ -206,7 +206,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFF0A111F),
       body: Stack(
         children: [
           /// 🌍 Full-screen background image
@@ -214,6 +214,56 @@ class _SplashScreenState extends State<SplashScreen>
             child: Image.asset(
               'assets/images/sp1.jpg',
               fit: BoxFit.cover,
+              errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
+                return Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: <Color>[
+                        Color(0xFF0A111F),
+                        Color(0xFF121A2A),
+                        Color(0xFF1A2231),
+                      ],
+                    ),
+                  ),
+                );
+              },
+              frameBuilder: (
+                BuildContext context,
+                Widget child,
+                int? frame,
+                bool wasSynchronouslyLoaded,
+              ) {
+                if (wasSynchronouslyLoaded || frame != null) {
+                  return child;
+                }
+                return Stack(
+                  fit: StackFit.expand,
+                  children: <Widget>[
+                    Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: <Color>[
+                            Color(0xFF0A111F),
+                            Color(0xFF121A2A),
+                            Color(0xFF1A2231),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const Center(
+                      child: SizedBox(
+                        width: 26,
+                        height: 26,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
 

@@ -20,11 +20,13 @@ class CreateMenuAction {
     required this.title,
     required this.subtitle,
     required this.icon,
+    this.route,
   });
 
   final String title;
   final String subtitle;
   final IconData icon;
+  final String? route;
 }
 
 class CreateMenuOverlay extends StatelessWidget {
@@ -55,6 +57,7 @@ class CreateMenuOverlay extends StatelessWidget {
           language: language,
         ),
         icon: Icons.notifications_active_outlined,
+        route: _trackRoute,
       ),
       CreateMenuAction(
         title: AppLocalizations.translate(
@@ -86,9 +89,10 @@ class CreateMenuOverlay extends StatelessWidget {
     return AnimatedBuilder(
       animation: AppLanguage.instance,
       builder: (context, _) {
-        final language = AppLanguage.instance.language;
-        final actions = _buildActions(language);
+        final String language = AppLanguage.instance.language;
+        final List<CreateMenuAction> actions = _buildActions(language);
         final bool isDark = Theme.of(context).brightness == Brightness.dark;
+        final NavigatorState navigator = Navigator.of(context);
         final Color background = Theme.of(context).scaffoldBackgroundColor;
         final Color menuContainer = Theme.of(context).colorScheme.surface;
         final Color divider = isDark
@@ -142,7 +146,7 @@ class CreateMenuOverlay extends StatelessWidget {
                           ),
                           const Spacer(),
                           IconButton(
-                            onPressed: () => Navigator.of(context).pop(),
+                            onPressed: () => navigator.pop(),
                             icon: const Icon(Icons.close_rounded),
                             color: primaryText,
                             iconSize: 24,
@@ -221,10 +225,13 @@ class CreateMenuOverlay extends StatelessWidget {
                                                 primaryText: primaryText,
                                                 secondaryText: secondaryText,
                                                 onTap: () {
-                                                  Navigator.of(context).pop();
-                                                  debugPrint(
-                                                    'Create action selected: ${action.title}',
-                                                  );
+                                                  navigator.pop();
+                                                  if (action.route != null) {
+                                                    navigator
+                                                        .pushReplacementNamed(
+                                                          action.route!,
+                                                        );
+                                                  }
                                                 },
                                               ),
                                               if (index != actions.length - 1)
@@ -345,41 +352,35 @@ class _OverlayBottomNavBar extends StatelessWidget {
       return;
     }
 
-    Navigator.of(context).pop();
+    final NavigatorState navigator = Navigator.of(context);
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    navigator.pop();
 
     if (route == _homeRoute || route == '/home') {
-      Future<void>.microtask(() {
-        Navigator.of(context).pushReplacementNamed(_homeRoute);
-      });
+      navigator.pushReplacementNamed(_homeRoute);
       return;
     }
 
     if (route == _eventsRoute || route == _trackRoute) {
-      Future<void>.microtask(() {
-        Navigator.of(context).pushReplacementNamed(route);
-      });
+      navigator.pushReplacementNamed(route);
       return;
     }
 
     if (route == _profileRoute) {
-      Future<void>.microtask(() {
-        Navigator.of(context).pushReplacementNamed(_profileRoute);
-      });
+      navigator.pushReplacementNamed(_profileRoute);
       return;
     }
 
-    Future<void>.microtask(() {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            behavior: SnackBarBehavior.floating,
-            content: Text(
-              AppLocalizations.translate('coming_soon', language: language),
-            ),
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          content: Text(
+            AppLocalizations.translate('coming_soon', language: language),
           ),
-        );
-    });
+        ),
+      );
   }
 
   @override

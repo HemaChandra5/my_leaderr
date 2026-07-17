@@ -103,53 +103,66 @@ class HomeHeader extends StatelessWidget {
                                 : const Color(0xff17191C),
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          child: Row(
-                            children: [
-                              IconButton(
-                                onPressed: onSearchTap,
-                                splashRadius: 20,
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints.tightFor(
-                                  width: 44,
-                                  height: 42,
-                                ),
-                                icon: Icon(
-                                  searchActive
-                                      ? Icons.close_rounded
-                                      : Icons.search_rounded,
-                                  size: 21,
-                                  color: const Color(0xffFFFFFF),
-                                ),
-                              ),
-                              if (searchActive)
-                                Expanded(
-                                  child: TextField(
-                                    controller: searchController,
-                                    focusNode: searchFocusNode,
-                                    onChanged: onSearchChanged,
-                                    style: TextStyle(
-                                      color: searchTextColor,
-                                      fontSize: 14,
-                                      fontFamily: 'Inter',
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: searchHintText,
-                                      hintStyle: TextStyle(
-                                        color: searchHintColor,
-                                        fontSize: 14,
-                                        fontFamily: 'Inter',
+                          child: searchActive
+                              ? Row(
+                                  children: [
+                                    IconButton(
+                                      onPressed: onSearchTap,
+                                      splashRadius: 20,
+                                      padding: EdgeInsets.zero,
+                                      constraints:
+                                          const BoxConstraints.tightFor(
+                                            width: 44,
+                                            height: 42,
+                                          ),
+                                      icon: const Icon(
+                                        Icons.close_rounded,
+                                        size: 21,
+                                        color: Color(0xffFFFFFF),
                                       ),
-                                      isDense: true,
-                                      border: InputBorder.none,
-                                      contentPadding: const EdgeInsets.only(
-                                        right: 12,
-                                        bottom: 2,
+                                    ),
+                                    Expanded(
+                                      child: TextField(
+                                        controller: searchController,
+                                        focusNode: searchFocusNode,
+                                        onChanged: onSearchChanged,
+                                        style: TextStyle(
+                                          color: searchTextColor,
+                                          fontSize: 14,
+                                          fontFamily: 'Inter',
+                                        ),
+                                        decoration: InputDecoration(
+                                          hintText: searchHintText,
+                                          hintStyle: TextStyle(
+                                            color: searchHintColor,
+                                            fontSize: 14,
+                                            fontFamily: 'Inter',
+                                          ),
+                                          isDense: true,
+                                          border: InputBorder.none,
+                                          contentPadding: const EdgeInsets.only(
+                                            right: 12,
+                                            bottom: 2,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: onSearchTap,
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.search_rounded,
+                                        size: 21,
+                                        color: Color(0xffFFFFFF),
                                       ),
                                     ),
                                   ),
                                 ),
-                            ],
-                          ),
                         ),
                         const SizedBox(width: 8),
                         Material(
