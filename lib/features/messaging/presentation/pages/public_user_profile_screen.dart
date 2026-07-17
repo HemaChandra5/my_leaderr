@@ -748,7 +748,7 @@ class _PublicUserProfileScreenState extends State<PublicUserProfileScreen>
           ),
         );
       },
-      separatorBuilder: (_, int __) => const SizedBox(height: 10),
+      separatorBuilder: (_, int _) => const SizedBox(height: 10),
       itemCount: items.length,
     );
   }
@@ -1056,7 +1056,7 @@ class AnimatedCounter extends StatelessWidget {
       duration: const Duration(milliseconds: 850),
       curve: Curves.easeOutCubic,
       tween: Tween<double>(begin: 0, end: value.toDouble()),
-      builder: (_, double animated, __) {
+      builder: (_, double animated, _) {
         return Text(
           animated.round().toString(),
           style: TextStyle(

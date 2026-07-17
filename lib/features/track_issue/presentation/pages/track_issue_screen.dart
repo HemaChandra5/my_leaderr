@@ -174,6 +174,7 @@ class _TrackIssueScreenState extends State<TrackIssueScreen>
 
   void _openPublicProfile(String name) {
     final String userId = 'user_${name.toLowerCase().replaceAll(' ', '_')}';
+    debugPrint('Opening profile for user: $userId');
     Navigator.of(context).pushNamed(
       AppRoutes.publicProfile,
       arguments: PublicProfileRouteArgs(userId: userId, displayName: name),

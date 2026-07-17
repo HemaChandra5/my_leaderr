@@ -372,7 +372,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                       icon: Icons.dark_mode_outlined,
                       trailing: Switch(
                         value: themeProvider.isDark,
-                        activeColor: AppTheme.gold,
+                        activeThumbColor: AppTheme.gold,
                         onChanged: themeProvider.toggleTheme,
                       ),
                     );
@@ -403,7 +403,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                       icon: Icons.notifications_active_outlined,
                       trailing: Switch(
                         value: settingsProvider.notificationsEnabled,
-                        activeColor: AppTheme.gold,
+                        activeThumbColor: AppTheme.gold,
                         onChanged: (_) => context
                             .read<SettingsProvider>()
                             .toggleNotifications(),

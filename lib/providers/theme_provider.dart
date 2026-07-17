@@ -1,40 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import '../core/theme/app_theme_manager.dart';
 
 class ThemeProvider extends ChangeNotifier {
   ThemeProvider() {
-    _loadTheme();
+    AppThemeManager.instance.addListener(_onThemeChanged);
+    AppThemeManager.instance.load();
   }
 
-  static const String _themePreferenceKey = 'theme_mode';
+  bool get isDark => AppThemeManager.instance.isDarkMode;
 
-  bool _isDark = true;
+  ThemeMode get themeMode => AppThemeManager.instance.themeMode;
 
-  bool get isDark => _isDark;
-
-  ThemeMode get themeMode => _isDark ? ThemeMode.dark : ThemeMode.light;
-
-  Future<void> _loadTheme() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String? savedMode = prefs.getString(_themePreferenceKey);
-
-    if (savedMode == null) {
-      return;
-    }
-
-    _isDark = savedMode != 'light';
+  void _onThemeChanged() {
     notifyListeners();
   }
 
   Future<void> toggleTheme(bool value) async {
-    if (_isDark == value) {
-      return;
-    }
+    await AppThemeManager.instance.setThemeMode(
+      value ? ThemeMode.dark : ThemeMode.light,
+    );
+  }
 
-    _isDark = value;
-    notifyListeners();
-
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_themePreferenceKey, _isDark ? 'dark' : 'light');
+  @override
+  void dispose() {
+    AppThemeManager.instance.removeListener(_onThemeChanged);
+    super.dispose();
   }
 }

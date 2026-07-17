@@ -206,7 +206,7 @@ class _LoginScreenState extends State<LoginScreen>
                   left: -40,
                   child: _GlowOrb(
                     size: 220,
-                    color: _AuthColors.gold.withOpacity(0.13),
+                    color: _AuthColors.gold.withValues(alpha: 0.13),
                   ),
                 ),
                 Positioned(
@@ -214,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen>
                   top: 220,
                   child: _GlowOrb(
                     size: 180,
-                    color: const Color(0xFF3A6B9F).withOpacity(0.12),
+                    color: const Color(0xFF3A6B9F).withValues(alpha: 0.12),
                   ),
                 ),
                 SafeArea(
@@ -620,7 +620,7 @@ class _GlowOrb extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: RadialGradient(colors: [color, color.withOpacity(0)]),
+          gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
         ),
       ),
     );

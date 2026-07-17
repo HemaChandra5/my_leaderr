@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../community/state/community_hub_controller.dart';
 import '../../../main.dart';
 import '../../messaging/models/public_user_profile.dart';
 import '../../../providers/user_provider.dart';
@@ -69,7 +70,12 @@ class _EventsScreenState extends State<EventsScreen> {
   }
 
   List<EventModel> get _categoryEvents {
-    return _allEvents
+    final List<EventModel> allVisible = <EventModel>[
+      ...context.read<CommunityHubController>().createdEvents,
+      ..._allEvents,
+    ];
+
+    return allVisible
         .where((EventModel event) => event.category == _selectedCategory)
         .map(
           (EventModel event) => event.copyWith(
@@ -127,7 +133,10 @@ class _EventsScreenState extends State<EventsScreen> {
     }
 
     setState(() {
-      _allEvents = <EventModel>[createdEvent, ..._allEvents];
+      _allEvents = <EventModel>[
+        createdEvent,
+        ..._allEvents.where((EventModel item) => item.id != createdEvent.id),
+      ];
       _selectedCategory = createdEvent.category;
       _upcomingPageIndex = 0;
     });
@@ -136,6 +145,7 @@ class _EventsScreenState extends State<EventsScreen> {
   void _openOrganizerProfile(String organizerName) {
     final String userId =
         'user_${organizerName.toLowerCase().replaceAll(' ', '_')}';
+    debugPrint('Opening profile for user: $userId');
     Navigator.of(context).pushNamed(
       AppRoutes.publicProfile,
       arguments: PublicProfileRouteArgs(

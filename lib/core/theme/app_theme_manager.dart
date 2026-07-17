@@ -23,10 +23,22 @@ class AppThemeManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> toggleTheme() async {
-    _themeMode = _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+  Future<void> setThemeMode(ThemeMode mode) async {
+    if (_themeMode == mode) {
+      return;
+    }
+    _themeMode = mode;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('theme_mode', _themeMode == ThemeMode.dark ? 'dark' : 'light');
+    await prefs.setString(
+      'theme_mode',
+      _themeMode == ThemeMode.dark ? 'dark' : 'light',
+    );
     notifyListeners();
+  }
+
+  Future<void> toggleTheme() async {
+    await setThemeMode(
+      _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark,
+    );
   }
 }

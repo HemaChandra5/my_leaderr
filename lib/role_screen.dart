@@ -6,7 +6,7 @@ import 'core/constants/app_colors.dart';
 import 'core/localization/app_language.dart';
 import 'core/localization/app_localizations.dart';
 import 'core/theme/app_theme_manager.dart';
-import 'features/welcome/presentation/widgets/hero_globe.dart';
+import 'features/welcome/presentation/widgets/premium_hero_image.dart';
 import 'features/welcome/presentation/widgets/welcome_heading.dart';
 import 'screens/auth/citizen_details_screen.dart';
 import 'screens/auth/leader_verification_screen.dart' as leader_auth;
@@ -166,16 +166,18 @@ class _RoleScreenState extends State<RoleScreen>
                             opacity: _globeFade,
                             child: ScaleTransition(
                               scale: _globeScale,
-                              child: SizedBox(
-                                height: globeHeight,
-                                child: OverflowBox(
-                                  alignment: const Alignment(-0.1, 0),
-                                  minWidth: w,
-                                  maxWidth: w * 1.65,
-                                  child: HeroGlobe(
-                                    height: globeHeight,
-                                    maxWidth: w * 1.65,
+                              child: IgnorePointer(
+                                ignoring: true,
+                                child: PremiumHeroImage(
+                                  key: ValueKey<Brightness>(
+                                    Theme.of(context).brightness,
                                   ),
+                                  alignment: const Alignment(0.0, -0.08),
+                                  fadeColor:
+                                      Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.black
+                                      : const Color(0xFFFFFFFF),
                                 ),
                               ),
                             ),
@@ -276,7 +278,7 @@ class _RoleScreenState extends State<RoleScreen>
                                         "Connecting Citizens. Empowering Leaders.",
                                         style: GoogleFonts.inter(
                                           fontSize: 11.5,
-                                          color: const Color(0xFF888888),
+                                          color: AppColors.textMuted,
                                         ),
                                       ),
                                     ],
@@ -328,6 +330,7 @@ class _RoleCardState extends State<_RoleCard> {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: widget.onSelect,
       onTapDown: (_) => setState(() => _pressed = true),
@@ -339,12 +342,12 @@ class _RoleCardState extends State<_RoleCard> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
           decoration: BoxDecoration(
-            color: const Color(0xFF121212),
+            color: colors.surface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: widget.selected
                   ? AppColors.primaryGold
-                  : Colors.white.withOpacity(0.08),
+                  : AppColors.divider,
               width: widget.selected ? 1.6 : 1,
             ),
           ),
@@ -362,7 +365,7 @@ class _RoleCardState extends State<_RoleCard> {
                 style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: colors.onSurface,
                 ),
               ),
 
@@ -376,7 +379,7 @@ class _RoleCardState extends State<_RoleCard> {
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 12.5,
-                      color: const Color(0xFF9CA3AF),
+                      color: AppColors.textMuted,
                     ),
                   ),
                 ),

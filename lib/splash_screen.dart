@@ -130,7 +130,7 @@ class _SplashScreenState extends State<SplashScreen>
       context,
     );
     precacheImage(
-      const AssetImage('assets/images/dark/earth_space.png'),
+      const AssetImage('assets/images/dark/nighttime.png'),
       context,
     );
   }
@@ -159,12 +159,6 @@ class _SplashScreenState extends State<SplashScreen>
     return isDarkMode
         ? 'assets/images/dark/logo.png'
         : 'assets/images/light/logo.png';
-  }
-
-  String _splashImageAsset(bool isDarkMode) {
-    return isDarkMode
-        ? 'assets/images/dark/earth_space.png'
-        : 'assets/images/light/lightimage.png';
   }
 
   Widget _buildThemeToggle() {
@@ -267,9 +261,7 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: isDarkMode
-          ? AppColors.background
-          : const Color(0xFFFFFFFF),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
@@ -360,10 +352,9 @@ class _SplashScreenState extends State<SplashScreen>
                             child: IgnorePointer(
                               ignoring: true,
                               child: PremiumHeroImage(
-                                key: ValueKey<String>(
-                                  _splashImageAsset(isDarkMode),
+                                key: ValueKey<Brightness>(
+                                  Theme.of(context).brightness,
                                 ),
-                                imageAsset: _splashImageAsset(isDarkMode),
                                 alignment: const Alignment(0.0, -0.08),
                                 fadeColor: isDarkMode
                                     ? Colors.black
