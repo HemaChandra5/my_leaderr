@@ -4,9 +4,14 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
 
 class WelcomeHeading extends StatelessWidget {
-  const WelcomeHeading({super.key, required this.fontSize});
+  const WelcomeHeading({
+    super.key,
+    required this.fontSize,
+    this.sideLineColor = AppColors.textPrimary,
+  });
 
   final double fontSize;
+  final Color sideLineColor;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +28,7 @@ class WelcomeHeading extends StatelessWidget {
         Text(
           'Our Voice.',
           textAlign: TextAlign.center,
-          style: style.copyWith(color: AppColors.textPrimary),
+          style: style.copyWith(color: sideLineColor),
         ),
         const SizedBox(height: 3),
         Text(
@@ -35,7 +40,7 @@ class WelcomeHeading extends StatelessWidget {
         Text(
           'Our Community.',
           textAlign: TextAlign.center,
-          style: style.copyWith(color: AppColors.textPrimary),
+          style: style.copyWith(color: sideLineColor),
         ),
       ],
     );

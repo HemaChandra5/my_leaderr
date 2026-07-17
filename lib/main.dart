@@ -4,18 +4,14 @@ import 'package:provider/provider.dart';
 import 'core/localization/app_language.dart';
 import 'features/community/presentation/pages/community_page.dart';
 import 'features/create/presentation/pages/create_menu_overlay.dart';
-import 'features/events/screens/events_screen.dart';
+import 'features/events/presentation/pages/events_screen.dart';
 import 'features/events/presentation/pages/upcoming_meetings_screen.dart';
 import 'features/home/presentation/pages/home_page.dart';
-import 'features/messaging/models/chat_models.dart';
 import 'features/messaging/models/public_user_profile.dart';
-import 'features/messaging/presentation/pages/chat_list_screen.dart';
-import 'features/messaging/presentation/pages/chat_screen.dart';
 import 'features/messaging/presentation/pages/public_user_profile_screen.dart';
 import 'features/profile/presentation/pages/profile_dashboard_gate.dart';
 import 'features/track_issue/presentation/pages/track_issue_screen.dart';
 import 'providers/settings_provider.dart';
-import 'providers/theme_provider.dart';
 import 'providers/user_provider.dart';
 import 'services/auth_service.dart';
 import 'services/firestore_service.dart';
@@ -32,9 +28,7 @@ class AppRoutes {
   static const String upcomingMeetings = '/events/upcoming';
   static const String track = '/track';
   static const String profile = '/profile';
-  static const String publicProfile = '/public-profile';
-  static const String inbox = '/messages';
-  static const String chat = '/messages/chat';
+  static const String publicProfile = '/profile/public';
 }
 
 // Toggle this to force a minimal debug screen at startup for rendering checks.
@@ -67,7 +61,6 @@ class MyLeaderApp extends StatelessWidget {
             firestoreService: FirestoreService(),
           ),
         ),
-        ChangeNotifierProvider<ThemeProvider>(create: (_) => ThemeProvider()),
         ChangeNotifierProvider<SettingsProvider>(
           create: (_) => SettingsProvider(),
         ),
@@ -75,35 +68,41 @@ class MyLeaderApp extends StatelessWidget {
       child: AnimatedBuilder(
         animation: AppLanguage.instance,
         builder: (context, _) {
-          return Consumer<ThemeProvider>(
-            builder: (context, themeProvider, __) {
-              return MaterialApp(
-                debugShowCheckedModeBanner: false,
-                title: 'My Leader',
-                theme: AppTheme.light,
-                darkTheme: AppTheme.dark,
-                themeMode: themeProvider.themeMode,
-                home: firebaseReady
-                    ? null
-                    : _StartupErrorPage(
-                        error: firebaseError ?? 'Unknown startup error',
-                      ),
-                initialRoute: firebaseReady
-                    ? (_forceDebugTest ? AppRoutes.debug : AppRoutes.splash)
-                    : null,
-                routes: <String, WidgetBuilder>{
-                  AppRoutes.debug: (_) => const _DebugTestPage(),
-                  AppRoutes.splash: (_) => const SplashScreen(),
-                  AppRoutes.home: (_) => const HomePage(),
-                  AppRoutes.community: (_) => const CommunityPage(),
-                  AppRoutes.createMenu: (_) => const CreateMenuOverlay(),
-                  AppRoutes.events: (_) => const EventsScreen(),
-                  AppRoutes.upcomingMeetings: (_) =>
-                      const UpcomingMeetingsScreen(),
-                  AppRoutes.track: (_) => const TrackIssueScreen(),
-                  AppRoutes.profile: (_) => const ProfileDashboardGate(),
-                },
-              );
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'My Leader',
+            theme: AppTheme.dark,
+            themeMode: ThemeMode.dark,
+            home: firebaseReady
+                ? null
+                : _StartupErrorPage(
+                    error: firebaseError ?? 'Unknown startup error',
+                  ),
+            initialRoute: firebaseReady
+                ? (_forceDebugTest ? AppRoutes.debug : AppRoutes.splash)
+                : null,
+            routes: <String, WidgetBuilder>{
+              AppRoutes.debug: (_) => const _DebugTestPage(),
+              AppRoutes.splash: (_) => const SplashScreen(),
+              AppRoutes.home: (_) => const HomePage(),
+              AppRoutes.community: (_) => const CommunityPage(),
+              AppRoutes.createMenu: (_) => const CreateMenuOverlay(),
+              AppRoutes.events: (_) => const EventsScreen(),
+              AppRoutes.upcomingMeetings: (_) => const UpcomingMeetingsScreen(),
+              AppRoutes.track: (_) => const TrackIssueScreen(),
+              AppRoutes.profile: (_) => const ProfileDashboardGate(),
+            },
+            onGenerateRoute: (RouteSettings settings) {
+              if (settings.name == AppRoutes.publicProfile) {
+                final Object? args = settings.arguments;
+                if (args is PublicProfileRouteArgs) {
+                  return MaterialPageRoute<void>(
+                    builder: (_) => PublicUserProfileScreen(args: args),
+                    settings: settings,
+                  );
+                }
+              }
+              return null;
             },
           );
         },

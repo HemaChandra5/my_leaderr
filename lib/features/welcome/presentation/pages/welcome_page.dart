@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_leaderr/auth/login_screen.dart';
 
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/localization/app_language.dart';
 import '../../../../role_screen.dart';
 import '../widgets/action_buttons.dart';
@@ -102,7 +101,7 @@ class _WelcomePageState extends State<WelcomePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
@@ -195,7 +194,10 @@ class _WelcomePageState extends State<WelcomePage>
                             SizedBox(height: globeToHeadingSpace),
                             FadeTransition(
                               opacity: _headingFade,
-                              child: WelcomeHeading(fontSize: headingSize),
+                              child: WelcomeHeading(
+                                fontSize: headingSize,
+                                sideLineColor: Colors.white,
+                              ),
                             ),
                             SizedBox(height: headingToSubtitleSpace),
                             FadeTransition(

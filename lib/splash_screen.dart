@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'auth/login_screen.dart';
 import 'core/localization/app_language.dart';
 import 'core/constants/app_colors.dart';
-import 'core/theme/app_theme_manager.dart';
 import 'features/welcome/presentation/widgets/action_buttons.dart';
 import 'features/welcome/presentation/widgets/premium_hero_image.dart';
 import 'features/welcome/presentation/widgets/welcome_heading.dart';
@@ -50,7 +49,6 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
     _language = AppLanguage.instance.language;
     AppLanguage.instance.addListener(_onLanguageChanged);
-    AppThemeManager.instance.addListener(_onThemeChanged);
 
     _controller = AnimationController(
       vsync: this,
@@ -111,13 +109,6 @@ class _SplashScreenState extends State<SplashScreen>
     });
   }
 
-  void _onThemeChanged() {
-    if (!mounted) {
-      return;
-    }
-    setState(() {});
-  }
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -125,10 +116,6 @@ class _SplashScreenState extends State<SplashScreen>
       return;
     }
     _didPrecacheThemeImages = true;
-    precacheImage(
-      const AssetImage('assets/images/light/lightimage.png'),
-      context,
-    );
     precacheImage(
       const AssetImage('assets/images/dark/earth_space.png'),
       context,
@@ -138,7 +125,6 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void dispose() {
     AppLanguage.instance.removeListener(_onLanguageChanged);
-    AppThemeManager.instance.removeListener(_onThemeChanged);
     _controller.dispose();
     super.dispose();
   }
@@ -155,33 +141,12 @@ class _SplashScreenState extends State<SplashScreen>
     ).push(MaterialPageRoute<void>(builder: (_) => const LoginScreen()));
   }
 
-  String _logoAsset(bool isDarkMode) {
-    return isDarkMode
-        ? 'assets/images/dark/logo.png'
-        : 'assets/images/light/logo.png';
+  String _logoAsset() {
+    return 'assets/images/dark/logo.png';
   }
 
-  String _splashImageAsset(bool isDarkMode) {
-    return isDarkMode
-        ? 'assets/images/dark/earth_space.png'
-        : 'assets/images/light/lightimage.png';
-  }
-
-  Widget _buildThemeToggle() {
-    final bool isDarkMode = AppThemeManager.instance.isDarkMode;
-    return IconButton.filledTonal(
-      onPressed: () => AppThemeManager.instance.toggleTheme(),
-      icon: Icon(
-        isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-        size: 18,
-      ),
-      tooltip: isDarkMode ? 'Switch to light mode' : 'Switch to dark mode',
-      style: IconButton.styleFrom(
-        backgroundColor: AppColors.surfaceElevated,
-        foregroundColor: AppColors.primaryGold,
-        side: BorderSide(color: AppColors.divider, width: 1),
-      ),
-    );
+  String _splashImageAsset() {
+    return 'assets/images/dark/earth_space.png';
   }
 
   Widget _buildLanguageSelector() {
@@ -265,11 +230,8 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: isDarkMode
-          ? AppColors.background
-          : const Color(0xFFFFFFFF),
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
@@ -303,10 +265,7 @@ class _SplashScreenState extends State<SplashScreen>
                       SizedBox(height: (h * 0.012).clamp(6, 12).toDouble()),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: <Widget>[
-                          _buildLanguageSelector(),
-                          _buildThemeToggle(),
-                        ],
+                        children: <Widget>[_buildLanguageSelector()],
                       ),
                       SizedBox(height: (h * 0.020).clamp(8, 20).toDouble()),
                       SlideTransition(
@@ -329,8 +288,8 @@ class _SplashScreenState extends State<SplashScreen>
                                 alignment: Alignment.center,
                                 widthFactor: 0.78,
                                 child: Image.asset(
-                                  _logoAsset(isDarkMode),
-                                  key: ValueKey<String>(_logoAsset(isDarkMode)),
+                                  _logoAsset(),
+                                  key: ValueKey<String>(_logoAsset()),
                                   width: logoSize,
                                   height: logoSize,
                                   fit: BoxFit.contain,
@@ -360,14 +319,10 @@ class _SplashScreenState extends State<SplashScreen>
                             child: IgnorePointer(
                               ignoring: true,
                               child: PremiumHeroImage(
-                                key: ValueKey<String>(
-                                  _splashImageAsset(isDarkMode),
-                                ),
-                                imageAsset: _splashImageAsset(isDarkMode),
+                                key: ValueKey<String>(_splashImageAsset()),
+                                imageAsset: _splashImageAsset(),
                                 alignment: const Alignment(0.0, -0.08),
-                                fadeColor: isDarkMode
-                                    ? Colors.black
-                                    : const Color(0xFFFFFFFF),
+                                fadeColor: Colors.black,
                               ),
                             ),
                           ),
@@ -378,7 +333,10 @@ class _SplashScreenState extends State<SplashScreen>
                         position: _headingSlide,
                         child: FadeTransition(
                           opacity: _headingFade,
-                          child: WelcomeHeading(fontSize: headingSize),
+                          child: WelcomeHeading(
+                            fontSize: headingSize,
+                            sideLineColor: Colors.white,
+                          ),
                         ),
                       ),
                       SizedBox(height: (h * 0.016).clamp(8, 16).toDouble()),

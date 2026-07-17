@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
 import '../core/localization/app_language.dart';
 import '../core/localization/app_localizations.dart';
-import '../core/theme/app_theme_manager.dart';
 import '../theme.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -52,34 +51,21 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       begin: const Offset(0, 0.12),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
-
-    AppThemeManager.instance.addListener(_onThemeChanged);
-  }
-
-  void _onThemeChanged() {
-    if (!mounted) {
-      return;
-    }
-    setState(() {});
   }
 
   @override
   void dispose() {
-    AppThemeManager.instance.removeListener(_onThemeChanged);
     _controller.dispose();
     super.dispose();
   }
 
   Widget _buildLanguageSelector(String currentLanguage) {
-    final bool isDarkMode = AppThemeManager.instance.isDarkMode;
     final Color chipBg = AppColors.surfaceElevated;
     final Color chipBorder = AppColors.divider;
     final Color chipText = AppColors.textPrimary;
 
     return Theme(
-      data: Theme.of(context).copyWith(
-        cardColor: isDarkMode ? const Color(0xFF1B1B1B) : Colors.white,
-      ),
+      data: Theme.of(context).copyWith(cardColor: Colors.white),
       child: PopupMenuButton<String>(
         initialValue: currentLanguage,
         onSelected: AppLanguage.instance.setLanguage,
@@ -152,26 +138,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     );
   }
 
-  Widget _buildThemeToggle() {
-    final bool isDarkMode = AppThemeManager.instance.isDarkMode;
-    return IconButton.filledTonal(
-      onPressed: () => AppThemeManager.instance.toggleTheme(),
-      icon: Icon(
-        isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-        size: 20,
-      ),
-      tooltip: isDarkMode ? 'Switch to light mode' : 'Switch to dark mode',
-      style: IconButton.styleFrom(
-        backgroundColor: AppColors.surfaceElevated,
-        foregroundColor: isDarkMode ? AppTheme.gold : AppColors.textPrimary,
-        side: BorderSide(
-          color: AppColors.divider,
-          width: 1,
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final mq = MediaQuery.of(context);
@@ -181,13 +147,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     return AnimatedBuilder(
       animation: AppLanguage.instance,
       builder: (context, _) {
-        final bool isDarkMode = AppThemeManager.instance.isDarkMode;
         final currentLanguage = AppLanguage.instance.language;
         final Color pageBg = AppColors.background;
         final Color primaryText = AppColors.textPrimary;
-        final Color heroFade = isDarkMode
-            ? Colors.black.withValues(alpha: 0.82)
-            : Colors.white.withValues(alpha: 0.72);
+        final Color heroFade = Colors.white.withValues(alpha: 0.72);
 
         return Scaffold(
           backgroundColor: pageBg,
@@ -196,7 +159,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             child: SafeArea(
               child: Stack(
                 children: [
-                  Positioned(top: 0, right: 8, child: _buildThemeToggle()),
                   Positioned(
                     top: 0,
                     left: 8,

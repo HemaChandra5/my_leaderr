@@ -7,7 +7,6 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../providers/user_provider.dart';
 import '../../../../theme.dart';
 import '../../../../providers/settings_provider.dart';
-import '../../../../providers/theme_provider.dart';
 import 'change_password_screen.dart';
 import 'edit_profile_screen.dart';
 import 'privacy_screen.dart';
@@ -32,8 +31,6 @@ class _SettingsScreenState extends State<SettingsScreen>
   static const String _editProfileKey = 'edit_profile';
   static const String _privacyKey = 'privacy';
   static const String _changePasswordKey = 'change_password';
-  static const String _darkModeKey = 'dark_mode';
-  static const String _lightModeKey = 'light_mode';
   static const String _languageKey = 'language';
   static const String _notificationsKey = 'notifications';
   static const String _helpCenterKey = 'help_center';
@@ -73,7 +70,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       duration: const Duration(milliseconds: 700),
     )..forward();
 
-    const int itemCount = 13;
+    const int itemCount = 12;
     _fadeAnimations = List<Animation<double>>.generate(itemCount, (int index) {
       final double begin = (index * 0.05).clamp(0, 0.85);
       final double end = (begin + 0.2).clamp(begin + 0.05, 1);
@@ -358,30 +355,9 @@ class _SettingsScreenState extends State<SettingsScreen>
                 4,
                 SectionHeaderWidget(title: _tr(_preferencesHeaderKey)),
               ),
-              _stagger(
-                5,
-                Consumer<ThemeProvider>(
-                  builder: (context, themeProvider, _) {
-                    return SettingsTileWidget(
-                      title: themeProvider.isDark
-                          ? _tr(_darkModeKey)
-                          : _tr(_lightModeKey),
-                      subtitle: themeProvider.isDark
-                          ? _tr(_darkModeKey)
-                          : _tr(_lightModeKey),
-                      icon: Icons.dark_mode_outlined,
-                      trailing: Switch(
-                        value: themeProvider.isDark,
-                        activeColor: AppTheme.gold,
-                        onChanged: themeProvider.toggleTheme,
-                      ),
-                    );
-                  },
-                ),
-              ),
               const SizedBox(height: 10),
               _stagger(
-                6,
+                5,
                 Consumer<SettingsProvider>(
                   builder: (context, settingsProvider, _) {
                     return SettingsTileWidget(
@@ -395,7 +371,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               ),
               const SizedBox(height: 10),
               _stagger(
-                7,
+                6,
                 Consumer<SettingsProvider>(
                   builder: (context, settingsProvider, _) {
                     return SettingsTileWidget(
@@ -414,9 +390,9 @@ class _SettingsScreenState extends State<SettingsScreen>
               ),
               const SizedBox(height: 16),
               // Support
-              _stagger(8, SectionHeaderWidget(title: _tr(_supportHeaderKey))),
+              _stagger(7, SectionHeaderWidget(title: _tr(_supportHeaderKey))),
               _stagger(
-                9,
+                8,
                 SettingsTileWidget(
                   title: _tr(_helpCenterKey),
                   icon: Icons.support_agent_rounded,
@@ -425,7 +401,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               ),
               const SizedBox(height: 10),
               _stagger(
-                10,
+                9,
                 SettingsTileWidget(
                   title: _tr(_aboutAppKey),
                   subtitle: _appInfo,
@@ -434,9 +410,9 @@ class _SettingsScreenState extends State<SettingsScreen>
               ),
               const SizedBox(height: 16),
               // Danger zone
-              _stagger(11, SectionHeaderWidget(title: _tr(_dangerHeaderKey))),
+              _stagger(10, SectionHeaderWidget(title: _tr(_dangerHeaderKey))),
               _stagger(
-                12,
+                11,
                 SettingsTileWidget(
                   title: _tr(_logoutKey),
                   icon: Icons.logout_rounded,
