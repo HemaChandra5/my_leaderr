@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 class PremiumHeroImage extends StatelessWidget {
   const PremiumHeroImage({
     super.key,
-    required this.imageAsset,
     this.fadeColor = Colors.white,
     this.alignment = const Alignment(0.0, -0.08),
     this.heightFactor = 0.55,
@@ -12,7 +11,6 @@ class PremiumHeroImage extends StatelessWidget {
     this.upwardShift = 0.028,
   });
 
-  final String imageAsset;
   final Color fadeColor;
   final Alignment alignment;
   final double heightFactor;
@@ -22,6 +20,11 @@ class PremiumHeroImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final String heroImage = isDark
+        ? 'assets/images/dark/nighttime.png'
+        : 'assets/images/light/lightimage.png';
+
     final Size size = MediaQuery.sizeOf(context);
     final double globeWidth = size.width * widthFactor;
     final double globeHeight = size.height * heightFactor;
@@ -29,85 +32,93 @@ class PremiumHeroImage extends StatelessWidget {
     final double lift = size.height * upwardShift;
 
     return IgnorePointer(
-      ignoring: true,
       child: ConstrainedBox(
         constraints: BoxConstraints.tightFor(
           width: size.width,
           height: visibleHeight,
         ),
-        child: TweenAnimationBuilder<double>(
-          duration: const Duration(milliseconds: 450),
-          curve: Curves.easeOutCubic,
-          tween: Tween(begin: 0, end: 1),
-          builder: (context, value, child) {
-            return Opacity(
-              opacity: value,
-              child: Transform.translate(
-                offset: Offset(0, (1 - value) * 15 - lift),
-                child: Transform.scale(
-                  scale: 0.94 + (0.06 * value),
-                  child: child,
-                ),
-              ),
-            );
-          },
-          child: Stack(
-            clipBehavior: Clip.none,
+        child: Transform.translate(
+          offset: Offset(0, -lift),
+          child: Align(
             alignment: Alignment.topCenter,
-            children: <Widget>[
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: _AtmosphereAndSunlightPainter(
-                    isDark: fadeColor.computeLuminance() < 0.5,
-                  ),
-                ),
-              ),
-              OverflowBox(
-                alignment: Alignment.topCenter,
-                minWidth: globeWidth,
-                maxWidth: globeWidth,
-                minHeight: globeHeight,
-                maxHeight: globeHeight,
-                child: ShaderMask(
-                  blendMode: BlendMode.dstIn,
-                  shaderCallback: (Rect bounds) {
-                    return const LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: <Color>[
-                        Colors.transparent,
-                        Colors.white,
-                        Colors.white,
-                        Colors.transparent,
-                      ],
-                      stops: <double>[0.0, 0.08, 0.56, 1.0],
-                    ).createShader(bounds);
-                  },
-                  child: ShaderMask(
-                    blendMode: BlendMode.dstIn,
-                    shaderCallback: (Rect bounds) {
-                      return const LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: <Color>[
-                          Colors.transparent,
-                          Colors.white,
-                          Colors.white,
-                          Colors.transparent,
-                        ],
-                        stops: <double>[0.0, 0.07, 0.93, 1.0],
-                      ).createShader(bounds);
-                    },
-                    child: Image.asset(
-                      imageAsset,
-                      alignment: alignment,
-                      fit: BoxFit.cover,
-                      filterQuality: FilterQuality.high,
+            child: OverflowBox(
+              alignment: Alignment.topCenter,
+              minWidth: globeWidth,
+              maxWidth: globeWidth,
+              minHeight: globeHeight,
+              maxHeight: globeHeight,
+              child: TweenAnimationBuilder<double>(
+                duration: const Duration(milliseconds: 450),
+                curve: Curves.easeOutCubic,
+                tween: Tween<double>(begin: 0, end: 1),
+                builder: (context, value, child) {
+                  return Opacity(
+                    opacity: value,
+                    child: Transform.translate(
+                      offset: Offset(0, (1 - value) * 15),
+                      child: Transform.scale(
+                        scale: 0.94 + (0.06 * value),
+                        child: child,
+                      ),
                     ),
+                  );
+                },
+                child: SizedBox(
+                  width: globeWidth,
+                  height: globeHeight,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.topCenter,
+                    children: <Widget>[
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: _AtmosphereAndSunlightPainter(
+                            isDark: fadeColor.computeLuminance() < 0.5,
+                          ),
+                        ),
+                      ),
+                      Positioned.fill(
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 380),
+                          switchInCurve: Curves.easeOut,
+                          switchOutCurve: Curves.easeIn,
+                          transitionBuilder:
+                              (Widget child, Animation<double> animation) {
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: child,
+                                );
+                              },
+                          child: ShaderMask(
+                            key: ValueKey<String>(heroImage),
+                            blendMode: BlendMode.dstIn,
+                            shaderCallback: (Rect bounds) {
+                              return const RadialGradient(
+                                center: Alignment(0, -0.10),
+                                radius: 1.08,
+                                colors: <Color>[
+                                  Colors.white,
+                                  Colors.white,
+                                  Colors.white,
+                                  Colors.transparent,
+                                ],
+                                stops: <double>[0.0, 0.72, 0.90, 1.0],
+                              ).createShader(bounds);
+                            },
+                            child: Image.asset(
+                              heroImage,
+                              alignment: alignment,
+                              fit: BoxFit.contain,
+                              filterQuality: FilterQuality.high,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),

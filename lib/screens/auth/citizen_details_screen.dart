@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:async';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -106,7 +105,9 @@ class _CitizenDetailsScreenState
 
   Future<void> _submit() async {
     if (!_formKey.currentState!
-        .validate()) return;
+        .validate()) {
+      return;
+    }
 
     final provider =
         context.read<UserProvider>();
@@ -131,7 +132,9 @@ class _CitizenDetailsScreenState
           await _askOtpCode();
 
       if (otp == null ||
-          otp.isEmpty) return;
+          otp.isEmpty) {
+        return;
+      }
 
       await provider
           .completeCitizenOnboarding(
@@ -211,19 +214,23 @@ class _CitizenDetailsScreenState
                   color: AppColors.textPrimary),
               validator: (v) {
                 if (hint ==
-                    "Email (Optional)")
+                    "Email (Optional)") {
                   return null;
+                }
                 if (v == null ||
-                    v.isEmpty)
+                    v.isEmpty) {
                   return "Required";
+                }
                 if (hint ==
                         "Phone Number" &&
-                    v.length < 10)
+                    v.length < 10) {
                   return "Invalid phone";
+                }
                 if (hint ==
                         "Password" &&
-                    v.length < 6)
+                    v.length < 6) {
                   return "Min 6 chars";
+                }
                 return null;
               },
               decoration:

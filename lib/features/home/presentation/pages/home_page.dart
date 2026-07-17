@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../core/localization/app_language.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../community/state/community_hub_controller.dart';
 import '../../../../main.dart';
 import '../../../messaging/models/public_user_profile.dart';
 
@@ -27,7 +28,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedTabIndex = 0;
   int _selectedNavIndex = 0;
-  bool _showSearchBar = false;
+  final bool _showSearchBar = false;
   final ScrollController _feedScrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
@@ -149,6 +150,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _openPublicProfile(PostCardData post) {
+    debugPrint('Opening profile for user: ${post.userId}');
     Navigator.of(context).pushNamed(
       AppRoutes.publicProfile,
       arguments: PublicProfileRouteArgs(
@@ -179,32 +181,6 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
-  }
-
-  void _closeSearchBar() {
-    if (!_showSearchBar) {
-      return;
-    }
-
-    setState(() {
-      _showSearchBar = false;
-      _searchController.clear();
-    });
-    _searchFocusNode.unfocus();
-  }
-
-  void _handleOutsideTap() {
-    if (_showSearchBar) {
-      _closeSearchBar();
-      return;
-    }
-    FocusScope.of(context).unfocus();
-  }
-
-  void _handleFeedScroll(UserScrollNotification notification) {
-    if (_showSearchBar && notification.direction != ScrollDirection.idle) {
-      _closeSearchBar();
-    }
   }
 
   @override
@@ -594,22 +570,49 @@ class _HomePageState extends State<HomePage> {
                                   16,
                                   24,
                                 ),
-                                itemBuilder: (context, index) => PostCard(
-                                  data: filteredFeed[index],
-                                  onMenuTap: () => _trackAction('post_menu'),
-                                  onProfileTap: () =>
-                                      _openPublicProfile(filteredFeed[index]),
-                                  onLikeTap: () => _trackAction('post_like'),
-                                  onCommentTap: () =>
-                                      _trackAction('post_comment'),
-                                  onShareTap: () => _trackAction('post_share'),
-                                  onBoostTap: () => _trackAction('post_boost'),
-                                  onBookmarkTap: () =>
-                                      _trackAction('post_bookmark'),
-                                ),
+                                itemBuilder: (context, index) {
+                                  final int pinnedCount = context
+                                      .watch<CommunityHubController>()
+                                      .homeAnnouncements
+                                      .length;
+
+                                  if (index < pinnedCount) {
+                                    final item = context
+                                        .read<CommunityHubController>()
+                                        .homeAnnouncements[index];
+                                    return Card(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(18),
+                                      ),
+                                      child: ListTile(
+                                        leading: const Icon(Icons.campaign_rounded),
+                                        title: Text(item.title),
+                                        subtitle: Text(item.description),
+                                        trailing: const Text('Pinned'),
+                                      ),
+                                    );
+                                  }
+
+                                  final PostCardData data =
+                                      filteredFeed[index - pinnedCount];
+                                  return PostCard(
+                                    data: data,
+                                    onMenuTap: () => _trackAction('post_menu'),
+                                    onProfileTap: () => _openPublicProfile(data),
+                                    onLikeTap: () => _trackAction('post_like'),
+                                    onCommentTap: () => _trackAction('post_comment'),
+                                    onShareTap: () => _trackAction('post_share'),
+                                    onBoostTap: () => _trackAction('post_boost'),
+                                    onBookmarkTap: () => _trackAction('post_bookmark'),
+                                  );
+                                },
                                 separatorBuilder: (_, index) =>
                                     const SizedBox(height: 16),
-                                itemCount: filteredFeed.length,
+                                itemCount: filteredFeed.length +
+                                    context
+                                        .watch<CommunityHubController>()
+                                        .homeAnnouncements
+                                        .length,
                               ),
                             ),
                           ),

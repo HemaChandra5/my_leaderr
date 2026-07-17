@@ -320,7 +320,6 @@ class _SplashScreenState extends State<SplashScreen>
                               ignoring: true,
                               child: PremiumHeroImage(
                                 key: ValueKey<String>(_splashImageAsset()),
-                                imageAsset: _splashImageAsset(),
                                 alignment: const Alignment(0.0, -0.08),
                                 fadeColor: Colors.black,
                               ),

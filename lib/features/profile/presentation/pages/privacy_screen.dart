@@ -200,7 +200,7 @@ class _PrivacyTile extends StatelessWidget {
           const SizedBox(width: 8),
           Switch(
             value: value,
-            activeColor: AppTheme.gold,
+            activeThumbColor: AppTheme.gold,
             onChanged: onChanged,
           ),
         ],

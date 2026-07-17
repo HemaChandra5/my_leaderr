@@ -194,7 +194,7 @@ class ProfileHeader extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFF22C55E).withOpacity(0.15),
+            color: const Color(0xFF22C55E).withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(20),
           ),
           child: const Text(
@@ -335,7 +335,7 @@ class ProfileMenuCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppTheme.surface,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppTheme.gold.withOpacity(0.4)),
+            border: Border.all(color: AppTheme.gold.withValues(alpha: 0.4)),
           ),
           child: Column(
             children: [

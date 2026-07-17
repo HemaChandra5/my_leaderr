@@ -35,7 +35,7 @@ class HomeHeader extends StatefulWidget {
 }
 
 class _HomeHeaderState extends State<HomeHeader> {
-  bool _bellPressed = false;
+  final bool _bellPressed = false;
 
   @override
   Widget build(BuildContext context) {
