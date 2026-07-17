@@ -10,6 +10,8 @@ abstract class TrackIssueRepository {
 
   Future<TrackedIssue?> fetchIssue(String issueId);
 
+  Future<TrackedIssue?> fetchLatestIssueForUser(String userId);
+
   Future<void> setNotificationSubscription({
     required String issueId,
     required String userId,

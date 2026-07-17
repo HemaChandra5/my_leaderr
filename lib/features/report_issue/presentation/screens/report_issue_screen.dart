@@ -9,6 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../main.dart';
 import '../../../../providers/user_provider.dart';
 import '../../models/authority_profile.dart';
 import '../../models/issue_category.dart';
@@ -41,7 +42,8 @@ Future<void> _openInMaps({required double lat, required double lng}) async {
 }
 
 String _authorityAvatarUrl(AuthorityProfile authority) {
-  if (authority.profilePhotoUrl != null && authority.profilePhotoUrl!.isNotEmpty) {
+  if (authority.profilePhotoUrl != null &&
+      authority.profilePhotoUrl!.isNotEmpty) {
     return authority.profilePhotoUrl!;
   }
 
@@ -72,10 +74,13 @@ int _authorityPriorityOrder(AuthorityProfile authority) {
   if (d.contains('mlc')) {
     return 1;
   }
-  if (d.contains('member of parliament') || RegExp(r'(^|\W)mp(\W|$)').hasMatch(d)) {
+  if (d.contains('member of parliament') ||
+      RegExp(r'(^|\W)mp(\W|$)').hasMatch(d)) {
     return 2;
   }
-  if (d.contains('councillor') || d.contains('councilor') || d.contains('corporator')) {
+  if (d.contains('councillor') ||
+      d.contains('councilor') ||
+      d.contains('corporator')) {
     return 3;
   }
   if (d.contains('sarpanch')) {
@@ -94,7 +99,9 @@ bool _usesConstituency(String designation) {
 
 bool _isWardRole(String designation) {
   final String d = designation.toLowerCase();
-  return d.contains('corporator') || d.contains('councillor') || d.contains('councilor');
+  return d.contains('corporator') ||
+      d.contains('councillor') ||
+      d.contains('councilor');
 }
 
 bool _isSarpanchRole(String designation) {
@@ -120,7 +127,8 @@ _AuthorityPrimaryInfo _authorityPrimaryInfo(AuthorityProfile authority) {
   if (_usesConstituency(authority.designation)) {
     return _AuthorityPrimaryInfo(
       icon: Icons.how_to_vote_rounded,
-      text: 'Constituency: ${_nonEmptyOr(authority.constituency, authority.jurisdiction)}',
+      text:
+          'Constituency: ${_nonEmptyOr(authority.constituency, authority.jurisdiction)}',
     );
   }
   if (_isWardRole(authority.designation)) {
@@ -313,7 +321,8 @@ class _ReportIssueViewState extends State<_ReportIssueView>
             if (!mounted) {
               return;
             }
-            final ReportIssueProvider freshProvider = context.read<ReportIssueProvider>();
+            final ReportIssueProvider freshProvider = context
+                .read<ReportIssueProvider>();
             if (freshProvider.description.isNotEmpty ||
                 _descriptionController.text.isNotEmpty) {
               _descriptionController.clear();
@@ -353,12 +362,19 @@ class _ReportIssueViewState extends State<_ReportIssueView>
               elevation: 0,
               centerTitle: true,
               leading: IconButton(
-                onPressed: () {
+                onPressed: () async {
                   if (provider.canGoBackStep) {
                     provider.previousStep();
                     return;
                   }
-                  Navigator.of(context).maybePop();
+
+                  final bool popped = await Navigator.of(context).maybePop();
+                  if (!popped && context.mounted) {
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      AppRoutes.home,
+                      (Route<dynamic> route) => false,
+                    );
+                  }
                 },
                 icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
               ),
@@ -805,10 +821,7 @@ class _WelcomeStage extends StatelessWidget {
               child: Hero(
                 tag: 'welcome-reporting-hero',
                 child: Center(
-                  child: SvgPicture.string(
-                    _welcomeHeroSvg,
-                    height: 122,
-                  ),
+                  child: SvgPicture.string(_welcomeHeroSvg, height: 122),
                 ),
               ),
             ),
@@ -1013,7 +1026,8 @@ class _CategoryStage extends StatelessWidget {
               ),
               itemBuilder: (BuildContext context, int index) {
                 final IssueCategory category = provider.categories[index];
-                final bool selected = category.id == provider.selectedCategoryId;
+                final bool selected =
+                    category.id == provider.selectedCategoryId;
                 return _CategoryCard(
                   category: category,
                   description:
@@ -1099,7 +1113,10 @@ class _CategoryCard extends StatelessWidget {
                   duration: const Duration(milliseconds: 240),
                   curve: Curves.easeInOut,
                   builder: (BuildContext context, double value, Widget? child) {
-                    return Transform.scale(scale: 0.98 + (value * 0.02), child: child);
+                    return Transform.scale(
+                      scale: 0.98 + (value * 0.02),
+                      child: child,
+                    );
                   },
                   child: SvgPicture.asset(
                     category.iconAssetPath,
@@ -1211,31 +1228,33 @@ class _TagAuthorityStageState extends State<_TagAuthorityStage> {
       }
     }
 
-    final List<AuthorityProfile> roleMustInclude =
-      provider.filteredPublicRepresentatives.where((AuthorityProfile authority) {
-        final String bag =
-          '${authority.name} ${authority.designation}'.toLowerCase();
-        return bag.contains('hemachandra') ||
-          bag.contains('mla') ||
-          bag.contains('mlc') ||
-          bag.contains('member of parliament') ||
-          RegExp(r'(^|\W)mp(\W|$)').hasMatch(bag) ||
-          bag.contains('sarpanch') ||
-          bag.contains('councillor') ||
-          bag.contains('councilor');
-      }).toList(growable: false);
+    final List<AuthorityProfile> roleMustInclude = provider
+        .filteredPublicRepresentatives
+        .where((AuthorityProfile authority) {
+          final String bag = '${authority.name} ${authority.designation}'
+              .toLowerCase();
+          return bag.contains('hemachandra') ||
+              bag.contains('mla') ||
+              bag.contains('mlc') ||
+              bag.contains('member of parliament') ||
+              RegExp(r'(^|\W)mp(\W|$)').hasMatch(bag) ||
+              bag.contains('sarpanch') ||
+              bag.contains('councillor') ||
+              bag.contains('councilor');
+        })
+        .toList(growable: false);
 
     final List<AuthorityProfile> relevantAuthorities =
-      recommendedAuthorities.isNotEmpty
+        recommendedAuthorities.isNotEmpty
         ? <AuthorityProfile>[...recommendedAuthorities]
         : <AuthorityProfile>[...fallbackAuthorities];
 
     final Set<String> relevantIds = relevantAuthorities
-      .map((AuthorityProfile item) => item.id)
-      .toSet();
+        .map((AuthorityProfile item) => item.id)
+        .toSet();
     for (final AuthorityProfile authority in roleMustInclude) {
       if (relevantIds.add(authority.id)) {
-      relevantAuthorities.add(authority);
+        relevantAuthorities.add(authority);
       }
     }
 
@@ -1275,7 +1294,9 @@ class _TagAuthorityStageState extends State<_TagAuthorityStage> {
             color: const Color(0xFF171717),
             borderRadius: BorderRadius.circular(17),
             border: Border.all(
-              color: focused ? const Color(0xFFF5B82E) : const Color(0xFF2A2A2A),
+              color: focused
+                  ? const Color(0xFFF5B82E)
+                  : const Color(0xFF2A2A2A),
               width: 1.05,
             ),
             boxShadow: <BoxShadow>[
@@ -1307,7 +1328,11 @@ class _TagAuthorityStageState extends State<_TagAuthorityStage> {
                 ),
                 prefixIcon: const Padding(
                   padding: EdgeInsets.only(left: 2),
-                  child: Icon(Icons.search_rounded, size: 20, color: Color(0xFFA0A0A0)),
+                  child: Icon(
+                    Icons.search_rounded,
+                    size: 20,
+                    color: Color(0xFFA0A0A0),
+                  ),
                 ),
                 prefixIconConstraints: const BoxConstraints(minWidth: 42),
                 border: InputBorder.none,
@@ -1342,7 +1367,8 @@ class _TagAuthorityStageState extends State<_TagAuthorityStage> {
               ),
             ),
           )
-        else _AuthorityCardGrid(items: relevantAuthorities, provider: provider),
+        else
+          _AuthorityCardGrid(items: relevantAuthorities, provider: provider),
       ],
     );
   }
@@ -1458,9 +1484,7 @@ class _AuthorityCard extends StatelessWidget {
                   padding: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: const Color(0xFF6E5A2A),
-                    ),
+                    border: Border.all(color: const Color(0xFF6E5A2A)),
                     boxShadow: <BoxShadow>[
                       BoxShadow(
                         color: _gold.withValues(alpha: 0.1),
@@ -1606,11 +1630,7 @@ class _HoverScaleCardState extends State<_HoverScaleCard> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           curve: Curves.easeOut,
-          transform: Matrix4.translationValues(
-            0,
-            _hovered ? -1 : 0,
-            0,
-          ),
+          transform: Matrix4.translationValues(0, _hovered ? -1 : 0, 0),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
@@ -1678,8 +1698,14 @@ class _AuthorityProfileSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          _ProfileStatLine(label: 'Jurisdiction', value: authority.jurisdiction),
-          _ProfileStatLine(label: 'Constituency', value: authority.constituency),
+          _ProfileStatLine(
+            label: 'Jurisdiction',
+            value: authority.jurisdiction,
+          ),
+          _ProfileStatLine(
+            label: 'Constituency',
+            value: authority.constituency,
+          ),
           _ProfileStatLine(
             label: 'Mandal / Ward',
             value: '${authority.mandal} / ${authority.ward}',
@@ -1687,7 +1713,8 @@ class _AuthorityProfileSheet extends StatelessWidget {
           _ProfileStatLine(label: 'Department', value: authority.department),
           _ProfileStatLine(
             label: 'SLA / Workload',
-            value: '${authority.responseSlaHours}h / ${authority.currentWorkload} open',
+            value:
+                '${authority.responseSlaHours}h / ${authority.currentWorkload} open',
           ),
           _ProfileStatLine(
             label: 'Performance',
@@ -1820,7 +1847,9 @@ class _DetailsStageState extends State<_DetailsStage> {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         const SnackBar(
-          content: Text('Use keyboard voice dictation to capture speech input.'),
+          content: Text(
+            'Use keyboard voice dictation to capture speech input.',
+          ),
         ),
       );
   }
@@ -1865,7 +1894,9 @@ class _DetailsStageState extends State<_DetailsStage> {
             border: Border.all(
               color: hasError
                   ? _error
-                  : (focused ? const Color(0xFFF5B82E) : const Color(0xFF2B2B2B)),
+                  : (focused
+                        ? const Color(0xFFF5B82E)
+                        : const Color(0xFF2B2B2B)),
               width: focused ? 1.2 : 1,
             ),
             boxShadow: <BoxShadow>[
@@ -1960,9 +1991,13 @@ class _DetailsStageState extends State<_DetailsStage> {
             Expanded(
               child: _DetailActionPill(
                 icon: Icons.auto_awesome_rounded,
-                label: _provider.isGeneratingSuggestion ? 'Generating...' : 'AI Assist',
+                label: _provider.isGeneratingSuggestion
+                    ? 'Generating...'
+                    : 'AI Assist',
                 loading: _provider.isGeneratingSuggestion,
-                onTap: _provider.isGeneratingSuggestion ? null : _openAiAssistSheet,
+                onTap: _provider.isGeneratingSuggestion
+                    ? null
+                    : _openAiAssistSheet,
               ),
             ),
           ],
@@ -2274,34 +2309,42 @@ class _EvidenceStage extends StatelessWidget {
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 200),
                 child: mediaItems.isEmpty
-                    ? const _EvidenceEmptyState(key: ValueKey<String>('empty-evidence'))
+                    ? const _EvidenceEmptyState(
+                        key: ValueKey<String>('empty-evidence'),
+                      )
                     : LayoutBuilder(
                         key: const ValueKey<String>('media-grid'),
-                        builder: (BuildContext context, BoxConstraints constraints) {
-                          final int columns = constraints.maxWidth >= 760
-                              ? 3
-                              : (constraints.maxWidth >= 420 ? 2 : 1);
+                        builder:
+                            (BuildContext context, BoxConstraints constraints) {
+                              final int columns = constraints.maxWidth >= 760
+                                  ? 3
+                                  : (constraints.maxWidth >= 420 ? 2 : 1);
 
-                          return GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: mediaItems.length,
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: columns,
-                              crossAxisSpacing: 10,
-                              mainAxisSpacing: 10,
-                              childAspectRatio: columns == 1 ? 2.75 : 1.05,
-                            ),
-                            itemBuilder: (BuildContext context, int idx) {
-                              final PickedMedia item = mediaItems[idx];
-                              return _MediaPreviewTile(
-                                key: ValueKey<String>('media-$idx-${item.file.path}'),
-                                item: item,
-                                onDelete: () => provider.removeMediaAt(idx),
+                              return GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: mediaItems.length,
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: columns,
+                                      crossAxisSpacing: 10,
+                                      mainAxisSpacing: 10,
+                                      childAspectRatio: columns == 1
+                                          ? 2.75
+                                          : 1.05,
+                                    ),
+                                itemBuilder: (BuildContext context, int idx) {
+                                  final PickedMedia item = mediaItems[idx];
+                                  return _MediaPreviewTile(
+                                    key: ValueKey<String>(
+                                      'media-$idx-${item.file.path}',
+                                    ),
+                                    item: item,
+                                    onDelete: () => provider.removeMediaAt(idx),
+                                  );
+                                },
                               );
                             },
-                          );
-                        },
                       ),
               ),
             ],
@@ -2574,7 +2617,10 @@ class _MediaPreviewTile extends StatelessWidget {
                     ? Image.file(file, fit: BoxFit.cover)
                     : const ColoredBox(
                         color: Color(0xFF1F1F1F),
-                        child: Icon(Icons.play_circle_fill_rounded, color: _gold),
+                        child: Icon(
+                          Icons.play_circle_fill_rounded,
+                          color: _gold,
+                        ),
                       ),
               ),
             ),
@@ -2665,7 +2711,9 @@ class _LocationStageState extends State<_LocationStage> {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: const Color(0xFF181818),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: const Text(
             'Location Permission Required',
             style: TextStyle(color: _textPrimary, fontWeight: FontWeight.w700),
@@ -2677,7 +2725,10 @@ class _LocationStageState extends State<_LocationStage> {
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel', style: TextStyle(color: _textSecondary)),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: _textSecondary),
+              ),
             ),
             FilledButton(
               style: FilledButton.styleFrom(
@@ -2714,11 +2765,16 @@ class _LocationStageState extends State<_LocationStage> {
     final double? lat = provider.detectedLatitude;
     final double? lng = provider.detectedLongitude;
     final bool hasCoordinates = lat != null && lng != null;
-    final LatLng markerPosition = hasCoordinates ? LatLng(lat, lng) : _fallbackCenter;
+    final LatLng markerPosition = hasCoordinates
+        ? LatLng(lat, lng)
+        : _fallbackCenter;
     final bool isFocused = _locationFocusNode.hasFocus;
     final String? locationFieldError = provider.locationFieldError;
-    final bool hasLocationValidationHint = locationFieldError != null && !provider.isLocating;
-    final String landmarkSuggestion = _landmarkSuggestion(provider.addressComponents);
+    final bool hasLocationValidationHint =
+        locationFieldError != null && !provider.isLocating;
+    final String landmarkSuggestion = _landmarkSuggestion(
+      provider.addressComponents,
+    );
 
     if (hasCoordinates &&
         (_lastCameraTarget == null ||
@@ -2849,7 +2905,9 @@ class _LocationStageState extends State<_LocationStage> {
                               ? Icons.gps_fixed_rounded
                               : Icons.my_location_rounded,
                           tooltip: 'Current Location',
-                          onTap: provider.isLocating ? null : provider.detectLocation,
+                          onTap: provider.isLocating
+                              ? null
+                              : provider.detectLocation,
                         ),
                       ),
                     ],
@@ -2889,9 +2947,13 @@ class _LocationStageState extends State<_LocationStage> {
               fillColor: Colors.transparent,
               contentPadding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
               border: InputBorder.none,
-              prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFFA0A0A0)),
+              prefixIcon: const Icon(
+                Icons.search_rounded,
+                color: Color(0xFFA0A0A0),
+              ),
               suffixIcon: IconButton(
-                onPressed: () => provider.searchAndResolveLocation(locationController.text),
+                onPressed: () =>
+                    provider.searchAndResolveLocation(locationController.text),
                 icon: const Icon(Icons.my_location_rounded, color: _gold),
                 tooltip: 'Search Location',
               ),
@@ -2945,7 +3007,9 @@ class _LocationStageState extends State<_LocationStage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          provider.isLocating ? 'Detecting Location' : 'Use Current Location',
+                          provider.isLocating
+                              ? 'Detecting Location'
+                              : 'Use Current Location',
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
@@ -2989,7 +3053,9 @@ class _LocationStageState extends State<_LocationStage> {
         if (provider.autoLocationText != null)
           Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: _LocationDetectedBanner(locationText: provider.autoLocationText!),
+            child: _LocationDetectedBanner(
+              locationText: provider.autoLocationText!,
+            ),
           ),
         if (provider.hasResolvedLocation)
           Padding(
@@ -3008,7 +3074,10 @@ class _LocationStageState extends State<_LocationStage> {
               },
               onRefresh: () {
                 if (hasCoordinates) {
-                  provider.reverseGeocodeForCoordinates(latitude: lat, longitude: lng);
+                  provider.reverseGeocodeForCoordinates(
+                    latitude: lat,
+                    longitude: lng,
+                  );
                 } else {
                   provider.detectLocation();
                 }
@@ -3025,7 +3094,9 @@ class _LocationStageState extends State<_LocationStage> {
                 );
               },
               accuracyLabel: hasCoordinates ? 'Excellent' : 'Estimating',
-              accuracyValue: hasCoordinates ? 'Coordinates locked' : 'Pending lock',
+              accuracyValue: hasCoordinates
+                  ? 'Coordinates locked'
+                  : 'Pending lock',
             ),
           ),
         if (landmarkSuggestion.isNotEmpty)
@@ -3081,7 +3152,8 @@ class _LocationStageState extends State<_LocationStage> {
     ];
     for (final String key in preferredKeys) {
       for (final MapEntry<String, String> entry in components.entries) {
-        if (entry.key.toLowerCase().contains(key) && entry.value.trim().isNotEmpty) {
+        if (entry.key.toLowerCase().contains(key) &&
+            entry.value.trim().isNotEmpty) {
           return entry.value;
         }
       }
@@ -3134,7 +3206,11 @@ class _LocationMapShimmerState extends State<_LocationMapShimmer>
             ),
           ),
           child: const Center(
-            child: Icon(Icons.location_searching_rounded, color: _gold, size: 34),
+            child: Icon(
+              Icons.location_searching_rounded,
+              color: _gold,
+              size: 34,
+            ),
           ),
         );
       },
@@ -3756,7 +3832,9 @@ class _ReviewStageState extends State<_ReviewStage> {
                   padding: const EdgeInsets.only(top: 10),
                   child: Row(
                     children: provider.mediaItems
-                        .where((PickedMedia m) => m.type == PickedMediaType.image)
+                        .where(
+                          (PickedMedia m) => m.type == PickedMediaType.image,
+                        )
                         .take(3)
                         .map(
                           (PickedMedia item) => Padding(
@@ -3768,7 +3846,9 @@ class _ReviewStageState extends State<_ReviewStage> {
                                 height: 46,
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF181818),
-                                  border: Border.all(color: const Color(0xFF2B2B2B)),
+                                  border: Border.all(
+                                    color: const Color(0xFF2B2B2B),
+                                  ),
                                 ),
                                 child: Image.file(
                                   File(item.file.path),
@@ -3827,12 +3907,14 @@ class _ReviewStageState extends State<_ReviewStage> {
                       if (_v(provider.addressComponents['postalCode']) != null)
                         _ReviewChip(
                           icon: Icons.pin_drop_outlined,
-                          label: 'PIN ${_v(provider.addressComponents['postalCode'])!}',
+                          label:
+                              'PIN ${_v(provider.addressComponents['postalCode'])!}',
                         ),
                     ],
                   ),
                 ),
-              if (provider.detectedLatitude != null && provider.detectedLongitude != null)
+              if (provider.detectedLatitude != null &&
+                  provider.detectedLongitude != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
@@ -3847,7 +3929,8 @@ class _ReviewStageState extends State<_ReviewStage> {
             ],
           ),
         ),
-        if (provider.detectedLatitude != null && provider.detectedLongitude != null)
+        if (provider.detectedLatitude != null &&
+            provider.detectedLongitude != null)
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: SizedBox(
@@ -4264,7 +4347,9 @@ class _ChecklistRow extends StatelessWidget {
       child: Row(
         children: <Widget>[
           Icon(
-            done ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+            done
+                ? Icons.check_circle_rounded
+                : Icons.radio_button_unchecked_rounded,
             size: 16,
             color: done ? _green : const Color(0xFF666666),
           ),
@@ -4300,7 +4385,8 @@ class _BottomActionBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isStart = provider.currentStep == 0;
     final bool isSubmit = provider.isLastStep;
-    final bool canProceed = provider.canProceedCurrentStep && (!isSubmit || reviewConfirmed);
+    final bool canProceed =
+        provider.canProceedCurrentStep && (!isSubmit || reviewConfirmed);
 
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -4496,5 +4582,3 @@ class _SubmittingDialogState extends State<_SubmittingDialog>
     );
   }
 }
-
-

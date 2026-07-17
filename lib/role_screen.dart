@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/constants/app_colors.dart';
 import 'core/localization/app_language.dart';
 import 'core/localization/app_localizations.dart';
+import 'features/welcome/presentation/widgets/premium_hero_image.dart';
 import 'features/welcome/presentation/widgets/welcome_heading.dart';
 import 'screens/auth/citizen_details_screen.dart';
 import 'screens/auth/leader_verification_screen.dart' as leader_auth;
@@ -24,6 +25,8 @@ class _RoleScreenState extends State<RoleScreen>
   late final AnimationController _controller;
 
   late final Animation<double> _logoFade;
+  late final Animation<double> _globeFade;
+  late final Animation<double> _globeScale;
   late final Animation<double> _headingFade;
   late final Animation<double> _cardsFade;
   late final Animation<double> _footerFade;
@@ -46,6 +49,13 @@ class _RoleScreenState extends State<RoleScreen>
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(parent: curve, curve: const Interval(0.0, 0.5)));
+
+    _globeFade = Tween(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: curve, curve: const Interval(0.1, 0.6)));
+
+    _globeScale = Tween(begin: 1.05, end: 1.0).animate(curve);
 
     _headingFade = Tween(
       begin: 0.0,
@@ -108,181 +118,179 @@ class _RoleScreenState extends State<RoleScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Transform.scale(
-              scale: 0.9,
-              child: Image.asset(
-                'assets/images/welcome_earth2.jpeg',
-                fit: BoxFit.cover,
-                alignment: const Alignment(0, -0.06),
-              ),
-            ),
-          ),
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.18),
-                    Colors.black.withValues(alpha: 0.58),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final h = constraints.maxHeight;
+            final w = constraints.maxWidth;
+
+            final horizontalPadding = (w * 0.07).clamp(18, 28).toDouble();
+            final logoSize = (w * 0.45).clamp(150, 220).toDouble();
+            final headingSize = (w * 0.078).clamp(27, 31).toDouble();
+
+            const postGlobeOffset = -140.0;
+
+            return SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: h),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: horizontalPadding,
+                      ),
+                      child: Column(
+                        children: [
+                          FadeTransition(
+                            opacity: _logoFade,
+                            child: Image.asset(
+                              'assets/images/logo.png',
+                              width: logoSize,
+                              height: logoSize,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+
+                          FadeTransition(
+                            opacity: _globeFade,
+                            child: ScaleTransition(
+                              scale: _globeScale,
+                              child: IgnorePointer(
+                                ignoring: true,
+                                child: PremiumHeroImage(
+                                  key: ValueKey<Brightness>(
+                                    Theme.of(context).brightness,
+                                  ),
+                                  alignment: const Alignment(0.0, -0.08),
+                                  fadeColor:
+                                      Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.black
+                                      : const Color(0xFFFFFFFF),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          Transform.translate(
+                            offset: const Offset(0, postGlobeOffset),
+                            child: Column(
+                              children: [
+                                FadeTransition(
+                                  opacity: _headingFade,
+                                  child: WelcomeHeading(fontSize: headingSize),
+                                ),
+                                SizedBox(
+                                  height: (h * 0.012).clamp(6, 12).toDouble(),
+                                ),
+
+                                FadeTransition(
+                                  opacity: _cardsFade,
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: _RoleCard(
+                                          title: AppLocalizations.translate(
+                                            'citizen',
+                                            language: _language,
+                                          ),
+                                          icon: Icons.groups_rounded,
+                                          crownIcon: null,
+                                          lines: [
+                                            AppLocalizations.translate(
+                                              'role_citizen_line_1',
+                                              language: _language,
+                                            ),
+                                            AppLocalizations.translate(
+                                              'role_citizen_line_2',
+                                              language: _language,
+                                            ),
+                                            AppLocalizations.translate(
+                                              'role_citizen_line_3',
+                                              language: _language,
+                                            ),
+                                          ],
+                                          selected: _selectedRole == 'Citizen',
+                                          onSelect: () =>
+                                              _continueWithRole('Citizen'),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 14),
+                                      Expanded(
+                                        child: _RoleCard(
+                                          title: AppLocalizations.translate(
+                                            'leader',
+                                            language: _language,
+                                          ),
+                                          icon: null,
+                                          crownIcon:
+                                              'assets/icons/crown_icon.png',
+                                          lines: [
+                                            AppLocalizations.translate(
+                                              'role_leader_line_1',
+                                              language: _language,
+                                            ),
+                                            AppLocalizations.translate(
+                                              'role_leader_line_2',
+                                              language: _language,
+                                            ),
+                                            AppLocalizations.translate(
+                                              'role_leader_line_3',
+                                              language: _language,
+                                            ),
+                                          ],
+                                          selected: _selectedRole == 'Leader',
+                                          onSelect: () =>
+                                              _continueWithRole('Leader'),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                SizedBox(
+                                  height: (h * 0.014).clamp(6, 14).toDouble(),
+                                ),
+
+                                FadeTransition(
+                                  opacity: _footerFade,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.verified_user_rounded,
+                                        color: AppColors.primaryGold,
+                                        size: 14,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        "Connecting Citizens. Empowering Leaders.",
+                                        style: GoogleFonts.inter(
+                                          fontSize: 11.5,
+                                          color: AppColors.textMuted,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(
+                                  height: (h * 0.03).clamp(12, 24).toDouble(),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ),
-          ),
-          SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final h = constraints.maxHeight;
-                final w = constraints.maxWidth;
-
-                final horizontalPadding = (w * 0.07).clamp(18, 28).toDouble();
-                final logoSize = (w * 0.45).clamp(150, 220).toDouble();
-                final headingSize = (w * 0.078).clamp(27, 31).toDouble();
-                final contentDropOffset = (h * 0.24).clamp(140, 240).toDouble();
-
-                return SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: h),
-                    child: Column(
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: horizontalPadding,
-                          ),
-                          child: Column(
-                            children: [
-                              FadeTransition(
-                                opacity: _logoFade,
-                                child: Image.asset(
-                                  'assets/images/logo.png',
-                                  width: logoSize,
-                                  height: logoSize,
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                              SizedBox(height: contentDropOffset),
-
-                              FadeTransition(
-                                opacity: _headingFade,
-                                child: WelcomeHeading(
-                                  fontSize: headingSize,
-                                  sideLineColor: Colors.white,
-                                ),
-                              ),
-                              SizedBox(
-                                height: (h * 0.012).clamp(6, 12).toDouble(),
-                              ),
-
-                              FadeTransition(
-                                opacity: _cardsFade,
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: _RoleCard(
-                                        title: AppLocalizations.translate(
-                                          'citizen',
-                                          language: _language,
-                                        ),
-                                        icon: Icons.groups_rounded,
-                                        crownIcon: null,
-                                        lines: [
-                                          AppLocalizations.translate(
-                                            'role_citizen_line_1',
-                                            language: _language,
-                                          ),
-                                          AppLocalizations.translate(
-                                            'role_citizen_line_2',
-                                            language: _language,
-                                          ),
-                                          AppLocalizations.translate(
-                                            'role_citizen_line_3',
-                                            language: _language,
-                                          ),
-                                        ],
-                                        selected: _selectedRole == 'Citizen',
-                                        onSelect: () =>
-                                            _continueWithRole('Citizen'),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 14),
-                                    Expanded(
-                                      child: _RoleCard(
-                                        title: AppLocalizations.translate(
-                                          'leader',
-                                          language: _language,
-                                        ),
-                                        icon: null,
-                                        crownIcon:
-                                            'assets/icons/crown_icon.png',
-                                        lines: [
-                                          AppLocalizations.translate(
-                                            'role_leader_line_1',
-                                            language: _language,
-                                          ),
-                                          AppLocalizations.translate(
-                                            'role_leader_line_2',
-                                            language: _language,
-                                          ),
-                                          AppLocalizations.translate(
-                                            'role_leader_line_3',
-                                            language: _language,
-                                          ),
-                                        ],
-                                        selected: _selectedRole == 'Leader',
-                                        onSelect: () =>
-                                            _continueWithRole('Leader'),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                              SizedBox(
-                                height: (h * 0.014).clamp(6, 14).toDouble(),
-                              ),
-
-                              FadeTransition(
-                                opacity: _footerFade,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.verified_user_rounded,
-                                      color: AppColors.primaryGold,
-                                      size: 14,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      "Connecting Citizens. Empowering Leaders.",
-                                      style: GoogleFonts.inter(
-                                        fontSize: 11.5,
-                                        color: const Color(0xFF888888),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(
-                                height: (h * 0.03).clamp(12, 24).toDouble(),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -314,6 +322,7 @@ class _RoleCardState extends State<_RoleCard> {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: widget.onSelect,
       onTapDown: (_) => setState(() => _pressed = true),
@@ -325,12 +334,12 @@ class _RoleCardState extends State<_RoleCard> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
           decoration: BoxDecoration(
-            color: const Color(0xFF121212),
+            color: colors.surface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: widget.selected
                   ? AppColors.primaryGold
-                  : Colors.white.withValues(alpha: 0.08),
+                  : AppColors.divider,
               width: widget.selected ? 1.6 : 1,
             ),
           ),
@@ -348,7 +357,7 @@ class _RoleCardState extends State<_RoleCard> {
                 style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: colors.onSurface,
                 ),
               ),
 
@@ -362,7 +371,7 @@ class _RoleCardState extends State<_RoleCard> {
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 12.5,
-                      color: const Color(0xFF9CA3AF),
+                      color: AppColors.textMuted,
                     ),
                   ),
                 ),

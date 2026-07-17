@@ -6,6 +6,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../main.dart';
+import '../../../../providers/user_provider.dart';
+import '../../../report_issue/models/issue_category.dart';
 import '../../../report_issue/models/submitted_issue.dart';
 import '../../data/repositories/firebase_track_issue_repository.dart';
 import '../../domain/entities/track_issue_models.dart';
@@ -55,6 +57,7 @@ class _TrackIssueScreenState extends State<TrackIssueScreen>
     with TickerProviderStateMixin {
   late final TrackIssueProvider _provider;
   late final AnimationController _entryController;
+  final TextEditingController _issueIdController = TextEditingController();
 
   bool _initialized = false;
   _DashboardSection _activeSection = _DashboardSection.overview;
@@ -68,7 +71,6 @@ class _TrackIssueScreenState extends State<TrackIssueScreen>
       vsync: this,
       duration: const Duration(milliseconds: 520),
     )..forward();
-
   }
 
   @override
@@ -89,7 +91,16 @@ class _TrackIssueScreenState extends State<TrackIssueScreen>
       routeIssueId = args.issueId;
     }
 
-    _provider.initialize(seedSubmission: widget.submission, routeIssueId: routeIssueId);
+    final String? currentUserId = context
+        .read<UserProvider>()
+        .firebaseUser
+        ?.uid;
+
+    _provider.initialize(
+      seedSubmission: widget.submission,
+      routeIssueId: routeIssueId,
+      currentUserId: currentUserId,
+    );
     _initialized = true;
   }
 
@@ -97,6 +108,7 @@ class _TrackIssueScreenState extends State<TrackIssueScreen>
   void dispose() {
     _provider.dispose();
     _entryController.dispose();
+    _issueIdController.dispose();
     super.dispose();
   }
 
@@ -153,98 +165,162 @@ class _TrackIssueScreenState extends State<TrackIssueScreen>
     return ChangeNotifierProvider<TrackIssueProvider>.value(
       value: _provider,
       child: Consumer<TrackIssueProvider>(
-        builder: (BuildContext context, TrackIssueProvider provider, Widget? child) {
-          final TrackedIssue? issue = provider.issue;
+        builder:
+            (BuildContext context, TrackIssueProvider provider, Widget? child) {
+              final TrackedIssue? issue = provider.issue;
+              final String errorMessage =
+                  provider.errorMessage ?? 'Unable to load issue status.';
+              final bool canLoadByIssueId =
+                  issue == null &&
+                  errorMessage.toLowerCase().contains('issue id is missing');
+              final String lowerError = errorMessage.toLowerCase();
+              final String? currentUserId = context
+                  .read<UserProvider>()
+                  .firebaseUser
+                  ?.uid;
+              final bool showCategoryFallback =
+                  issue == null &&
+                  (lowerError.contains('issue id is missing') ||
+                      lowerError.contains('no issues found for your account') ||
+                      lowerError.contains('unable to find your latest issue') ||
+                      lowerError.contains('issue not found for id'));
 
-          return AnnotatedRegion<SystemUiOverlayStyle>(
-            value: SystemUiOverlayStyle.light,
-            child: Theme(
-              data: baseTheme.copyWith(
-                textTheme: GoogleFonts.plusJakartaSansTextTheme(baseTheme.textTheme),
-              ),
-              child: Scaffold(
-                backgroundColor: _bg,
-                appBar: AppBar(
-                  backgroundColor: _bg,
-                  elevation: 0,
-                  scrolledUnderElevation: 0,
-                  leading: IconButton(
-                    onPressed: _onBackPressed,
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, color: _textPrimary, size: 17),
-                  ),
-                  title: const Text(
-                    'Track Your Issue',
-                    style: TextStyle(
-                      color: _textPrimary,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
+              return AnnotatedRegion<SystemUiOverlayStyle>(
+                value: SystemUiOverlayStyle.light,
+                child: Theme(
+                  data: baseTheme.copyWith(
+                    textTheme: GoogleFonts.plusJakartaSansTextTheme(
+                      baseTheme.textTheme,
                     ),
                   ),
-                  actions: <Widget>[
-                    if (issue != null)
-                      IconButton(
-                        tooltip: 'Live Updates',
-                        onPressed: () => _openLiveUpdates(issue.issueId),
-                        icon: const Icon(Icons.wifi_tethering_rounded, color: _primary, size: 20),
+                  child: Scaffold(
+                    backgroundColor: _bg,
+                    appBar: AppBar(
+                      backgroundColor: _bg,
+                      elevation: 0,
+                      scrolledUnderElevation: 0,
+                      leading: IconButton(
+                        onPressed: _onBackPressed,
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          color: _textPrimary,
+                          size: 17,
+                        ),
                       ),
-                    IconButton(
-                      onPressed: provider.isRefreshing ? null : provider.refresh,
-                      icon: provider.isRefreshing
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: _primary),
-                            )
-                          : const Icon(Icons.refresh_rounded, color: _textPrimary, size: 20),
-                    ),
-                  ],
-                ),
-                body: RefreshIndicator(
-                  onRefresh: provider.refresh,
-                  color: _primary,
-                  backgroundColor: _surface,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 240),
-                    child: provider.isLoading && issue == null
-                        ? const _LoadingState(key: ValueKey<String>('loading'))
-                        : provider.hasError && issue == null
-                        ? _ErrorState(
-                            key: const ValueKey<String>('error'),
-                            message: provider.errorMessage ?? 'Unable to load issue status.',
-                            onRetry: provider.refresh,
-                            onHome: () {
-                              Navigator.of(context).pushNamedAndRemoveUntil(
-                                AppRoutes.home,
-                                (Route<dynamic> route) => false,
-                              );
-                            },
-                          )
-                        : _DashboardBody(
-                            key: const ValueKey<String>('content'),
-                            issue: issue!,
-                            provider: provider,
-                            section: _activeSection,
-                            entryController: _entryController,
-                            onSectionChanged: (_DashboardSection next) {
-                              setState(() {
-                                _activeSection = next;
-                              });
-                            },
-                            onVerify: () => _submitCitizenVerification(provider),
-                            onOpenLiveUpdates: () => _openLiveUpdates(issue.issueId),
-                            onBackHome: () {
-                              Navigator.of(context).pushNamedAndRemoveUntil(
-                                AppRoutes.home,
-                                (Route<dynamic> route) => false,
-                              );
-                            },
+                      title: const Text(
+                        'Track Your Issue',
+                        style: TextStyle(
+                          color: _textPrimary,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      actions: <Widget>[
+                        if (issue != null)
+                          IconButton(
+                            tooltip: 'Live Updates',
+                            onPressed: () => _openLiveUpdates(issue.issueId),
+                            icon: const Icon(
+                              Icons.wifi_tethering_rounded,
+                              color: _primary,
+                              size: 20,
+                            ),
                           ),
+                        IconButton(
+                          onPressed: provider.isRefreshing
+                              ? null
+                              : provider.refresh,
+                          icon: provider.isRefreshing
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: _primary,
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.refresh_rounded,
+                                  color: _textPrimary,
+                                  size: 20,
+                                ),
+                        ),
+                      ],
+                    ),
+                    body: RefreshIndicator(
+                      onRefresh: provider.refresh,
+                      color: _primary,
+                      backgroundColor: _surface,
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 240),
+                        child: provider.isLoading && issue == null
+                            ? const _LoadingState(
+                                key: ValueKey<String>('loading'),
+                              )
+                            : showCategoryFallback
+                            ? _CategoryWorkflowFallback(
+                                key: const ValueKey<String>(
+                                  'category-fallback',
+                                ),
+                                onSelectCategory: (String category) {
+                                  provider.loadCategoryWorkflowPreview(
+                                    category: category,
+                                    userId: currentUserId,
+                                  );
+                                },
+                                onTryLatestIssue: () {
+                                  provider.initialize(
+                                    currentUserId: currentUserId,
+                                  );
+                                },
+                              )
+                            : provider.hasError && issue == null
+                            ? _ErrorState(
+                                key: const ValueKey<String>('error'),
+                                message: errorMessage,
+                                onRetry: provider.refresh,
+                                onHome: () {
+                                  Navigator.of(context).pushNamedAndRemoveUntil(
+                                    AppRoutes.home,
+                                    (Route<dynamic> route) => false,
+                                  );
+                                },
+                                showIssueIdInput: canLoadByIssueId,
+                                issueIdController: _issueIdController,
+                                onLoadIssueId: (String issueId) {
+                                  provider.initialize(
+                                    routeIssueId: issueId.trim(),
+                                  );
+                                },
+                              )
+                            : _DashboardBody(
+                                key: const ValueKey<String>('content'),
+                                issue: issue!,
+                                provider: provider,
+                                section: _activeSection,
+                                entryController: _entryController,
+                                onSectionChanged: (_DashboardSection next) {
+                                  setState(() {
+                                    _activeSection = next;
+                                  });
+                                },
+                                onVerify: () =>
+                                    _submitCitizenVerification(provider),
+                                onOpenLiveUpdates: () =>
+                                    _openLiveUpdates(issue.issueId),
+                                onBackHome: () {
+                                  Navigator.of(context).pushNamedAndRemoveUntil(
+                                    AppRoutes.home,
+                                    (Route<dynamic> route) => false,
+                                  );
+                                },
+                              ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-          );
-        },
+              );
+            },
       ),
     );
   }
@@ -288,50 +364,50 @@ class _DashboardBody extends StatelessWidget {
       child: FadeTransition(
         opacity: fade,
         child: CustomScrollView(
-          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
           slivers: <Widget>[
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(14, 8, 14, 18),
               sliver: SliverList(
-                delegate: SliverChildListDelegate(
-                  <Widget>[
-                    _HeroCard(issue: issue),
+                delegate: SliverChildListDelegate(<Widget>[
+                  _HeroCard(issue: issue),
+                  const SizedBox(height: 12),
+                  _SectionSegmented(
+                    current: section,
+                    onChanged: onSectionChanged,
+                  ),
+                  const SizedBox(height: 12),
+                  if (section == _DashboardSection.overview) ...<Widget>[
+                    _KpiGrid(issue: issue),
                     const SizedBox(height: 12),
-                    _SectionSegmented(
-                      current: section,
-                      onChanged: onSectionChanged,
+                    _TaggedAuthorityCard(issue: issue),
+                    const SizedBox(height: 12),
+                    _AssignedOfficerCard(issue: issue),
+                    const SizedBox(height: 12),
+                    _ActionRail(
+                      issue: issue,
+                      onOpenLiveUpdates: onOpenLiveUpdates,
                     ),
                     const SizedBox(height: 12),
-                    if (section == _DashboardSection.overview) ...<Widget>[
-                      _KpiGrid(issue: issue),
+                    _NarrativeCard(issue: issue),
+                    const SizedBox(height: 12),
+                    _EvidenceSection(issue: issue),
+                    if (provider.canSubmitCitizenVerification) ...<Widget>[
                       const SizedBox(height: 12),
-                      _TaggedAuthorityCard(issue: issue),
-                      const SizedBox(height: 12),
-                      _AssignedOfficerCard(issue: issue),
-                      const SizedBox(height: 12),
-                      _ActionRail(
-                        issue: issue,
-                        onOpenLiveUpdates: onOpenLiveUpdates,
+                      _VerificationCard(
+                        isSubmitting: provider.isSubmittingVerification,
+                        onSubmit: provider.isSubmittingVerification
+                            ? null
+                            : onVerify,
                       ),
-                      const SizedBox(height: 12),
-                      _NarrativeCard(issue: issue),
-                      const SizedBox(height: 12),
-                      _EvidenceSection(issue: issue),
-                      if (provider.canSubmitCitizenVerification) ...<Widget>[
-                        const SizedBox(height: 12),
-                        _VerificationCard(
-                          isSubmitting: provider.isSubmittingVerification,
-                          onSubmit: provider.isSubmittingVerification ? null : onVerify,
-                        ),
-                      ],
-                    ] else ...<Widget>[
-                      _WorkflowTimelineCard(issue: issue),
                     ],
-                    const SizedBox(height: 14),
-                    _BottomActions(issue: issue, onBackHome: onBackHome),
-                    const SizedBox(height: 26),
-                  ],
-                ),
+                  ] else ...<Widget>[_WorkflowTimelineCard(issue: issue)],
+                  const SizedBox(height: 14),
+                  _BottomActions(issue: issue, onBackHome: onBackHome),
+                  const SizedBox(height: 26),
+                ]),
               ),
             ),
           ],
@@ -396,10 +472,7 @@ class _HeroCard extends StatelessWidget {
                 icon: Icons.account_balance_rounded,
                 label: _safeText(issue.department),
               ),
-              _ContextBadge(
-                icon: Icons.tag_rounded,
-                label: issue.issueId,
-              ),
+              _ContextBadge(icon: Icons.tag_rounded, label: issue.issueId),
             ],
           ),
           const SizedBox(height: 12),
@@ -441,10 +514,7 @@ class _HeroCard extends StatelessWidget {
 }
 
 class _SectionSegmented extends StatelessWidget {
-  const _SectionSegmented({
-    required this.current,
-    required this.onChanged,
-  });
+  const _SectionSegmented({required this.current, required this.onChanged});
 
   final _DashboardSection current;
   final ValueChanged<_DashboardSection> onChanged;
@@ -701,19 +771,25 @@ class _AssignedOfficerCard extends StatelessWidget {
                   _AuthorityIconAction(
                     icon: Icons.person_outline_rounded,
                     tooltip: 'Profile',
-                    onTap: photoUrl == null ? null : () => _openEvidencePreview(context, photoUrl),
+                    onTap: photoUrl == null
+                        ? null
+                        : () => _openEvidencePreview(context, photoUrl),
                   ),
                   const SizedBox(width: 6),
                   _AuthorityIconAction(
                     icon: Icons.call_outlined,
                     tooltip: 'Call',
-                    onTap: officerPhone == null ? null : () => _launchPhone(officerPhone),
+                    onTap: officerPhone == null
+                        ? null
+                        : () => _launchPhone(officerPhone),
                   ),
                   const SizedBox(width: 6),
                   _AuthorityIconAction(
                     icon: Icons.message_outlined,
                     tooltip: 'Message',
-                    onTap: officerPhone == null ? null : () => _launchSms(officerPhone),
+                    onTap: officerPhone == null
+                        ? null
+                        : () => _launchSms(officerPhone),
                   ),
                 ],
               ),
@@ -721,11 +797,23 @@ class _AssignedOfficerCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           _DataLine(label: 'Name', value: _safeText(issue.assignedOfficer)),
-          _DataLine(label: 'Designation', value: _safeText(issue.assignedOfficerDesignation)),
+          _DataLine(
+            label: 'Designation',
+            value: _safeText(issue.assignedOfficerDesignation),
+          ),
           _DataLine(label: 'Department', value: _safeText(issue.department)),
-          _DataLine(label: 'Employee ID', value: _safeText(issue.assignedOfficerEmployeeId)),
-          _DataLine(label: 'Phone', value: _safeText(issue.assignedOfficerPhone)),
-          _DataLine(label: 'Email', value: _safeText(issue.assignedOfficerEmail)),
+          _DataLine(
+            label: 'Employee ID',
+            value: _safeText(issue.assignedOfficerEmployeeId),
+          ),
+          _DataLine(
+            label: 'Phone',
+            value: _safeText(issue.assignedOfficerPhone),
+          ),
+          _DataLine(
+            label: 'Email',
+            value: _safeText(issue.assignedOfficerEmail),
+          ),
         ],
       ),
     );
@@ -791,19 +879,25 @@ class _TaggedAuthorityCard extends StatelessWidget {
                   _AuthorityIconAction(
                     icon: Icons.person_outline_rounded,
                     tooltip: 'Profile',
-                    onTap: photoUrl == null ? null : () => _openEvidencePreview(context, photoUrl),
+                    onTap: photoUrl == null
+                        ? null
+                        : () => _openEvidencePreview(context, photoUrl),
                   ),
                   const SizedBox(width: 6),
                   _AuthorityIconAction(
                     icon: Icons.call_outlined,
                     tooltip: 'Call',
-                    onTap: authorityPhone == null ? null : () => _launchPhone(authorityPhone),
+                    onTap: authorityPhone == null
+                        ? null
+                        : () => _launchPhone(authorityPhone),
                   ),
                   const SizedBox(width: 6),
                   _AuthorityIconAction(
                     icon: Icons.message_outlined,
                     tooltip: 'Message',
-                    onTap: authorityPhone == null ? null : () => _launchSms(authorityPhone),
+                    onTap: authorityPhone == null
+                        ? null
+                        : () => _launchSms(authorityPhone),
                   ),
                 ],
               ),
@@ -811,8 +905,14 @@ class _TaggedAuthorityCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           _DataLine(label: 'Name', value: _safeText(issue.taggedAuthorityName)),
-          _DataLine(label: 'Designation', value: _safeText(issue.taggedAuthorityDesignation)),
-          _DataLine(label: 'Department', value: _safeText(issue.taggedAuthorityDepartment)),
+          _DataLine(
+            label: 'Designation',
+            value: _safeText(issue.taggedAuthorityDesignation),
+          ),
+          _DataLine(
+            label: 'Department',
+            value: _safeText(issue.taggedAuthorityDepartment),
+          ),
           _DataLine(label: 'Area', value: _safeText(issue.taggedAuthorityArea)),
         ],
       ),
@@ -968,7 +1068,9 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double width = wide ? MediaQuery.sizeOf(context).width - 28 : (MediaQuery.sizeOf(context).width - 44) / 3;
+    final double width = wide
+        ? MediaQuery.sizeOf(context).width - 28
+        : (MediaQuery.sizeOf(context).width - 44) / 3;
 
     return Material(
       color: _surface,
@@ -986,14 +1088,20 @@ class _ActionButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Icon(icon, color: onTap == null ? const Color(0xFF666666) : _primary, size: 16),
+              Icon(
+                icon,
+                color: onTap == null ? const Color(0xFF666666) : _primary,
+                size: 16,
+              ),
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
                   label,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: onTap == null ? const Color(0xFF666666) : _textPrimary,
+                    color: onTap == null
+                        ? const Color(0xFF666666)
+                        : _textPrimary,
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,
                   ),
@@ -1020,7 +1128,11 @@ class _NarrativeCard extends StatelessWidget {
         children: <Widget>[
           const Text(
             'Issue Details',
-            style: TextStyle(color: _textPrimary, fontSize: 16, fontWeight: FontWeight.w800),
+            style: TextStyle(
+              color: _textPrimary,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -1046,8 +1158,14 @@ class _NarrativeCard extends StatelessWidget {
           const SizedBox(height: 10),
           _DataLine(label: 'Citizen Name', value: _safeText(issue.createdBy)),
           const _DataLine(label: 'Citizen Role', value: 'Public User'),
-          _DataLine(label: 'Officer Name', value: _safeText(issue.assignedOfficer)),
-          _DataLine(label: 'Officer Designation', value: _safeText(issue.assignedOfficerDesignation)),
+          _DataLine(
+            label: 'Officer Name',
+            value: _safeText(issue.assignedOfficer),
+          ),
+          _DataLine(
+            label: 'Officer Designation',
+            value: _safeText(issue.assignedOfficerDesignation),
+          ),
         ],
       ),
     );
@@ -1072,13 +1190,21 @@ class _EvidenceSection extends StatelessWidget {
         children: <Widget>[
           const Text(
             'Evidence',
-            style: TextStyle(color: _textPrimary, fontSize: 16, fontWeight: FontWeight.w800),
+            style: TextStyle(
+              color: _textPrimary,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           const SizedBox(height: 8),
           if (urls.isEmpty)
             const Text(
               'No evidence uploaded by user.',
-              style: TextStyle(color: _textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: _textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             )
           else
             GridView.builder(
@@ -1111,11 +1237,19 @@ class _EvidenceSection extends StatelessWidget {
                           child: Image.network(
                             url,
                             fit: BoxFit.contain,
-                            errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
-                              return const Center(
-                                child: Icon(Icons.broken_image_outlined, color: _textSecondary),
-                              );
-                            },
+                            errorBuilder:
+                                (
+                                  BuildContext context,
+                                  Object error,
+                                  StackTrace? stackTrace,
+                                ) {
+                                  return const Center(
+                                    child: Icon(
+                                      Icons.broken_image_outlined,
+                                      color: _textSecondary,
+                                    ),
+                                  );
+                                },
                           ),
                         ),
                       ),
@@ -1131,10 +1265,7 @@ class _EvidenceSection extends StatelessWidget {
 }
 
 class _VerificationCard extends StatelessWidget {
-  const _VerificationCard({
-    required this.isSubmitting,
-    required this.onSubmit,
-  });
+  const _VerificationCard({required this.isSubmitting, required this.onSubmit});
 
   final bool isSubmitting;
   final VoidCallback? onSubmit;
@@ -1147,12 +1278,21 @@ class _VerificationCard extends StatelessWidget {
         children: <Widget>[
           const Text(
             'Citizen Verification',
-            style: TextStyle(color: _textPrimary, fontSize: 16, fontWeight: FontWeight.w800),
+            style: TextStyle(
+              color: _textPrimary,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           const SizedBox(height: 6),
           const Text(
             'Work is marked completed. Verify quality and submit your rating.',
-            style: TextStyle(color: _textSecondary, fontSize: 12, height: 1.4, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              color: _textSecondary,
+              fontSize: 12,
+              height: 1.4,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 10),
           SizedBox(
@@ -1163,16 +1303,26 @@ class _VerificationCard extends StatelessWidget {
                   ? const SizedBox(
                       width: 14,
                       height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.black,
+                      ),
                     )
                   : const Icon(Icons.verified_rounded, size: 16),
-              label: Text(isSubmitting ? 'Submitting...' : 'Submit Verification'),
+              label: Text(
+                isSubmitting ? 'Submitting...' : 'Submit Verification',
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _primary,
                 foregroundColor: Colors.black,
                 minimumSize: const Size.fromHeight(44),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ),
@@ -1190,7 +1340,8 @@ class _WorkflowTimelineCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final int currentIndex = issue.currentStatusIndex;
-    final Map<IssueWorkflowStatus, IssueTimelineEvent> eventMap = _eventByStatus(issue.timeline);
+    final Map<IssueWorkflowStatus, IssueTimelineEvent> eventMap =
+        _eventByStatus(issue.timeline);
 
     return _CardShell(
       child: Column(
@@ -1198,7 +1349,11 @@ class _WorkflowTimelineCard extends StatelessWidget {
         children: <Widget>[
           const Text(
             'Workflow Timeline',
-            style: TextStyle(color: _textPrimary, fontSize: 16, fontWeight: FontWeight.w800),
+            style: TextStyle(
+              color: _textPrimary,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           const SizedBox(height: 10),
           for (int i = 0; i < workflowOrder.length; i++)
@@ -1244,10 +1399,16 @@ class _WorkflowStepRow extends StatelessWidget {
     final Color dotColor = state == _WorkflowVisualState.active
         ? _primary
         : const Color(0xFF575757);
-    final String timeLabel = event == null ? 'Awaiting update' : _formatDateTime(event!.timestamp);
+    final String timeLabel = event == null
+        ? 'Awaiting update'
+        : _formatDateTime(event!.timestamp);
     final String remarks = _safeText(event?.remarks);
-    final String ownerDepartment = _safeText(event?.department ?? fallbackDepartment);
-    final String ownerOfficer = _safeText(event?.officerName ?? fallbackOfficer);
+    final String ownerDepartment = _safeText(
+      event?.department ?? fallbackDepartment,
+    );
+    final String ownerOfficer = _safeText(
+      event?.officerName ?? fallbackOfficer,
+    );
     final String slaLabel = _stageSlaBadge(status);
     final Color slaColor = _stageSlaColor(state);
     final String stateLabel = _workflowStateLabel(state);
@@ -1266,7 +1427,11 @@ class _WorkflowStepRow extends StatelessWidget {
                   color: _success,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check_rounded, color: Colors.black, size: 12),
+                child: const Icon(
+                  Icons.check_rounded,
+                  color: Colors.black,
+                  size: 12,
+                ),
               )
             else
               Container(
@@ -1281,7 +1446,9 @@ class _WorkflowStepRow extends StatelessWidget {
               Container(
                 width: 2,
                 height: 52,
-                color: state == _WorkflowVisualState.completed ? _success : const Color(0xFF303030),
+                color: state == _WorkflowVisualState.completed
+                    ? _success
+                    : const Color(0xFF303030),
               ),
           ],
         ),
@@ -1352,7 +1519,10 @@ class _WorkflowStepRow extends StatelessWidget {
                       children: <Widget>[
                         Flexible(
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFF111111),
                               borderRadius: BorderRadius.circular(999),
@@ -1387,9 +1557,18 @@ class _WorkflowStepRow extends StatelessWidget {
                   Container(height: 1, color: _surfaceBorder),
                   const SizedBox(height: 8),
                   _OfficialNoteLine(label: 'Latest Note', value: remarks),
-                  _OfficialNoteLine(label: 'Updated By', value: _safeText(event?.updatedBy)),
-                  _OfficialNoteLine(label: 'Assigned Officer', value: ownerOfficer),
-                  _OfficialNoteLine(label: 'Owner Department', value: ownerDepartment),
+                  _OfficialNoteLine(
+                    label: 'Updated By',
+                    value: _safeText(event?.updatedBy),
+                  ),
+                  _OfficialNoteLine(
+                    label: 'Assigned Officer',
+                    value: ownerOfficer,
+                  ),
+                  _OfficialNoteLine(
+                    label: 'Owner Department',
+                    value: ownerDepartment,
+                  ),
                   _OfficialNoteLine(label: 'Updated At', value: timeLabel),
                 ],
               ),
@@ -1462,8 +1641,13 @@ class _BottomActions extends StatelessWidget {
               minimumSize: const Size.fromHeight(44),
               backgroundColor: _primary,
               foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              textStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
         ),
@@ -1477,7 +1661,9 @@ class _BottomActions extends StatelessWidget {
                   minimumSize: const Size.fromHeight(44),
                   side: const BorderSide(color: _surfaceBorder),
                   foregroundColor: _textPrimary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
                 child: const Text(
                   'Return to Home',
@@ -1494,7 +1680,9 @@ class _BottomActions extends StatelessWidget {
                   Clipboard.setData(ClipboardData(text: text));
                   ScaffoldMessenger.of(context)
                     ..hideCurrentSnackBar()
-                    ..showSnackBar(const SnackBar(content: Text('Tracking details copied')));
+                    ..showSnackBar(
+                      const SnackBar(content: Text('Tracking details copied')),
+                    );
                 },
                 icon: const Icon(Icons.copy_rounded, size: 16),
                 label: const Text('Copy Details'),
@@ -1502,8 +1690,13 @@ class _BottomActions extends StatelessWidget {
                   minimumSize: const Size.fromHeight(44),
                   backgroundColor: const Color(0xFF232323),
                   foregroundColor: _textPrimary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),
@@ -1555,24 +1748,22 @@ class _CardHeader extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: const TextStyle(color: _textPrimary, fontSize: 16, fontWeight: FontWeight.w800),
+            style: const TextStyle(
+              color: _textPrimary,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
         const SizedBox(width: 8),
-        _MicroBadge(
-          label: badgeLabel,
-          color: badgeTone,
-        ),
+        _MicroBadge(label: badgeLabel, color: badgeTone),
       ],
     );
   }
 }
 
 class _ContextBadge extends StatelessWidget {
-  const _ContextBadge({
-    required this.icon,
-    required this.label,
-  });
+  const _ContextBadge({required this.icon, required this.label});
 
   final IconData icon;
   final String label;
@@ -1606,11 +1797,7 @@ class _ContextBadge extends StatelessWidget {
 }
 
 class _MicroBadge extends StatelessWidget {
-  const _MicroBadge({
-    required this.label,
-    required this.color,
-    this.icon,
-  });
+  const _MicroBadge({required this.label, required this.color, this.icon});
 
   final String label;
   final Color color;
@@ -1648,11 +1835,7 @@ class _MicroBadge extends StatelessWidget {
 }
 
 class _StatusPill extends StatelessWidget {
-  const _StatusPill({
-    this.icon,
-    required this.label,
-    required this.color,
-  });
+  const _StatusPill({this.icon, required this.label, required this.color});
 
   final IconData? icon;
   final String label;
@@ -1703,7 +1886,11 @@ class _LoadingState extends StatelessWidget {
         Center(
           child: Text(
             'Loading issue tracking...',
-            style: TextStyle(color: _textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              color: _textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ],
@@ -1717,11 +1904,17 @@ class _ErrorState extends StatelessWidget {
     required this.message,
     required this.onRetry,
     required this.onHome,
+    required this.showIssueIdInput,
+    required this.issueIdController,
+    required this.onLoadIssueId,
   });
 
   final String message;
   final Future<void> Function() onRetry;
   final VoidCallback onHome;
+  final bool showIssueIdInput;
+  final TextEditingController issueIdController;
+  final ValueChanged<String> onLoadIssueId;
 
   @override
   Widget build(BuildContext context) {
@@ -1742,7 +1935,11 @@ class _ErrorState extends StatelessWidget {
               const SizedBox(height: 8),
               const Text(
                 'Unable to load tracking',
-                style: TextStyle(color: _textPrimary, fontSize: 16, fontWeight: FontWeight.w800),
+                style: TextStyle(
+                  color: _textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
@@ -1755,6 +1952,41 @@ class _ErrorState extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+              if (showIssueIdInput) ...<Widget>[
+                const SizedBox(height: 12),
+                TextField(
+                  controller: issueIdController,
+                  textInputAction: TextInputAction.done,
+                  style: const TextStyle(color: _textPrimary),
+                  decoration: InputDecoration(
+                    hintText: 'Enter issue ID to view tracking',
+                    hintStyle: const TextStyle(color: _textSecondary),
+                    filled: true,
+                    fillColor: _surfaceRaised,
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: _surfaceBorder),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: _primary),
+                    ),
+                  ),
+                  onSubmitted: onLoadIssueId,
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => onLoadIssueId(issueIdController.text),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _surfaceRaised,
+                      foregroundColor: _textPrimary,
+                    ),
+                    child: const Text('Load Issue'),
+                  ),
+                ),
+              ],
               const SizedBox(height: 12),
               Row(
                 children: <Widget>[
@@ -1796,7 +2028,96 @@ class _VerificationInput {
   final String remarks;
 }
 
-Future<_VerificationInput?> _showVerificationDialog(BuildContext context) async {
+class _CategoryWorkflowFallback extends StatelessWidget {
+  const _CategoryWorkflowFallback({
+    super.key,
+    required this.onSelectCategory,
+    required this.onTryLatestIssue,
+  });
+
+  final ValueChanged<String> onSelectCategory;
+  final VoidCallback onTryLatestIssue;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
+      children: <Widget>[
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: _surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: _surfaceBorder),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              const Text(
+                'Choose Category Workflow',
+                style: TextStyle(
+                  color: _textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'No issue ID was available. Select a category to view the exact workflow stages.',
+                style: TextStyle(
+                  color: _textSecondary,
+                  fontSize: 12,
+                  height: 1.35,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: onTryLatestIssue,
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: _surfaceBorder),
+                    foregroundColor: _textPrimary,
+                  ),
+                  icon: const Icon(Icons.history_rounded, size: 18),
+                  label: const Text('Try My Latest Issue'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: IssueCategoryCatalog.all
+                    .map(
+                      (IssueCategory category) => ActionChip(
+                        backgroundColor: _surfaceRaised,
+                        side: const BorderSide(color: _surfaceBorder),
+                        label: Text(
+                          category.title,
+                          style: const TextStyle(
+                            color: _textPrimary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                        ),
+                        onPressed: () => onSelectCategory(category.title),
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+Future<_VerificationInput?> _showVerificationDialog(
+  BuildContext context,
+) async {
   int selectedRating = 4;
   final TextEditingController remarksController = TextEditingController();
 
@@ -1808,7 +2129,11 @@ Future<_VerificationInput?> _showVerificationDialog(BuildContext context) async 
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         title: const Text(
           'Submit Verification',
-          style: TextStyle(color: _textPrimary, fontSize: 16, fontWeight: FontWeight.w800),
+          style: TextStyle(
+            color: _textPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+          ),
         ),
         content: StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
@@ -1818,7 +2143,11 @@ Future<_VerificationInput?> _showVerificationDialog(BuildContext context) async 
               children: <Widget>[
                 const Text(
                   'Rate the resolution quality',
-                  style: TextStyle(color: _textSecondary, fontSize: 11.8, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    color: _textSecondary,
+                    fontSize: 11.8,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Row(
@@ -1846,7 +2175,10 @@ Future<_VerificationInput?> _showVerificationDialog(BuildContext context) async 
                   style: const TextStyle(color: _textPrimary, fontSize: 12),
                   decoration: InputDecoration(
                     hintText: 'Add remarks (optional)',
-                    hintStyle: const TextStyle(color: _textSecondary, fontSize: 12),
+                    hintStyle: const TextStyle(
+                      color: _textSecondary,
+                      fontSize: 12,
+                    ),
                     filled: true,
                     fillColor: _surfaceSoft,
                     border: OutlineInputBorder(
@@ -1870,7 +2202,10 @@ Future<_VerificationInput?> _showVerificationDialog(BuildContext context) async 
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel', style: TextStyle(color: _textSecondary, fontSize: 12)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: _textSecondary, fontSize: 12),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -1881,8 +2216,14 @@ Future<_VerificationInput?> _showVerificationDialog(BuildContext context) async 
                 ),
               );
             },
-            style: ElevatedButton.styleFrom(backgroundColor: _primary, foregroundColor: Colors.black),
-            child: const Text('Submit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _primary,
+              foregroundColor: Colors.black,
+            ),
+            child: const Text(
+              'Submit',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       );
@@ -1922,14 +2263,21 @@ class _LiveUpdatesPageState extends State<_LiveUpdatesPage> {
         scrolledUnderElevation: 0,
         title: const Text(
           'Live Updates',
-          style: TextStyle(color: _textPrimary, fontSize: 18, fontWeight: FontWeight.w800),
+          style: TextStyle(
+            color: _textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ),
       body: StreamBuilder<TrackedIssue?>(
         stream: _repository.watchIssue(widget.issueId),
         builder: (BuildContext context, AsyncSnapshot<TrackedIssue?> snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator(color: _primary));
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              !snapshot.hasData) {
+            return const Center(
+              child: CircularProgressIndicator(color: _primary),
+            );
           }
 
           final TrackedIssue? issue = snapshot.data;
@@ -1937,15 +2285,26 @@ class _LiveUpdatesPageState extends State<_LiveUpdatesPage> {
             return const Center(
               child: Text(
                 'No live updates available.',
-                style: TextStyle(color: _textSecondary, fontSize: 12.5, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  color: _textSecondary,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             );
           }
 
-          final List<IssueTimelineEvent> events = List<IssueTimelineEvent>.from(issue.timeline)
-            ..sort((IssueTimelineEvent a, IssueTimelineEvent b) => b.timestamp.compareTo(a.timestamp));
-          final List<IssueTimelineEvent> uniqueEvents = _deduplicateLiveEvents(events);
-          final List<DateTime> displayTimestamps = _buildLiveDisplayTimestamps(uniqueEvents);
+          final List<IssueTimelineEvent> events =
+              List<IssueTimelineEvent>.from(issue.timeline)..sort(
+                (IssueTimelineEvent a, IssueTimelineEvent b) =>
+                    b.timestamp.compareTo(a.timestamp),
+              );
+          final List<IssueTimelineEvent> uniqueEvents = _deduplicateLiveEvents(
+            events,
+          );
+          final List<DateTime> displayTimestamps = _buildLiveDisplayTimestamps(
+            uniqueEvents,
+          );
 
           return Column(
             children: <Widget>[
@@ -1974,15 +2333,16 @@ class _LiveUpdatesPageState extends State<_LiveUpdatesPage> {
                       tween: Tween<double>(begin: 0, end: 1),
                       duration: Duration(milliseconds: 260 + (index * 120)),
                       curve: Curves.easeOut,
-                      builder: (BuildContext context, double value, Widget? child) {
-                        return Opacity(
-                          opacity: value,
-                          child: Transform.translate(
-                            offset: Offset(0, (1 - value) * 16),
-                            child: child,
-                          ),
-                        );
-                      },
+                      builder:
+                          (BuildContext context, double value, Widget? child) {
+                            return Opacity(
+                              opacity: value,
+                              child: Transform.translate(
+                                offset: Offset(0, (1 - value) * 16),
+                                child: child,
+                              ),
+                            );
+                          },
                       child: _LiveUpdatePostCard(
                         event: event,
                         displayTimestamp: displayTimestamps[index],
@@ -2016,16 +2376,27 @@ class _LiveUpdatesPageState extends State<_LiveUpdatesPage> {
                       minimumSize: const Size.fromHeight(42),
                       foregroundColor: Colors.black,
                       backgroundColor: _isRealtimeEnabled ? _success : _primary,
-                      side: BorderSide(color: _isRealtimeEnabled ? _success : _primary),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      side: BorderSide(
+                        color: _isRealtimeEnabled ? _success : _primary,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                     icon: Icon(
-                      _isRealtimeEnabled ? Icons.track_changes_rounded : Icons.notifications_outlined,
+                      _isRealtimeEnabled
+                          ? Icons.track_changes_rounded
+                          : Icons.notifications_outlined,
                       size: 16,
                     ),
                     label: Text(
-                      _isRealtimeEnabled ? 'Notifications On' : 'Enable Notifications',
-                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+                      _isRealtimeEnabled
+                          ? 'Notifications On'
+                          : 'Enable Notifications',
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
@@ -2045,11 +2416,16 @@ class _LiveUpdatesPageState extends State<_LiveUpdatesPage> {
                       minimumSize: const Size.fromHeight(42),
                       foregroundColor: _textPrimary,
                       side: const BorderSide(color: _surfaceBorder),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                     child: const Text(
                       'Back to Home',
-                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
@@ -2063,7 +2439,10 @@ class _LiveUpdatesPageState extends State<_LiveUpdatesPage> {
 }
 
 class _LiveUpdatePostCard extends StatefulWidget {
-  const _LiveUpdatePostCard({required this.event, required this.displayTimestamp});
+  const _LiveUpdatePostCard({
+    required this.event,
+    required this.displayTimestamp,
+  });
 
   final IssueTimelineEvent event;
   final DateTime displayTimestamp;
@@ -2100,7 +2479,9 @@ class _LiveUpdatePostCardState extends State<_LiveUpdatePostCard> {
         .map((String value) => value.trim())
         .where((String value) => value.isNotEmpty)
         .toList(growable: false);
-    final List<String> images = photos.isEmpty ? _relatedImagesForEvent(event) : photos;
+    final List<String> images = photos.isEmpty
+        ? _relatedImagesForEvent(event)
+        : photos;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -2130,13 +2511,21 @@ class _LiveUpdatePostCardState extends State<_LiveUpdatePostCard> {
                       updaterName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: _textPrimary, fontSize: 12.5, fontWeight: FontWeight.w700),
+                      style: const TextStyle(
+                        color: _textPrimary,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     Text(
                       updaterRole,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: _textSecondary, fontSize: 10.8, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        color: _textSecondary,
+                        fontSize: 10.8,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     _MicroBadge(
@@ -2148,7 +2537,11 @@ class _LiveUpdatePostCardState extends State<_LiveUpdatePostCard> {
               ),
               Text(
                 _formatDateTime(widget.displayTimestamp),
-                style: const TextStyle(color: _textSecondary, fontSize: 10.8, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  color: _textSecondary,
+                  fontSize: 10.8,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
@@ -2157,7 +2550,12 @@ class _LiveUpdatePostCardState extends State<_LiveUpdatePostCard> {
             remarks,
             maxLines: 4,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: _textPrimary, fontSize: 12.4, height: 1.35, fontWeight: FontWeight.w500),
+            style: const TextStyle(
+              color: _textPrimary,
+              fontSize: 12.4,
+              height: 1.35,
+              fontWeight: FontWeight.w500,
+            ),
           ),
           const SizedBox(height: 10),
           SizedBox(
@@ -2181,14 +2579,22 @@ class _LiveUpdatePostCardState extends State<_LiveUpdatePostCard> {
                   child: Image.network(
                     imageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
-                      return const ColoredBox(
-                        color: Color(0xFF171717),
-                        child: Center(
-                          child: Icon(Icons.broken_image_outlined, color: _textSecondary),
-                        ),
-                      );
-                    },
+                    errorBuilder:
+                        (
+                          BuildContext context,
+                          Object error,
+                          StackTrace? stackTrace,
+                        ) {
+                          return const ColoredBox(
+                            color: Color(0xFF171717),
+                            child: Center(
+                              child: Icon(
+                                Icons.broken_image_outlined,
+                                color: _textSecondary,
+                              ),
+                            ),
+                          );
+                        },
                   ),
                 );
               },
@@ -2223,7 +2629,9 @@ Future<void> _openIssueMap(TrackedIssue issue) async {
   if (lat == null || lng == null) {
     return;
   }
-  final Uri uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
+  final Uri uri = Uri.parse(
+    'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
+  );
   await launchUrl(uri, mode: LaunchMode.externalApplication);
 }
 
@@ -2261,11 +2669,19 @@ void _openEvidencePreview(BuildContext context, String imageUrl) {
                 child: Image.network(
                   imageUrl,
                   fit: BoxFit.contain,
-                  errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
-                    return const Center(
-                      child: Icon(Icons.broken_image_outlined, color: _textSecondary),
-                    );
-                  },
+                  errorBuilder:
+                      (
+                        BuildContext context,
+                        Object error,
+                        StackTrace? stackTrace,
+                      ) {
+                        return const Center(
+                          child: Icon(
+                            Icons.broken_image_outlined,
+                            color: _textSecondary,
+                          ),
+                        );
+                      },
                 ),
               ),
             ),
@@ -2298,7 +2714,9 @@ String _issueTitle(TrackedIssue issue) {
 
 String _safeText(String? value) {
   final String normalized = (value ?? '').trim();
-  if (normalized.isEmpty || normalized.toLowerCase() == 'unassigned' || normalized.toLowerCase() == 'not available') {
+  if (normalized.isEmpty ||
+      normalized.toLowerCase() == 'unassigned' ||
+      normalized.toLowerCase() == 'not available') {
     return '--';
   }
   return normalized;
@@ -2317,7 +2735,9 @@ class _ProfileAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String? normalized = (imageUrl ?? '').trim().isEmpty ? null : imageUrl!.trim();
+    final String? normalized = (imageUrl ?? '').trim().isEmpty
+        ? null
+        : imageUrl!.trim();
     final String fallbackUrl = _randomAvatarForName(displayName);
     final String activeUrl = normalized ?? fallbackUrl;
 
@@ -2333,20 +2753,28 @@ class _ProfileAvatar extends StatelessWidget {
         child: Image.network(
           activeUrl,
           fit: BoxFit.cover,
-          frameBuilder: (
-            BuildContext context,
-            Widget child,
-            int? frame,
-            bool wasSynchronouslyLoaded,
-          ) {
-            if (wasSynchronouslyLoaded || frame != null) {
-              return child;
-            }
-            return _AvatarFallback(initials: _initials(displayName), radius: radius);
-          },
-          errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
-            return _AvatarFallback(initials: _initials(displayName), radius: radius);
-          },
+          frameBuilder:
+              (
+                BuildContext context,
+                Widget child,
+                int? frame,
+                bool wasSynchronouslyLoaded,
+              ) {
+                if (wasSynchronouslyLoaded || frame != null) {
+                  return child;
+                }
+                return _AvatarFallback(
+                  initials: _initials(displayName),
+                  radius: radius,
+                );
+              },
+          errorBuilder:
+              (BuildContext context, Object error, StackTrace? stackTrace) {
+                return _AvatarFallback(
+                  initials: _initials(displayName),
+                  radius: radius,
+                );
+              },
         ),
       ),
     );
@@ -2430,7 +2858,9 @@ String _initials(String value) {
   }
   if (parts.length == 1) {
     final String head = parts.first;
-    return head.length >= 2 ? head.substring(0, 2).toUpperCase() : head.toUpperCase();
+    return head.length >= 2
+        ? head.substring(0, 2).toUpperCase()
+        : head.toUpperCase();
   }
   return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
 }
@@ -2466,7 +2896,9 @@ List<DateTime> _buildLiveDisplayTimestamps(List<IssueTimelineEvent> events) {
   return resolved;
 }
 
-List<IssueTimelineEvent> _deduplicateLiveEvents(List<IssueTimelineEvent> events) {
+List<IssueTimelineEvent> _deduplicateLiveEvents(
+  List<IssueTimelineEvent> events,
+) {
   final Set<String> seen = <String>{};
   final List<IssueTimelineEvent> result = <IssueTimelineEvent>[];
 
@@ -2492,7 +2924,8 @@ String? _taggedAuthorityPhoto(TrackedIssue issue) {
     return direct;
   }
   if (issue.taggedAuthorityProfiles.isNotEmpty) {
-    final String fromProfile = (issue.taggedAuthorityProfiles.first.profilePhotoUrl ?? '').trim();
+    final String fromProfile =
+        (issue.taggedAuthorityProfiles.first.profilePhotoUrl ?? '').trim();
     if (fromProfile.isNotEmpty) {
       return fromProfile;
     }
@@ -2510,7 +2943,8 @@ String? _taggedAuthorityPhone(TrackedIssue issue) {
     return office;
   }
   if (issue.taggedAuthorityProfiles.isNotEmpty) {
-    final String p = (issue.taggedAuthorityProfiles.first.phoneNumber ?? '').trim();
+    final String p = (issue.taggedAuthorityProfiles.first.phoneNumber ?? '')
+        .trim();
     if (p.isNotEmpty) {
       return p;
     }
@@ -2530,10 +2964,15 @@ String? _officerPhone(TrackedIssue issue) {
   return null;
 }
 
-Future<void> _shareIssueDetails(BuildContext context, TrackedIssue issue) async {
+Future<void> _shareIssueDetails(
+  BuildContext context,
+  TrackedIssue issue,
+) async {
   final String text =
       'Issue ID: ${issue.issueId}\nStatus: ${issue.currentStatus.title}\nDepartment: ${_safeText(issue.department)}\nExpected Resolution: ${_formatDate(issue.expectedResolutionAt)}';
-  await Share.share(text, subject: 'Issue ${issue.issueId} Tracking Update');
+  await SharePlus.instance.share(
+    ShareParams(text: text, subject: 'Issue ${issue.issueId} Tracking Update'),
+  );
 }
 
 double _managerProgress(TrackedIssue issue) {
@@ -2544,10 +2983,16 @@ double _managerProgress(TrackedIssue issue) {
   return source;
 }
 
-Map<IssueWorkflowStatus, IssueTimelineEvent> _eventByStatus(List<IssueTimelineEvent> timeline) {
-  final Map<IssueWorkflowStatus, IssueTimelineEvent> result = <IssueWorkflowStatus, IssueTimelineEvent>{};
-  final List<IssueTimelineEvent> sorted = List<IssueTimelineEvent>.from(timeline)
-    ..sort((IssueTimelineEvent a, IssueTimelineEvent b) => b.timestamp.compareTo(a.timestamp));
+Map<IssueWorkflowStatus, IssueTimelineEvent> _eventByStatus(
+  List<IssueTimelineEvent> timeline,
+) {
+  final Map<IssueWorkflowStatus, IssueTimelineEvent> result =
+      <IssueWorkflowStatus, IssueTimelineEvent>{};
+  final List<IssueTimelineEvent> sorted =
+      List<IssueTimelineEvent>.from(timeline)..sort(
+        (IssueTimelineEvent a, IssueTimelineEvent b) =>
+            b.timestamp.compareTo(a.timestamp),
+      );
   for (final IssueTimelineEvent event in sorted) {
     result.putIfAbsent(event.status, () => event);
   }

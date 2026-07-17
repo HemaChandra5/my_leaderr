@@ -26,7 +26,6 @@ class ReportIssueProvider extends ChangeNotifier {
   final LocationService locationService;
   final IssueSubmissionService submissionService;
   final AuthorityService authorityService;
-  final Geocoding _geocoding = Geocoding();
 
   final List<PickedMedia> _mediaItems = <PickedMedia>[];
   final List<AuthorityProfile> _authorities = <AuthorityProfile>[];
@@ -128,12 +127,14 @@ class ReportIssueProvider extends ChangeNotifier {
   double? get detectedLongitude => _detectedLongitude;
   Map<String, String> get addressComponents =>
       Map<String, String>.unmodifiable(_addressComponents);
-    String? get locationPlaceId => _locationPlaceId;
-    DateTime? get locationTimestamp => _locationTimestamp;
-    bool get autoAddressLoaded => _autoAddressLoaded;
-    bool get canEditLocationManually => _autoAddressLoaded;
-    bool get hasResolvedLocation =>
-      _detectedLatitude != null && _detectedLongitude != null && _autoAddressLoaded;
+  String? get locationPlaceId => _locationPlaceId;
+  DateTime? get locationTimestamp => _locationTimestamp;
+  bool get autoAddressLoaded => _autoAddressLoaded;
+  bool get canEditLocationManually => _autoAddressLoaded;
+  bool get hasResolvedLocation =>
+      _detectedLatitude != null &&
+      _detectedLongitude != null &&
+      _autoAddressLoaded;
   String? get locationError => _locationError;
   bool get showLocationPermissionDialog => _showLocationPermissionDialog;
   String? get submissionError => _submissionError;
@@ -407,10 +408,8 @@ class ReportIssueProvider extends ChangeNotifier {
     _notifySafely();
 
     try {
-      final LocationResult result = await locationService.reverseGeocodeCoordinates(
-        latitude: latitude,
-        longitude: longitude,
-      );
+      final LocationResult result = await locationService
+          .reverseGeocodeCoordinates(latitude: latitude, longitude: longitude);
       if (_isDisposed || requestToken != _locationRequestToken) {
         return;
       }
@@ -457,15 +456,16 @@ class ReportIssueProvider extends ChangeNotifier {
     _notifySafely();
 
     try {
-      final List<Location> locations = await _geocoding.locationFromAddress(q);
+      final List<Location> locations = await locationFromAddress(q);
       if (locations.isEmpty) {
         throw const LocationServiceFailure('Unable to find this location.');
       }
       final Location first = locations.first;
-      final LocationResult result = await locationService.reverseGeocodeCoordinates(
-        latitude: first.latitude,
-        longitude: first.longitude,
-      );
+      final LocationResult result = await locationService
+          .reverseGeocodeCoordinates(
+            latitude: first.latitude,
+            longitude: first.longitude,
+          );
       if (_isDisposed || requestToken != _locationRequestToken) {
         return;
       }

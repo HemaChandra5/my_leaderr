@@ -20,6 +20,7 @@ class TrackIssueProvider extends ChangeNotifier {
   bool _isLoading = true;
   bool _isRefreshing = false;
   bool _isSubmittingVerification = false;
+  bool _isPreviewMode = false;
   int _timelineVersion = 0;
   String _timelineSignature = '';
   DateTime _now = DateTime.now();
@@ -30,6 +31,7 @@ class TrackIssueProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isRefreshing => _isRefreshing;
   bool get isSubmittingVerification => _isSubmittingVerification;
+  bool get isPreviewMode => _isPreviewMode;
   int get timelineVersion => _timelineVersion;
 
   bool get hasIssue => _issue != null;
@@ -37,7 +39,7 @@ class TrackIssueProvider extends ChangeNotifier {
 
   bool get canSubmitCitizenVerification {
     final TrackedIssue? current = _issue;
-    if (current == null || _isSubmittingVerification) {
+    if (current == null || _isSubmittingVerification || _isPreviewMode) {
       return false;
     }
     return current.currentStatus == IssueWorkflowStatus.citizenVerification ||
@@ -78,13 +80,21 @@ class TrackIssueProvider extends ChangeNotifier {
     return '${(current.progress * 100).round()}%';
   }
 
-  void initialize({SubmittedIssue? seedSubmission, String? routeIssueId}) {
-    final String? resolvedIssueId = routeIssueId ?? seedSubmission?.issueId;
+  void initialize({
+    SubmittedIssue? seedSubmission,
+    String? routeIssueId,
+    String? currentUserId,
+  }) {
+    final String? resolvedIssueId = (routeIssueId ?? seedSubmission?.issueId)
+        ?.trim();
 
     if (resolvedIssueId == null || resolvedIssueId.isEmpty) {
-      _errorMessage = 'Issue ID is missing. Unable to load timeline.';
-      _isLoading = false;
-      notifyListeners();
+      final String userId = (currentUserId ?? '').trim();
+      if (userId.isNotEmpty) {
+        _loadLatestIssueForUser(userId);
+        return;
+      }
+      loadCategoryWorkflowPreview(category: 'Roads');
       return;
     }
 
@@ -93,6 +103,7 @@ class TrackIssueProvider extends ChangeNotifier {
     }
 
     _issueId = resolvedIssueId;
+    _isPreviewMode = false;
 
     if (seedSubmission != null && _issue == null) {
       _issue = _fallbackFromSubmission(seedSubmission);
@@ -109,11 +120,14 @@ class TrackIssueProvider extends ChangeNotifier {
           (TrackedIssue? remoteIssue) {
             _isLoading = false;
             if (remoteIssue == null) {
-              _errorMessage = 'Issue not found for ID $resolvedIssueId.';
-              notifyListeners();
+              loadCategoryWorkflowPreview(
+                category: 'Roads',
+                userId: currentUserId,
+              );
               return;
             }
 
+            _isPreviewMode = false;
             _errorMessage = null;
             _issue = remoteIssue;
 
@@ -127,16 +141,176 @@ class TrackIssueProvider extends ChangeNotifier {
             notifyListeners();
           },
           onError: (Object error) {
-            _isLoading = false;
-            _errorMessage = 'Unable to listen for updates: $error';
-            notifyListeners();
+            loadCategoryWorkflowPreview(
+              category: 'Roads',
+              userId: currentUserId,
+            );
           },
         );
   }
 
+  Future<void> _loadLatestIssueForUser(String userId) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final TrackedIssue? latest = await repository.fetchLatestIssueForUser(
+        userId,
+      );
+      if (latest == null || latest.issueId.trim().isEmpty) {
+        loadCategoryWorkflowPreview(category: 'Roads', userId: userId);
+        return;
+      }
+
+      initialize(routeIssueId: latest.issueId, currentUserId: userId);
+    } catch (error) {
+      loadCategoryWorkflowPreview(category: 'Roads', userId: userId);
+    }
+  }
+
+  void loadCategoryWorkflowPreview({required String category, String? userId}) {
+    _subscription?.cancel();
+
+    final DateTime now = DateTime.now();
+    final List<IssueWorkflowStatus> previewFlow = <IssueWorkflowStatus>[
+      IssueWorkflowStatus.issueCreated,
+      IssueWorkflowStatus.departmentAssigned,
+      IssueWorkflowStatus.officerAccepted,
+      IssueWorkflowStatus.inspectionScheduled,
+      IssueWorkflowStatus.workStarted,
+      IssueWorkflowStatus.workInProgress,
+    ];
+
+    final List<IssueTimelineEvent> timeline = <IssueTimelineEvent>[];
+    final DateTime start = now.subtract(const Duration(days: 2));
+    for (int i = 0; i < previewFlow.length; i++) {
+      final IssueWorkflowStatus status = previewFlow[i];
+      timeline.add(
+        IssueTimelineEvent(
+          status: status,
+          title: status.title,
+          timestamp: start.add(Duration(hours: i * 8)),
+          updatedBy: i == 0 ? 'Citizen' : 'System',
+          department: _departmentForCategory(category),
+          officerName: 'Assigned Team',
+          remarks: _remarksForStatus(status, category),
+          latitude: null,
+          longitude: null,
+          photoAttachments: const <String>[],
+          videoAttachments: const <String>[],
+          auditLogs: const <String>[],
+        ),
+      );
+    }
+
+    _issueId = null;
+    _isPreviewMode = true;
+    _isLoading = false;
+    _errorMessage = null;
+    _issue = TrackedIssue(
+      issueId: 'PREVIEW-${category.toUpperCase().replaceAll(' ', '-')}',
+      userId: (userId ?? '').trim(),
+      referenceNumber: 'Preview workflow',
+      submissionChannel: 'App',
+      createdBy: (userId ?? '').trim(),
+      complaintType: null,
+      visibility: null,
+      queuePosition: null,
+      currentSla: 'In progress',
+      verificationStatus: null,
+      resolutionCategory: null,
+      escalationLevel: null,
+      issueTitle: '$category workflow preview',
+      category: category,
+      priority: 'Medium',
+      currentStatus: IssueWorkflowStatus.workInProgress,
+      department: _departmentForCategory(category),
+      assignedOfficer: 'Assigned Team',
+      assignedOfficerDesignation: 'Field Officer',
+      assignedOfficerEmployeeId: null,
+      assignedOfficerPhone: null,
+      assignedOfficerEmail: null,
+      assignedOfficerExtension: null,
+      assignedOfficerAvailability: 'Working Hours',
+      assignedOfficerOfficeLocation: null,
+      taggedAuthorityName: _departmentForCategory(category),
+      taggedAuthorityDesignation: 'Department',
+      taggedAuthorityDepartment: _departmentForCategory(category),
+      taggedAuthorityArea: null,
+      taggedAuthorityVerified: true,
+      taggedAuthorityMobile: null,
+      taggedAuthorityOfficePhone: null,
+      taggedAuthorityEmail: null,
+      taggedAuthorityProfileUrl: null,
+      taggedAuthorityProfiles: const <TrackedAuthorityProfile>[],
+      assignedAuthorities: <String>[_departmentForCategory(category)],
+      transferredAuthorities: const <String>[],
+      officerAvatarUrl: null,
+      createdAt: start,
+      updatedAt: now,
+      expectedResolutionAt: now.add(const Duration(days: 1)),
+      resolvedAt: null,
+      address: 'Workflow preview mode',
+      locationComponents: const <String, String>{},
+      latitude: null,
+      longitude: null,
+      imageUrls: const <String>[],
+      videoUrls: const <String>[],
+      auditLogs: const <String>[
+        'Preview shown because no issue ID was available.',
+      ],
+      timeline: timeline,
+      progressStages: const <TrackedIssueStage>[],
+    );
+    notifyListeners();
+  }
+
+  String _departmentForCategory(String category) {
+    final String c = category.toLowerCase();
+    if (c.contains('water')) {
+      return 'Water Works Department';
+    }
+    if (c.contains('road')) {
+      return 'Roads and Infrastructure Department';
+    }
+    if (c.contains('electric')) {
+      return 'Electrical Maintenance Department';
+    }
+    if (c.contains('drain')) {
+      return 'Drainage Department';
+    }
+    if (c.contains('garbage') || c.contains('sanitation')) {
+      return 'Sanitation Department';
+    }
+    return 'Public Services Department';
+  }
+
+  String _remarksForStatus(IssueWorkflowStatus status, String category) {
+    switch (status) {
+      case IssueWorkflowStatus.issueCreated:
+        return '$category issue registered successfully.';
+      case IssueWorkflowStatus.departmentAssigned:
+        return 'Issue assigned to ${_departmentForCategory(category)}.';
+      case IssueWorkflowStatus.officerAccepted:
+        return 'Officer acknowledged the task and started planning.';
+      case IssueWorkflowStatus.inspectionScheduled:
+        return 'Site inspection slot scheduled by field team.';
+      case IssueWorkflowStatus.workStarted:
+        return 'Ground work has started for this issue.';
+      case IssueWorkflowStatus.workInProgress:
+        return 'Work is currently in progress.';
+      case IssueWorkflowStatus.workCompleted:
+      case IssueWorkflowStatus.citizenVerification:
+      case IssueWorkflowStatus.issueClosed:
+      case IssueWorkflowStatus.unknown:
+        return 'Pending next workflow update.';
+    }
+  }
+
   Future<void> refresh() async {
     final String? id = _issueId;
-    if (id == null || id.isEmpty || _isRefreshing) {
+    if (id == null || id.isEmpty || _isRefreshing || _isPreviewMode) {
       return;
     }
 
@@ -164,10 +338,7 @@ class TrackIssueProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> submitCitizenVerification({
-    String? remarks,
-    int? rating,
-  }) async {
+  Future<bool> submitCitizenVerification({String? remarks, int? rating}) async {
     final TrackedIssue? current = _issue;
     if (current == null || _isSubmittingVerification) {
       return false;
@@ -258,22 +429,22 @@ class TrackIssueProvider extends ChangeNotifier {
       assignedOfficerAvailability: null,
       assignedOfficerOfficeLocation: null,
       taggedAuthorityName: submission.taggedAuthorities.isEmpty
-        ? null
-        : (submission.taggedAuthorities.first['name'] as String?),
+          ? null
+          : (submission.taggedAuthorities.first['name'] as String?),
       taggedAuthorityDesignation: submission.taggedAuthorities.isEmpty
-        ? null
-        : (submission.taggedAuthorities.first['designation'] as String?),
+          ? null
+          : (submission.taggedAuthorities.first['designation'] as String?),
       taggedAuthorityDepartment: submission.taggedAuthorities.isEmpty
-        ? null
-        : (submission.taggedAuthorities.first['department'] as String?),
+          ? null
+          : (submission.taggedAuthorities.first['department'] as String?),
       taggedAuthorityArea: null,
       taggedAuthorityVerified: true,
       taggedAuthorityMobile: null,
       taggedAuthorityOfficePhone: null,
       taggedAuthorityEmail: null,
       taggedAuthorityProfileUrl: submission.taggedAuthorities.isEmpty
-        ? null
-        : (submission.taggedAuthorities.first['profilePhotoUrl'] as String?),
+          ? null
+          : (submission.taggedAuthorities.first['profilePhotoUrl'] as String?),
       taggedAuthorityProfiles: submission.taggedAuthorities
           .whereType<Map<String, dynamic>>()
           .map(TrackedAuthorityProfile.fromMap)

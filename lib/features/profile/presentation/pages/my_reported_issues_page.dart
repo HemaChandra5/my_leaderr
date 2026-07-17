@@ -4,8 +4,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../main.dart';
 import '../../../../providers/user_provider.dart';
+import '../../../report_issue/presentation/screens/report_issue_screen.dart';
 import '../../../track_issue/presentation/pages/track_issue_screen.dart';
 import '../../data/repositories/firestore_reported_issues_repository.dart';
 import '../../domain/models/reported_issue_case.dart';
@@ -70,28 +70,36 @@ class _MyReportedIssuesPageState extends State<MyReportedIssuesPage>
         settings: RouteSettings(arguments: issueId),
         transitionDuration: const Duration(milliseconds: 280),
         reverseTransitionDuration: const Duration(milliseconds: 220),
-        pageBuilder: (
-          BuildContext context,
-          Animation<double> animation,
-          Animation<double> secondaryAnimation,
-        ) {
-          return const TrackIssueScreen();
-        },
-        transitionsBuilder: (
-          BuildContext context,
-          Animation<double> animation,
-          Animation<double> secondaryAnimation,
-          Widget child,
-        ) {
-          final Animation<Offset> slide = Tween<Offset>(
-            begin: const Offset(0, 0.04),
-            end: Offset.zero,
-          ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
-          return FadeTransition(
-            opacity: animation,
-            child: SlideTransition(position: slide, child: child),
-          );
-        },
+        pageBuilder:
+            (
+              BuildContext context,
+              Animation<double> animation,
+              Animation<double> secondaryAnimation,
+            ) {
+              return const TrackIssueScreen();
+            },
+        transitionsBuilder:
+            (
+              BuildContext context,
+              Animation<double> animation,
+              Animation<double> secondaryAnimation,
+              Widget child,
+            ) {
+              final Animation<Offset> slide =
+                  Tween<Offset>(
+                    begin: const Offset(0, 0.04),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.easeOutCubic,
+                    ),
+                  );
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(position: slide, child: child),
+              );
+            },
       ),
     );
   }
@@ -102,14 +110,16 @@ class _MyReportedIssuesPageState extends State<MyReportedIssuesPage>
     final String userId = (userProvider.firebaseUser?.uid ?? '').trim();
 
     return ChangeNotifierProvider<MyReportedIssuesProvider>(
-      create: (_) =>
-          MyReportedIssuesProvider(repository: FirestoreReportedIssuesRepository())
-            ..initialize(userId),
+      create: (_) => MyReportedIssuesProvider(
+        repository: FirestoreReportedIssuesRepository(),
+      )..initialize(userId),
       child: Consumer<MyReportedIssuesProvider>(
         builder: (BuildContext context, MyReportedIssuesProvider provider, _) {
           return Theme(
             data: Theme.of(context).copyWith(
-              textTheme: GoogleFonts.interTextTheme(Theme.of(context).textTheme),
+              textTheme: GoogleFonts.interTextTheme(
+                Theme.of(context).textTheme,
+              ),
             ),
             child: Scaffold(
               backgroundColor: _pageBg,
@@ -119,7 +129,10 @@ class _MyReportedIssuesPageState extends State<MyReportedIssuesPage>
                 titleSpacing: 0,
                 leading: IconButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, color: _textPrimary),
+                  icon: const Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: _textPrimary,
+                  ),
                 ),
                 title: const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,24 +217,26 @@ class _MyReportedIssuesPageState extends State<MyReportedIssuesPage>
             child: Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: _filterOptions.map((String filter) {
-                final bool selected = provider.filters.contains(filter);
-                return FilterChip(
-                  selected: selected,
-                  onSelected: (_) => provider.toggleFilter(filter),
-                  label: Text(filter),
-                  showCheckmark: false,
-                  selectedColor: const Color(0xFF3A2A0D),
-                  backgroundColor: _panelBg,
-                  side: BorderSide(
-                    color: selected ? _gold : const Color(0xFF293241),
-                  ),
-                  labelStyle: TextStyle(
-                    color: selected ? _gold : _textMuted,
-                    fontWeight: FontWeight.w600,
-                  ),
-                );
-              }).toList(growable: false),
+              children: _filterOptions
+                  .map((String filter) {
+                    final bool selected = provider.filters.contains(filter);
+                    return FilterChip(
+                      selected: selected,
+                      onSelected: (_) => provider.toggleFilter(filter),
+                      label: Text(filter),
+                      showCheckmark: false,
+                      selectedColor: const Color(0xFF3A2A0D),
+                      backgroundColor: _panelBg,
+                      side: BorderSide(
+                        color: selected ? _gold : const Color(0xFF293241),
+                      ),
+                      labelStyle: TextStyle(
+                        color: selected ? _gold : _textMuted,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    );
+                  })
+                  .toList(growable: false),
             ),
           ),
         ),
@@ -229,7 +244,13 @@ class _MyReportedIssuesPageState extends State<MyReportedIssuesPage>
           SliverFillRemaining(
             hasScrollBody: false,
             child: _EmptyState(
-              onReport: () => Navigator.of(context).pushNamed(AppRoutes.track),
+              onReport: () {
+                Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const ReportIssueScreen(),
+                  ),
+                );
+              },
             ),
           )
         else
@@ -262,10 +283,26 @@ class _SummaryGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<({String label, int value, String svg})> cards =
         <({String label, int value, String svg})>[
-          (label: 'Total Requests', value: provider.totalRequests, svg: _summarySvg('total')),
-          (label: 'In Progress', value: provider.inProgressCount, svg: _summarySvg('progress')),
-          (label: 'Resolved', value: provider.resolvedCount, svg: _summarySvg('resolved')),
-          (label: 'Pending', value: provider.pendingCount, svg: _summarySvg('pending')),
+          (
+            label: 'Total Requests',
+            value: provider.totalRequests,
+            svg: _summarySvg('total'),
+          ),
+          (
+            label: 'In Progress',
+            value: provider.inProgressCount,
+            svg: _summarySvg('progress'),
+          ),
+          (
+            label: 'Resolved',
+            value: provider.resolvedCount,
+            svg: _summarySvg('resolved'),
+          ),
+          (
+            label: 'Pending',
+            value: provider.pendingCount,
+            svg: _summarySvg('pending'),
+          ),
         ];
 
     return GridView.builder(
@@ -467,7 +504,9 @@ class _IssueCaseCardState extends State<_IssueCaseCard> {
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(color: _goldSoft),
                           ),
-                          child: SvgPicture.string(_categorySvg(issue.category)),
+                          child: SvgPicture.string(
+                            _categorySvg(issue.category),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -509,13 +548,29 @@ class _IssueCaseCardState extends State<_IssueCaseCard> {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  _InfoRow(icon: Icons.calendar_today_rounded, text: _formatDate(issue.submittedAt), label: 'Submitted'),
+                  _InfoRow(
+                    icon: Icons.calendar_today_rounded,
+                    text: _formatDate(issue.submittedAt),
+                    label: 'Submitted',
+                  ),
                   const SizedBox(height: 6),
-                  _InfoRow(icon: Icons.place_rounded, text: issue.location, label: 'Location'),
+                  _InfoRow(
+                    icon: Icons.place_rounded,
+                    text: issue.location,
+                    label: 'Location',
+                  ),
                   const SizedBox(height: 6),
-                  _InfoRow(icon: Icons.account_balance_rounded, text: issue.department, label: 'Department'),
+                  _InfoRow(
+                    icon: Icons.account_balance_rounded,
+                    text: issue.department,
+                    label: 'Department',
+                  ),
                   const SizedBox(height: 6),
-                  _InfoRow(icon: Icons.badge_rounded, text: issue.officer, label: 'Officer'),
+                  _InfoRow(
+                    icon: Icons.badge_rounded,
+                    text: issue.officer,
+                    label: 'Officer',
+                  ),
                   const SizedBox(height: 6),
                   _InfoRow(
                     icon: Icons.schedule_rounded,
@@ -630,7 +685,9 @@ class _QuickActions extends StatelessWidget {
             ScaffoldMessenger.of(context)
               ..hideCurrentSnackBar()
               ..showSnackBar(
-                const SnackBar(content: Text('Issue details copied to clipboard.')),
+                const SnackBar(
+                  content: Text('Issue details copied to clipboard.'),
+                ),
               );
           },
         ),

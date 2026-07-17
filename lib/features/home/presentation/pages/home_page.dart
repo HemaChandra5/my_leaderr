@@ -460,68 +460,6 @@ class _HomePageState extends State<HomePage> {
                             searchTextColor: primaryText,
                             searchHintColor: secondaryText,
                           ),
-                          const SizedBox(height: 12),
-
-                          // Upgraded Search bar container
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Container(
-                              height: 50,
-                              decoration: BoxDecoration(
-                                color: fieldBg,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: const Color(
-                                    0xFFF5A623,
-                                  ).withValues(alpha: 0.15),
-                                  width: 1,
-                                ),
-                              ),
-                              child: TextField(
-                                controller: _searchController,
-                                onChanged: (_) => setState(() {}),
-                                style: TextStyle(
-                                  color: primaryText,
-                                  fontSize: 14,
-                                  fontFamily: 'Inter',
-                                ),
-                                decoration: InputDecoration(
-                                  hintText: _tr('search_meetings'),
-                                  hintStyle: TextStyle(
-                                    color: secondaryText,
-                                    fontSize: 14,
-                                    fontFamily: 'Inter',
-                                  ),
-                                  prefixIcon: Icon(
-                                    Icons.search_rounded,
-                                    color: const Color(
-                                      0xfff5a623,
-                                    ).withValues(alpha: 0.8),
-                                    size: 20,
-                                  ),
-                                  suffixIcon: _searchController.text.isNotEmpty
-                                      ? IconButton(
-                                          onPressed: () {
-                                            _searchController.clear();
-                                            setState(() {});
-                                          },
-                                          icon: Icon(
-                                            Icons.close_rounded,
-                                            color: secondaryText,
-                                            size: 18,
-                                          ),
-                                        )
-                                      : null,
-                                  border: InputBorder.none,
-                                  enabledBorder: InputBorder.none,
-                                  focusedBorder: InputBorder.none,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
                           const SizedBox(height: 14),
 
                           // Category tabs
@@ -585,7 +523,9 @@ class _HomePageState extends State<HomePage> {
                                         borderRadius: BorderRadius.circular(18),
                                       ),
                                       child: ListTile(
-                                        leading: const Icon(Icons.campaign_rounded),
+                                        leading: const Icon(
+                                          Icons.campaign_rounded,
+                                        ),
                                         title: Text(item.title),
                                         subtitle: Text(item.description),
                                         trailing: const Text('Pinned'),
@@ -598,17 +538,23 @@ class _HomePageState extends State<HomePage> {
                                   return PostCard(
                                     data: data,
                                     onMenuTap: () => _trackAction('post_menu'),
-                                    onProfileTap: () => _openPublicProfile(data),
+                                    onProfileTap: () =>
+                                        _openPublicProfile(data),
                                     onLikeTap: () => _trackAction('post_like'),
-                                    onCommentTap: () => _trackAction('post_comment'),
-                                    onShareTap: () => _trackAction('post_share'),
-                                    onBoostTap: () => _trackAction('post_boost'),
-                                    onBookmarkTap: () => _trackAction('post_bookmark'),
+                                    onCommentTap: () =>
+                                        _trackAction('post_comment'),
+                                    onShareTap: () =>
+                                        _trackAction('post_share'),
+                                    onBoostTap: () =>
+                                        _trackAction('post_boost'),
+                                    onBookmarkTap: () =>
+                                        _trackAction('post_bookmark'),
                                   );
                                 },
                                 separatorBuilder: (_, index) =>
                                     const SizedBox(height: 16),
-                                itemCount: filteredFeed.length +
+                                itemCount:
+                                    filteredFeed.length +
                                     context
                                         .watch<CommunityHubController>()
                                         .homeAnnouncements

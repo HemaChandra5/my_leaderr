@@ -2,8 +2,6 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
 
-final Geocoding _geocoding = Geocoding();
-
 enum LocationFailureCode {
   servicesDisabled,
   permissionDenied,
@@ -14,7 +12,10 @@ enum LocationFailureCode {
 }
 
 class LocationServiceFailure implements Exception {
-  const LocationServiceFailure(this.message, {this.code = LocationFailureCode.unknown});
+  const LocationServiceFailure(
+    this.message, {
+    this.code = LocationFailureCode.unknown,
+  });
 
   final String message;
   final LocationFailureCode code;
@@ -50,7 +51,8 @@ class LocationService {
       );
     }
 
-    final ph.PermissionStatus current = await ph.Permission.locationWhenInUse.status;
+    final ph.PermissionStatus current =
+        await ph.Permission.locationWhenInUse.status;
     ph.PermissionStatus status = current;
     if (!status.isGranted) {
       status = await ph.Permission.locationWhenInUse.request();
@@ -104,13 +106,9 @@ class LocationService {
     required double latitude,
     required double longitude,
   }) async {
-
     List<Placemark> placemarks;
     try {
-      placemarks = await _geocoding.placemarkFromCoordinates(
-        latitude,
-        longitude,
-      );
+      placemarks = await placemarkFromCoordinates(latitude, longitude);
     } catch (_) {
       throw const LocationServiceFailure(
         'Unable to detect your location. Please enter your address manually.',
@@ -167,8 +165,7 @@ class LocationService {
       longitude: longitude,
       formattedAddress: formattedAddress,
       components: components,
-      placeId:
-          '${latitude.toStringAsFixed(5)}_${longitude.toStringAsFixed(5)}',
+      placeId: '${latitude.toStringAsFixed(5)}_${longitude.toStringAsFixed(5)}',
       locationTimestamp: DateTime.now().toUtc(),
     );
   }

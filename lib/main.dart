@@ -25,7 +25,7 @@ import 'features/messaging/presentation/pages/chat_list_screen.dart';
 import 'features/messaging/presentation/pages/chat_screen.dart';
 import 'features/messaging/presentation/pages/public_user_profile_screen.dart';
 import 'features/profile/presentation/pages/profile_dashboard_gate.dart';
-import 'features/track_issue/presentation/pages/track_issue_screen.dart';
+import 'features/report_issue/presentation/screens/report_issue_screen.dart';
 import 'providers/settings_provider.dart';
 import 'providers/user_provider.dart';
 import 'services/auth_service.dart';
@@ -109,7 +109,7 @@ class MyLeaderApp extends StatelessWidget {
               AppRoutes.createMenu: (_) => const CreateMenuOverlay(),
               AppRoutes.events: (_) => const EventsScreen(),
               AppRoutes.upcomingMeetings: (_) => const UpcomingMeetingsScreen(),
-              AppRoutes.track: (_) => const TrackIssueScreen(),
+              AppRoutes.track: (_) => const ReportIssueScreen(),
               AppRoutes.profile: (_) => const ProfileDashboardGate(),
             },
             onGenerateRoute: (RouteSettings settings) {
@@ -136,7 +136,10 @@ class MyLeaderApp extends StatelessWidget {
                 return _buildActionRoute(const CreateEventScreen(), settings);
               }
               if (name == CommunityActionRoutes.leaderAnnouncement) {
-                return _buildActionRoute(const LeaderAnnouncementScreen(), settings);
+                return _buildActionRoute(
+                  const LeaderAnnouncementScreen(),
+                  settings,
+                );
               }
               if (name == CommunityActionRoutes.shareLocation) {
                 return _buildActionRoute(const ShareLocationScreen(), settings);
@@ -208,12 +211,7 @@ Route<T> _buildActionRoute<T>(Widget page, RouteSettings settings) {
         child: page,
       );
     },
-    transitionsBuilder: (
-      _,
-      Animation<double> animation,
-      _,
-      Widget child,
-    ) {
+    transitionsBuilder: (_, Animation<double> animation, _, Widget child) {
       final Animation<Offset> slide = Tween<Offset>(
         begin: const Offset(0, 0.06),
         end: Offset.zero,
