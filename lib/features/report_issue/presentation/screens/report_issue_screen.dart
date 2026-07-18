@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -29,6 +30,23 @@ const Color _error = Color(0xFFE53935);
 const Color _textPrimary = Color(0xFFFFFFFF);
 const Color _textSecondary = Color(0xFFBDBDBD);
 const Color _stroke = Color(0xFF2A2A2A);
+const Color _surfaceSoft = Color(0xFF121214);
+const Color _surfaceElevated = Color(0xFF1A1A1D);
+const Color _textPrimarySoft = Color(0xFFF5F5F5);
+const Color _textMuted = Color(0xFF9A9A9E);
+const Color _successMuted = Color(0xFF5E9770);
+const Color _dividerSoft = Color(0xFF26262A);
+const Color _authBg = Color(0xFF080808);
+const Color _authSurface = Color(0xFF14161C);
+const Color _authCard = Color(0xFF181A20);
+const Color _authCardHover = Color(0xFF1D2028);
+const Color _authBorder = Color(0x0DFFFFFF);
+const Color _authDivider = Color(0x0AFFFFFF);
+const Color _authGold = Color(0xFFF4B400);
+const Color _authGoldDeep = Color(0xFFE2A400);
+const Color _authTextPrimary = Color(0xFFFFFFFF);
+const Color _authTextSecondary = Color(0xFFB6BEC9);
+const Color _authHint = Color(0xFF7E8591);
 const bool _enableGoogleMaps = bool.fromEnvironment(
   'ENABLE_GOOGLE_MAPS',
   defaultValue: false,
@@ -115,6 +133,18 @@ class _AuthorityPrimaryInfo {
   final String text;
 }
 
+class _IssueTickIcon extends StatelessWidget {
+  const _IssueTickIcon({this.size = 14, this.color = const Color(0xFF34C759)});
+
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Icon(Icons.verified_rounded, size: size, color: color);
+  }
+}
+
 String _nonEmptyOr(String value, String fallback) {
   final String v = value.trim();
   if (v.isEmpty || v.toLowerCase() == 'n/a') {
@@ -123,30 +153,53 @@ String _nonEmptyOr(String value, String fallback) {
   return v;
 }
 
-_AuthorityPrimaryInfo _authorityPrimaryInfo(AuthorityProfile authority) {
-  if (_usesConstituency(authority.designation)) {
-    return _AuthorityPrimaryInfo(
-      icon: Icons.how_to_vote_rounded,
-      text:
-          'Constituency: ${_nonEmptyOr(authority.constituency, authority.jurisdiction)}',
-    );
-  }
-  if (_isWardRole(authority.designation)) {
-    return _AuthorityPrimaryInfo(
-      icon: Icons.confirmation_number_rounded,
-      text: 'Ward: ${_nonEmptyOr(authority.ward, authority.jurisdiction)}',
-    );
-  }
-  if (_isSarpanchRole(authority.designation)) {
-    return _AuthorityPrimaryInfo(
-      icon: Icons.terrain_rounded,
-      text: 'Village: ${_nonEmptyOr(authority.mandal, authority.jurisdiction)}',
-    );
+String _cleanConstituencyDisplay(String rawValue) {
+  String value = rawValue.trim();
+  if (value.isEmpty || value.toLowerCase() == 'n/a') {
+    return value;
   }
 
-  return const _AuthorityPrimaryInfo(
-    icon: Icons.account_balance_rounded,
-    text: 'Government Officers',
+  value = value.replaceAll(
+    RegExp(
+      r'\s*,?\s*(parliamentary\s+)?constituency\s*$',
+      caseSensitive: false,
+    ),
+    '',
+  );
+  value = value.replaceAll(RegExp(r'\s{2,}'), ' ').trim();
+  return value.isEmpty ? rawValue.trim() : value;
+}
+
+String _constituencyDisplayValue(AuthorityProfile authority) {
+  final String raw = _nonEmptyOr(
+    authority.constituency,
+    authority.jurisdiction,
+  );
+  return _cleanConstituencyDisplay(raw);
+}
+
+double? _normalizedResolutionRate(double? rawRate) {
+  if (rawRate == null || rawRate.isNaN) {
+    return null;
+  }
+  final double value = rawRate <= 1 ? rawRate * 100 : rawRate;
+  return value.clamp(0, 100).toDouble();
+}
+
+Color _resolutionTone(double percent) {
+  if (percent >= 75) {
+    return const Color(0xFF5E9770);
+  }
+  if (percent >= 50) {
+    return const Color(0xFF9C8357);
+  }
+  return const Color(0xFF8D6666);
+}
+
+_AuthorityPrimaryInfo _authorityPrimaryInfo(AuthorityProfile authority) {
+  return _AuthorityPrimaryInfo(
+    icon: Icons.location_on_rounded,
+    text: '${_constituencyDisplayValue(authority)} Constituency',
   );
 }
 
@@ -315,6 +368,8 @@ class _ReportIssueViewState extends State<_ReportIssueView>
   Widget build(BuildContext context) {
     return Consumer<ReportIssueProvider>(
       builder: (BuildContext context, ReportIssueProvider provider, _) {
+        final bool isAuthorityStep = provider.currentStep == 2;
+
         if (provider.currentStep == 3 && !_detailsStepInitialized) {
           _detailsStepInitialized = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -340,7 +395,8 @@ class _ReportIssueViewState extends State<_ReportIssueView>
           );
         }
 
-        if (_locationController.text != provider.locationInput) {
+        if (provider.currentStep != 5 &&
+            _locationController.text != provider.locationInput) {
           _locationController.value = TextEditingValue(
             text: provider.locationInput,
             selection: TextSelection.collapsed(
@@ -355,12 +411,21 @@ class _ReportIssueViewState extends State<_ReportIssueView>
             textTheme: GoogleFonts.interTextTheme(baseTheme.textTheme),
           ),
           child: Scaffold(
-            backgroundColor: _bg,
+            backgroundColor: isAuthorityStep ? _authBg : _bg,
             appBar: AppBar(
-              backgroundColor: _bg,
+              backgroundColor: isAuthorityStep ? _authBg : _bg,
               surfaceTintColor: Colors.transparent,
               elevation: 0,
+              scrolledUnderElevation: 0,
               centerTitle: true,
+              toolbarHeight: isAuthorityStep ? 72 : 64,
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(1),
+                child: Container(
+                  height: 1,
+                  color: isAuthorityStep ? _authDivider : _dividerSoft,
+                ),
+              ),
               leading: IconButton(
                 onPressed: () async {
                   if (provider.canGoBackStep) {
@@ -376,64 +441,111 @@ class _ReportIssueViewState extends State<_ReportIssueView>
                     );
                   }
                 },
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+                icon: Container(
+                  width: isAuthorityStep ? 40 : 36,
+                  height: isAuthorityStep ? 40 : 36,
+                  decoration: BoxDecoration(
+                    color: isAuthorityStep
+                        ? _authSurface.withValues(alpha: 0.85)
+                        : _surfaceSoft,
+                    borderRadius: BorderRadius.circular(
+                      isAuthorityStep ? 13 : 11,
+                    ),
+                    border: Border.all(
+                      color: isAuthorityStep ? _authBorder : _dividerSoft,
+                    ),
+                    boxShadow: isAuthorityStep
+                        ? <BoxShadow>[
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.35),
+                              blurRadius: 14,
+                              offset: const Offset(0, 6),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    size: isAuthorityStep ? 17 : 16,
+                    color: isAuthorityStep
+                        ? _authTextPrimary
+                        : _textPrimarySoft,
+                  ),
+                ),
               ),
-              title: const Text(
+              title: Text(
                 'Issue Reporting',
-                style: TextStyle(
-                  color: _textPrimary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
+                style: GoogleFonts.inter(
+                  color: isAuthorityStep ? _authTextPrimary : _textPrimarySoft,
+                  fontSize: isAuthorityStep ? 22 : 19,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: isAuthorityStep ? -0.2 : 0.1,
                 ),
               ),
             ),
             body: SafeArea(
               top: false,
-              child: Column(
-                children: <Widget>[
-                  _FlowProgressHeader(currentStep: provider.currentStep),
-                  const SizedBox(height: 4),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 320),
-                        switchInCurve: Curves.easeOutCubic,
-                        transitionBuilder:
-                            (Widget child, Animation<double> animation) {
-                              return FadeTransition(
-                                opacity: animation,
-                                child: SlideTransition(
-                                  position: Tween<Offset>(
-                                    begin: const Offset(0.03, 0),
-                                    end: Offset.zero,
-                                  ).animate(animation),
-                                  child: child,
-                                ),
-                              );
+              child: DecoratedBox(
+                decoration: isAuthorityStep
+                    ? const BoxDecoration(
+                        gradient: RadialGradient(
+                          center: Alignment(0, -0.95),
+                          radius: 1.35,
+                          colors: <Color>[Color(0x120F1118), _authBg],
+                          stops: <double>[0, 1],
+                        ),
+                      )
+                    : const BoxDecoration(),
+                child: Column(
+                  children: <Widget>[
+                    _FlowProgressHeader(
+                      currentStep: provider.currentStep,
+                      authorityMode: isAuthorityStep,
+                    ),
+                    const SizedBox(height: 4),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 18),
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 320),
+                          switchInCurve: Curves.easeOutCubic,
+                          transitionBuilder:
+                              (Widget child, Animation<double> animation) {
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: SlideTransition(
+                                    position: Tween<Offset>(
+                                      begin: const Offset(0.03, 0),
+                                      end: Offset.zero,
+                                    ).animate(animation),
+                                    child: child,
+                                  ),
+                                );
+                              },
+                          child: _StageView(
+                            key: ValueKey<int>(provider.currentStep),
+                            provider: provider,
+                            descriptionController: _descriptionController,
+                            locationController: _locationController,
+                            reviewConfirmed: _reviewConfirmed,
+                            onReviewConfirmationChanged: (bool value) {
+                              setState(() {
+                                _reviewConfirmed = value;
+                              });
                             },
-                        child: _StageView(
-                          key: ValueKey<int>(provider.currentStep),
-                          provider: provider,
-                          descriptionController: _descriptionController,
-                          locationController: _locationController,
-                          reviewConfirmed: _reviewConfirmed,
-                          onReviewConfirmationChanged: (bool value) {
-                            setState(() {
-                              _reviewConfirmed = value;
-                            });
-                          },
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  _BottomActionBar(
-                    provider: provider,
-                    reviewConfirmed: _reviewConfirmed,
-                    onSubmit: () => _submit(provider),
-                  ),
-                ],
+                    _BottomActionBar(
+                      provider: provider,
+                      reviewConfirmed: _reviewConfirmed,
+                      authorityMode: isAuthorityStep,
+                      onSubmit: () => _submit(provider),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -444,9 +556,13 @@ class _ReportIssueViewState extends State<_ReportIssueView>
 }
 
 class _FlowProgressHeader extends StatelessWidget {
-  const _FlowProgressHeader({required this.currentStep});
+  const _FlowProgressHeader({
+    required this.currentStep,
+    this.authorityMode = false,
+  });
 
   final int currentStep;
+  final bool authorityMode;
 
   static const List<String> _labels = <String>[
     'Welcome',
@@ -466,17 +582,19 @@ class _FlowProgressHeader extends StatelessWidget {
     final int percent = (progress * 100).round();
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 6, 16, 2),
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+      margin: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF111111),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF242424)),
+        color: authorityMode
+            ? _authSurface.withValues(alpha: 0.9)
+            : _surfaceSoft,
+        borderRadius: BorderRadius.circular(authorityMode ? 24 : 18),
+        border: Border.all(color: authorityMode ? _authBorder : _dividerSoft),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: authorityMode ? 0.34 : 0.24),
+            blurRadius: authorityMode ? 30 : 24,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -484,6 +602,7 @@ class _FlowProgressHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Expanded(
                 child: Column(
@@ -492,72 +611,55 @@ class _FlowProgressHeader extends StatelessWidget {
                     Text(
                       'Step ${current + 1} of $total',
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF9CA7B5),
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.1,
+                        color: authorityMode ? _authHint : _textMuted,
+                        fontSize: 12,
+                        fontWeight: authorityMode
+                            ? FontWeight.w600
+                            : FontWeight.w500,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _labels[current],
+                      style: GoogleFonts.inter(
+                        color: authorityMode
+                            ? _authTextPrimary
+                            : _textPrimarySoft,
+                        fontSize: authorityMode ? 20 : 18,
+                        fontWeight: authorityMode
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        height: 1.1,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               Column(
                 children: <Widget>[
-                  SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: TweenAnimationBuilder<double>(
-                      tween: Tween<double>(begin: 0, end: progress),
-                      duration: const Duration(milliseconds: 240),
-                      curve: Curves.easeInOut,
-                      builder: (BuildContext context, double value, _) {
-                        return Stack(
-                          alignment: Alignment.center,
-                          children: <Widget>[
-                            Container(
-                              width: 26,
-                              height: 26,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF151515),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            CircularProgressIndicator(
-                              value: value,
-                              strokeWidth: 2.6,
-                              backgroundColor: const Color(0xFF2E2E2E),
-                              valueColor: const AlwaysStoppedAnimation<Color>(
-                                _gold,
-                              ),
-                            ),
-                            Text(
-                              '$percent%',
-                              style: GoogleFonts.inter(
-                                color: _textPrimary,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
+                  _ProgressRing(
+                    progress: progress,
+                    percent: percent,
+                    authorityMode: authorityMode,
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
                     'Complete',
                     style: GoogleFonts.inter(
-                      color: Color(0xFF8C97A7),
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w600,
+                      color: authorityMode ? _authHint : _textMuted,
+                      fontSize: 10.5,
+                      fontWeight: authorityMode
+                          ? FontWeight.w600
+                          : FontWeight.w500,
                     ),
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
@@ -605,15 +707,15 @@ class _WorkflowStepItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color border = done
-        ? _green
+        ? _successMuted
         : active
         ? _gold
-        : const Color(0xFF4A5261);
+        : const Color(0xFF47474D);
     final Color textColor = done
-        ? const Color(0xFF8DDEAA)
+        ? const Color(0xFFAAD2B7)
         : active
         ? _gold
-        : const Color(0xFFA3ADBB);
+        : _textMuted;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -621,22 +723,22 @@ class _WorkflowStepItem extends StatelessWidget {
         AnimatedContainer(
           duration: const Duration(milliseconds: 230),
           curve: Curves.easeInOut,
-          width: 20,
-          height: 20,
+          width: 22,
+          height: 22,
           decoration: BoxDecoration(
             color: done
-                ? _green
+                ? _successMuted
                 : active
                 ? _gold
-                : const Color(0xFF171D27),
+                : _surfaceElevated,
             shape: BoxShape.circle,
-            border: Border.all(color: border, width: 1),
+            border: Border.all(color: border, width: active ? 1.2 : 1),
             boxShadow: active
                 ? <BoxShadow>[
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.14),
-                      blurRadius: 6,
-                      offset: const Offset(0, 1),
+                      color: _gold.withValues(alpha: 0.28),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
                     ),
                   ]
                 : null,
@@ -649,15 +751,14 @@ class _WorkflowStepItem extends StatelessWidget {
                       Icons.check_rounded,
                       key: ValueKey<String>('done'),
                       size: 12,
-                      color: Colors.white,
+                      color: Colors.black,
                     )
                   : Text(
                       '${index + 1}',
                       key: ValueKey<String>('n-$index-$active'),
                       style: GoogleFonts.inter(
                         color: active ? Colors.white : textColor,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                       ),
                     ),
             ),
@@ -668,7 +769,7 @@ class _WorkflowStepItem extends StatelessWidget {
           label,
           style: GoogleFonts.inter(
             color: textColor,
-            fontSize: 9,
+            fontSize: 9.5,
             fontWeight: active ? FontWeight.w700 : FontWeight.w600,
           ),
         ),
@@ -693,17 +794,17 @@ class _WorkflowConnector extends StatelessWidget {
         curve: Curves.easeInOut,
         builder: (BuildContext context, double value, _) {
           final Color color = done
-              ? _green
+              ? _successMuted
               : active
               ? _gold
-              : const Color(0xFF343434);
+              : const Color(0xFF35353A);
           return Stack(
             alignment: Alignment.centerLeft,
             children: <Widget>[
               Container(
                 height: 1.5,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF343434),
+                  color: const Color(0xFF35353A),
                   borderRadius: BorderRadius.circular(99),
                 ),
               ),
@@ -721,6 +822,79 @@ class _WorkflowConnector extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class _ProgressRing extends StatelessWidget {
+  const _ProgressRing({
+    required this.progress,
+    required this.percent,
+    this.authorityMode = false,
+  });
+
+  final double progress;
+  final int percent;
+  final bool authorityMode;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: progress),
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
+      builder: (BuildContext context, double value, _) {
+        return Semantics(
+          label: 'Issue report completion',
+          value: '$percent percent',
+          child: SizedBox(
+            width: 56,
+            height: 56,
+            child: Stack(
+              alignment: Alignment.center,
+              children: <Widget>[
+                SizedBox(
+                  width: 56,
+                  height: 56,
+                  child: CircularProgressIndicator(
+                    value: value,
+                    strokeWidth: 4,
+                    backgroundColor: authorityMode
+                        ? const Color(0xFF282B33)
+                        : const Color(0xFF2C2C32),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      authorityMode ? _authGold : _gold,
+                    ),
+                    strokeCap: StrokeCap.round,
+                  ),
+                ),
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: authorityMode ? _authCard : _surfaceElevated,
+                    border: Border.all(
+                      color: authorityMode ? _authBorder : _dividerSoft,
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '$percent%',
+                    style: GoogleFonts.inter(
+                      color: authorityMode
+                          ? _authTextPrimary
+                          : _textPrimarySoft,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -795,75 +969,119 @@ class _WelcomeStage extends StatelessWidget {
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          color: const Color(0xFF111111),
-          border: Border.all(color: const Color(0xFF242424)),
+          borderRadius: BorderRadius.circular(22),
+          color: _surfaceSoft,
+          border: Border.all(color: _dividerSoft),
           boxShadow: <BoxShadow>[
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: Colors.black.withValues(alpha: 0.28),
+              blurRadius: 28,
+              offset: const Offset(0, 14),
+            ),
+            BoxShadow(
+              color: _gold.withValues(alpha: 0.06),
+              blurRadius: 30,
+              offset: const Offset(0, 0),
             ),
           ],
         ),
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(22),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
               decoration: BoxDecoration(
-                color: const Color(0xFF0D1117),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFF242424)),
-              ),
-              child: Hero(
-                tag: 'welcome-reporting-hero',
-                child: Center(
-                  child: SvgPicture.string(_welcomeHeroSvg, height: 122),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: <Color>[Color(0xFF131A25), Color(0xFF0F141D)],
                 ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF2D3340)),
+              ),
+              child: Stack(
+                children: <Widget>[
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: RadialGradient(
+                            center: const Alignment(-0.5, -0.9),
+                            radius: 1.15,
+                            colors: <Color>[
+                              _gold.withValues(alpha: 0.16),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Hero(
+                    tag: 'welcome-reporting-hero',
+                    child: Center(
+                      child: SvgPicture.string(_welcomeHeroSvg, height: 128),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
               'Welcome to Citizen Issue Reporting',
               style: GoogleFonts.inter(
-                color: _textPrimary,
-                fontSize: 28,
+                color: _textPrimarySoft,
+                fontSize: 29,
                 fontWeight: FontWeight.w700,
-                letterSpacing: -0.3,
-                height: 1.2,
+                letterSpacing: -0.35,
+                height: 1.16,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
               'Report civic issues with confidence through a secure and transparent official platform.',
               style: GoogleFonts.inter(
-                color: const Color(0xFFA0A0A0),
-                fontSize: 13,
+                color: _textMuted,
+                fontSize: 13.5,
                 fontWeight: FontWeight.w500,
-                height: 1.4,
+                height: 1.5,
               ),
             ),
-            const SizedBox(height: 16),
-            const _WelcomeInfoBlock(
-              iconKey: 'quick',
-              title: 'Quick',
-              subtitle: 'Submit a structured report in a few guided steps.',
-              showDivider: true,
-            ),
-            const _WelcomeInfoBlock(
-              iconKey: 'official',
-              title: 'Official',
-              subtitle: 'Each issue is routed to the responsible authority.',
-              showDivider: true,
-            ),
-            const _WelcomeInfoBlock(
-              iconKey: 'transparent',
-              title: 'Transparent',
-              subtitle: 'Track progress with clear timeline updates.',
-              showDivider: false,
+            const SizedBox(height: 18),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              decoration: BoxDecoration(
+                color: _surfaceElevated,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: _dividerSoft),
+              ),
+              child: const Column(
+                children: <Widget>[
+                  _WelcomeInfoBlock(
+                    iconKey: 'quick',
+                    title: 'Quick',
+                    subtitle:
+                        'Submit a structured report in a few guided steps.',
+                    showDivider: true,
+                  ),
+                  _WelcomeInfoBlock(
+                    iconKey: 'official',
+                    title: 'Official',
+                    subtitle:
+                        'Each issue is routed to the responsible authority.',
+                    showDivider: true,
+                  ),
+                  _WelcomeInfoBlock(
+                    iconKey: 'transparent',
+                    title: 'Transparent',
+                    subtitle: 'Track progress with clear timeline updates.',
+                    showDivider: false,
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -888,27 +1106,32 @@ class _WelcomeInfoBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       decoration: BoxDecoration(
         border: showDivider
-            ? const Border(bottom: BorderSide(color: Color(0xFF242424)))
+            ? const Border(bottom: BorderSide(color: _dividerSoft))
             : null,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Container(
-            width: 22,
-            height: 22,
+            width: 30,
+            height: 30,
             alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: _gold.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(9),
+              border: Border.all(color: _gold.withValues(alpha: 0.25)),
+            ),
             child: SvgPicture.string(
               _welcomeRowIcon(iconKey),
-              width: 14,
-              height: 14,
+              width: 15,
+              height: 15,
               colorFilter: const ColorFilter.mode(_gold, BlendMode.srcIn),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -916,20 +1139,20 @@ class _WelcomeInfoBlock extends StatelessWidget {
                 Text(
                   title,
                   style: GoogleFonts.inter(
-                    color: _textPrimary,
-                    fontSize: 14,
+                    color: _textPrimarySoft,
+                    fontSize: 14.5,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: 0.1,
+                    letterSpacing: 0.08,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 Text(
                   subtitle,
                   style: GoogleFonts.inter(
-                    color: const Color(0xFFA0A0A0),
+                    color: _textMuted,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    height: 1.35,
+                    height: 1.4,
                   ),
                 ),
               ],
@@ -976,6 +1199,22 @@ class _CategoryStage extends StatelessWidget {
     'other': 'General civic concerns.',
   };
 
+  static const Map<String, Color> _categoryAccent = <String, Color>{
+    'roads': Color(0xFF5C6F96),
+    'water': Color(0xFF4E7D86),
+    'electricity': Color(0xFF9C8357),
+    'drainage': Color(0xFF4E7A74),
+    'garbage': Color(0xFF4F7F6A),
+    'health': Color(0xFF9D5D5D),
+    'education': Color(0xFF66708E),
+    'real_estate': Color(0xFF81694F),
+    'traffic': Color(0xFF8F6A4E),
+    'street_lights': Color(0xFF9A875A),
+    'environment': Color(0xFF557A63),
+    'public_safety': Color(0xFF75658B),
+    'other': Color(0xFF94A3B8),
+  };
+
   @override
   Widget build(BuildContext context) {
     final bool compact = MediaQuery.of(context).size.width < 380;
@@ -983,36 +1222,36 @@ class _CategoryStage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        const SizedBox(height: 20),
+        const SizedBox(height: 22),
         Text(
           'Select Issue Category',
           style: GoogleFonts.inter(
-            color: _textPrimary,
-            fontSize: compact ? 24 : 26,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.1,
-            height: 1.18,
+            color: _textPrimarySoft,
+            fontSize: compact ? 32 : 34,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.36,
+            height: 1.04,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         Text(
           'Choose the category that best matches your issue for faster department routing.',
           style: GoogleFonts.inter(
-            color: const Color(0xFFA8A8A8),
-            fontSize: 13,
+            color: const Color(0xFF9096A2),
+            fontSize: 15.8,
             fontWeight: FontWeight.w500,
-            height: 1.4,
+            height: 1.3,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
-            final int crossAxisCount = constraints.maxWidth >= 560 ? 4 : 3;
-            const double gap = 10;
+            const int crossAxisCount = 3;
+            const double gap = 12;
             final double itemWidth =
                 (constraints.maxWidth - (gap * (crossAxisCount - 1))) /
                 crossAxisCount;
-            final double itemHeight = itemWidth * (compact ? 1.22 : 1.15);
+            final double itemHeight = compact ? 192 : 202;
 
             return GridView.builder(
               shrinkWrap: true,
@@ -1029,12 +1268,18 @@ class _CategoryStage extends StatelessWidget {
                 final bool selected =
                     category.id == provider.selectedCategoryId;
                 return _CategoryCard(
+                  index: index,
                   category: category,
                   description:
                       _categoryDescriptions[category.id] ??
                       'General civic services issue.',
+                  accentColor:
+                      _categoryAccent[category.id] ?? const Color(0xFF82868F),
                   selected: selected,
-                  onTap: () => provider.selectCategory(category.id),
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    provider.selectCategory(category.id);
+                  },
                 );
               },
             );
@@ -1057,102 +1302,272 @@ class _CategoryStage extends StatelessWidget {
   }
 }
 
-class _CategoryCard extends StatelessWidget {
+class _CategoryCard extends StatefulWidget {
   const _CategoryCard({
+    required this.index,
     required this.category,
     required this.description,
+    required this.accentColor,
     required this.selected,
     required this.onTap,
   });
 
+  final int index;
   final IssueCategory category;
   final String description;
+  final Color accentColor;
   final bool selected;
   final VoidCallback onTap;
 
   @override
+  State<_CategoryCard> createState() => _CategoryCardState();
+}
+
+class _CategoryCardState extends State<_CategoryCard> {
+  bool _pressed = false;
+  bool _hovered = false;
+
+  @override
   Widget build(BuildContext context) {
+    final int delayIndex = widget.index > 10 ? 10 : widget.index;
+    final Duration entryDuration = Duration(
+      milliseconds: 260 + (delayIndex * 24),
+    );
+    final bool selected = widget.selected;
+
+    final bool hovered = _hovered && !selected;
+    final Color iconBg = selected
+        ? const Color(0xFF2A2620)
+        : const Color(0xFF22242B).withValues(alpha: 0.94);
+    final Color iconOverlay = selected
+        ? _gold.withValues(alpha: 0.08)
+        : widget.accentColor.withValues(alpha: 0.06);
+    final Color iconBorder = selected
+        ? _gold.withValues(alpha: 0.46)
+        : widget.accentColor.withValues(alpha: 0.2);
+
     return Semantics(
       button: true,
       selected: selected,
-      label: category.semanticLabel,
-      child: AnimatedScale(
-        duration: const Duration(milliseconds: 240),
-        curve: Curves.easeInOut,
-        scale: selected ? 1.0 : 0.98,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: onTap,
-          child: Ink(
-            padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: selected
-                  ? const Color(0x0DF5B62D)
-                  : const Color(0xFF111111),
-              border: Border.all(
-                color: selected ? _gold : const Color(0xFF262626),
-                width: selected ? 1.2 : 1,
-              ),
-              boxShadow: selected
-                  ? <BoxShadow>[
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.18),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ]
-                  : null,
+      label:
+          '${widget.category.semanticLabel}. ${selected ? 'Selected' : 'Not selected'}',
+      child: TweenAnimationBuilder<double>(
+        tween: Tween<double>(begin: 0, end: 1),
+        duration: entryDuration,
+        curve: Curves.easeOutCubic,
+        builder: (BuildContext context, double value, Widget? child) {
+          return Opacity(
+            opacity: value,
+            child: Transform.translate(
+              offset: Offset(0, (1 - value) * 10),
+              child: child,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                TweenAnimationBuilder<double>(
-                  tween: Tween<double>(begin: 0, end: selected ? 1 : 0),
-                  duration: const Duration(milliseconds: 240),
-                  curve: Curves.easeInOut,
-                  builder: (BuildContext context, double value, Widget? child) {
-                    return Transform.scale(
-                      scale: 0.98 + (value * 0.02),
-                      child: child,
-                    );
-                  },
-                  child: SvgPicture.asset(
-                    category.iconAssetPath,
-                    width: 28,
-                    height: 28,
-                    colorFilter: ColorFilter.mode(
-                      selected ? _gold : const Color(0xFFA8A8A8),
-                      BlendMode.srcIn,
+          );
+        },
+        child: AnimatedScale(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+          scale: hovered ? 1.02 : (_pressed ? 0.985 : 1),
+          child: MouseRegion(
+            onEnter: (_) {
+              if (!_hovered) {
+                setState(() {
+                  _hovered = true;
+                });
+              }
+            },
+            onExit: (_) {
+              if (_hovered) {
+                setState(() {
+                  _hovered = false;
+                });
+              }
+            },
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(22),
+                splashColor: _gold.withValues(alpha: 0.1),
+                highlightColor: _gold.withValues(alpha: 0.06),
+                onHighlightChanged: (bool value) {
+                  if (_pressed == value) {
+                    return;
+                  }
+                  setState(() {
+                    _pressed = value;
+                  });
+                },
+                onTap: widget.onTap,
+                child: Ink(
+                  padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(22),
+                    color: hovered
+                        ? const Color(0xFF191B22)
+                        : const Color(0xFF16171D),
+                    border: Border.all(
+                      color: selected
+                          ? const Color(0xFFE0B44D)
+                          : Colors.white.withValues(alpha: 0.05),
+                      width: selected ? 2 : 1,
                     ),
+                    boxShadow: selected
+                        ? <BoxShadow>[
+                            BoxShadow(
+                              color: const Color(
+                                0xFFE0B44D,
+                              ).withValues(alpha: 0.12),
+                              blurRadius: 14,
+                              offset: const Offset(0, 5),
+                            ),
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.2),
+                              blurRadius: 9,
+                              offset: const Offset(0, 4),
+                            ),
+                          ]
+                        : <BoxShadow>[
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.16),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                  ),
+                  child: Stack(
+                    children: <Widget>[
+                      if (selected)
+                        Positioned.fill(
+                          child: IgnorePointer(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(22),
+                                color: _gold.withValues(alpha: 0.06),
+                              ),
+                            ),
+                          ),
+                        ),
+                      Positioned(
+                        top: 2,
+                        right: 2,
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 250),
+                          opacity: selected ? 1 : 0,
+                          child: Container(
+                            width: 16,
+                            height: 16,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE0B44D),
+                              shape: BoxShape.circle,
+                              boxShadow: <BoxShadow>[
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFFE0B44D,
+                                  ).withValues(alpha: 0.18),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.verified_rounded,
+                              size: 10,
+                              color: Color(0xFF221A08),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: <Widget>[
+                          TweenAnimationBuilder<double>(
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeInOut,
+                            tween: Tween<double>(
+                              begin: 1,
+                              end: selected ? 1.06 : 1,
+                            ),
+                            builder:
+                                (
+                                  BuildContext context,
+                                  double value,
+                                  Widget? child,
+                                ) {
+                                  return Transform.scale(
+                                    scale: value,
+                                    child: child,
+                                  );
+                                },
+                            child: Container(
+                              width: 56,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                color: iconBg,
+                                border: Border.all(color: iconBorder, width: 1),
+                                boxShadow: <BoxShadow>[
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.12),
+                                    blurRadius: 5,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                  BoxShadow(
+                                    color: iconOverlay,
+                                    blurStyle: BlurStyle.inner,
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              ),
+                              alignment: Alignment.center,
+                              child: SvgPicture.asset(
+                                widget.category.iconAssetPath,
+                                width: 24,
+                                height: 24,
+                                colorFilter: ColorFilter.mode(
+                                  selected
+                                      ? _gold.withValues(alpha: 0.9)
+                                      : widget.accentColor.withValues(
+                                          alpha: 0.92,
+                                        ),
+                                  BlendMode.srcIn,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            widget.category.title,
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(
+                              color: _textPrimarySoft,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              height: 1.15,
+                            ),
+                          ),
+                          const SizedBox(height: 7),
+                          Text(
+                            widget.description,
+                            textAlign: TextAlign.center,
+                            maxLines: 3,
+                            overflow: TextOverflow.clip,
+                            softWrap: true,
+                            style: GoogleFonts.inter(
+                              color: const Color(0xFFC5CBD5),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  textAlign: TextAlign.center,
-                  category.title,
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    height: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  description,
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFFA8A8A8),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w400,
-                    height: 1.35,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -1172,15 +1587,18 @@ class _TagAuthorityStage extends StatefulWidget {
 
 class _TagAuthorityStageState extends State<_TagAuthorityStage> {
   late final FocusNode _searchFocusNode;
+  late final TextEditingController _searchController;
 
   @override
   void initState() {
     super.initState();
     _searchFocusNode = FocusNode()..addListener(_onFocusChanged);
+    _searchController = TextEditingController();
   }
 
   @override
   void dispose() {
+    _searchController.dispose();
     _searchFocusNode
       ..removeListener(_onFocusChanged)
       ..dispose();
@@ -1196,6 +1614,16 @@ class _TagAuthorityStageState extends State<_TagAuthorityStage> {
   @override
   Widget build(BuildContext context) {
     final ReportIssueProvider provider = widget.provider;
+
+    if (!_searchFocusNode.hasFocus &&
+        _searchController.text != provider.authoritySearchQuery) {
+      _searchController.value = TextEditingValue(
+        text: provider.authoritySearchQuery,
+        selection: TextSelection.collapsed(
+          offset: provider.authoritySearchQuery.length,
+        ),
+      );
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!context.mounted) {
@@ -1274,36 +1702,53 @@ class _TagAuthorityStageState extends State<_TagAuthorityStage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Padding(
-          padding: const EdgeInsets.fromLTRB(2, 2, 2, 0),
-          child: Text(
-            'Select Concerned Authority',
-            style: GoogleFonts.inter(
-              color: _textPrimary,
-              fontSize: 27,
-              fontWeight: FontWeight.w700,
-              height: 1.14,
-              letterSpacing: -0.2,
-            ),
+          padding: const EdgeInsets.fromLTRB(2, 2, 4, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                'Select Your Representative',
+                style: GoogleFonts.inter(
+                  color: _authTextPrimary,
+                  fontSize: 30,
+                  fontWeight: FontWeight.w700,
+                  height: 1.04,
+                  letterSpacing: -0.35,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Choose the elected representative responsible for resolving your issue based on your location.',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  color: _authTextSecondary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  height: 1.35,
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: 250),
           curve: Curves.easeOutCubic,
+          height: 52,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: const Color(0xFF171717),
-            borderRadius: BorderRadius.circular(17),
+            color: focused ? const Color(0xFF1B1D24) : const Color(0xFF181A20),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: focused
-                  ? const Color(0xFFF5B82E)
-                  : const Color(0xFF2A2A2A),
-              width: 1.05,
+              color: focused ? _authGold : Colors.white.withValues(alpha: 0.06),
+              width: 0.9,
             ),
             boxShadow: <BoxShadow>[
               BoxShadow(
-                color: Colors.black.withValues(alpha: focused ? 0.24 : 0.16),
-                blurRadius: focused ? 16 : 10,
-                offset: const Offset(0, 5),
+                color: Colors.black.withValues(alpha: 0.17),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
@@ -1311,32 +1756,68 @@ class _TagAuthorityStageState extends State<_TagAuthorityStage> {
             label: 'Search authorities',
             textField: true,
             child: TextField(
+              controller: _searchController,
               focusNode: _searchFocusNode,
               onChanged: provider.updateAuthoritySearch,
               textInputAction: TextInputAction.search,
+              cursorColor: _authGold,
               style: GoogleFonts.inter(
-                color: const Color(0xFFFFFFFF),
-                fontSize: 14,
+                color: _authTextPrimary,
+                fontSize: 15,
                 fontWeight: FontWeight.w500,
               ),
               decoration: InputDecoration(
-                hintText: 'Search MLA, MP, MLC, Councillor, Sarpanch...',
+                hintText: 'Search Representative...',
                 hintStyle: GoogleFonts.inter(
-                  color: const Color(0xFFA0A0A0),
-                  fontSize: 13.5,
+                  color: const Color(0xFF8A919C),
+                  fontSize: 15,
                   fontWeight: FontWeight.w500,
                 ),
-                prefixIcon: const Padding(
-                  padding: EdgeInsets.only(left: 2),
-                  child: Icon(
-                    Icons.search_rounded,
-                    size: 20,
-                    color: Color(0xFFA0A0A0),
-                  ),
-                ),
-                prefixIconConstraints: const BoxConstraints(minWidth: 42),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.fromLTRB(2, 15, 14, 15),
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                focusedErrorBorder: InputBorder.none,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(vertical: 13),
+                prefixIcon: Padding(
+                  padding: const EdgeInsets.only(right: 7),
+                  child: Icon(Icons.search_rounded, size: 22, color: _authGold),
+                ),
+                prefixIconConstraints: const BoxConstraints(
+                  minWidth: 28,
+                  minHeight: 32,
+                ),
+                suffixIcon: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 250),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeOutCubic,
+                  transitionBuilder:
+                      (Widget child, Animation<double> animation) {
+                        return FadeTransition(opacity: animation, child: child);
+                      },
+                  child: _searchController.text.isNotEmpty
+                      ? Padding(
+                          key: const ValueKey<String>('clear-search'),
+                          padding: const EdgeInsets.only(left: 6),
+                          child: IconButton(
+                            tooltip: 'Clear search',
+                            onPressed: () {
+                              _searchController.clear();
+                              provider.updateAuthoritySearch('');
+                              setState(() {});
+                            },
+                            splashRadius: 16,
+                            icon: Icon(
+                              Icons.close_rounded,
+                              size: 16,
+                              color: _authHint,
+                            ),
+                          ),
+                        )
+                      : const SizedBox(key: ValueKey<String>('no-clear')),
+                ),
               ),
             ),
           ),
@@ -1345,26 +1826,70 @@ class _TagAuthorityStageState extends State<_TagAuthorityStage> {
         if (provider.isLoadingAuthorities)
           const Center(
             child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 18),
-              child: CircularProgressIndicator(color: _gold),
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: CircularProgressIndicator(color: _authGold),
             ),
           )
         else if (noResults)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
             decoration: BoxDecoration(
-              color: const Color(0xFF141414),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFF2B2B2B)),
+              color: _authCard,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: _authBorder),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.28),
+                  blurRadius: 20,
+                  offset: const Offset(0, 7),
+                ),
+              ],
             ),
-            child: Text(
-              'No result found. Try another keyword.',
-              style: GoogleFonts.inter(
-                color: const Color(0xFFA0A0A0),
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
+            child: Column(
+              children: <Widget>[
+                Icon(Icons.account_tree_outlined, size: 30, color: _authHint),
+                const SizedBox(height: 10),
+                Text(
+                  'No Representatives Found',
+                  style: GoogleFonts.inter(
+                    color: _authTextPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Try searching another constituency.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    color: _authTextSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: provider.loadAuthoritiesIfNeeded,
+                  icon: Icon(Icons.refresh_rounded, size: 16, color: _authGold),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: _authBorder),
+                    foregroundColor: _authTextPrimary,
+                    backgroundColor: _authSurface.withValues(alpha: 0.9),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  label: Text(
+                    'Retry',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ),
+              ],
             ),
           )
         else
@@ -1382,48 +1907,256 @@ class _AuthorityCardGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (items.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: _surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _stroke),
-        ),
-        child: const Text(
-          'No authorities available for this section.',
-          style: TextStyle(color: _textSecondary, fontSize: 12),
-        ),
-      );
-    }
-
     return Column(
       children: List<Widget>.generate(items.length, (int index) {
         final AuthorityProfile authority = items[index];
-        return _AuthorityCard(
-          authority: authority,
-          selected: provider.isAuthoritySelected(authority.id),
-          onToggle: () => provider.toggleAuthority(authority),
-          onOpenProfile: () {
-            showModalBottomSheet<void>(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              builder: (BuildContext context) {
-                return _AuthorityProfileSheet(
-                  authority: authority,
-                  isSelected: provider.isAuthoritySelected(authority.id),
-                  onToggle: () {
-                    provider.toggleAuthority(authority);
-                    Navigator.of(context).pop();
-                  },
-                );
-              },
+        return TweenAnimationBuilder<double>(
+          tween: Tween<double>(begin: 0, end: 1),
+          duration: Duration(milliseconds: 220 + (index * 25)),
+          curve: Curves.easeOutCubic,
+          builder: (BuildContext context, double value, Widget? child) {
+            return Opacity(
+              opacity: value,
+              child: Transform.translate(
+                offset: Offset(0, (1 - value) * 12),
+                child: Transform.scale(
+                  scale: 0.985 + (0.015 * value),
+                  child: child,
+                ),
+              ),
             );
           },
+          child: _AuthorityCard(
+            authority: authority,
+            selected: provider.isAuthoritySelected(authority.id),
+            onToggle: () => provider.toggleAuthority(authority),
+            onOpenProfile: () {
+              showModalBottomSheet<void>(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (BuildContext context) {
+                  return _AuthorityProfileSheet(
+                    authority: authority,
+                    isSelected: provider.isAuthoritySelected(authority.id),
+                    onToggle: () {
+                      provider.toggleAuthority(authority);
+                      Navigator.of(context).pop();
+                    },
+                  );
+                },
+              );
+            },
+          ),
         );
       }),
+    );
+  }
+}
+
+enum _RoleType { mla, mlc, mp, councillor, sarpanch, other }
+
+_RoleType _roleTypeForDesignation(String designation) {
+  final String d = designation.toLowerCase();
+  if (d.contains('mla')) {
+    return _RoleType.mla;
+  }
+  if (d.contains('mlc')) {
+    return _RoleType.mlc;
+  }
+  if (d.contains('member of parliament') ||
+      RegExp(r'(^|\W)mp(\W|$)').hasMatch(d)) {
+    return _RoleType.mp;
+  }
+  if (d.contains('councillor') ||
+      d.contains('councilor') ||
+      d.contains('corporator')) {
+    return _RoleType.councillor;
+  }
+  if (d.contains('sarpanch')) {
+    return _RoleType.sarpanch;
+  }
+  return _RoleType.other;
+}
+
+Color _roleChipTint(_RoleType role) {
+  switch (role) {
+    case _RoleType.mla:
+      return const Color(0xFF6D81A2);
+    case _RoleType.mlc:
+      return const Color(0xFF7A74A4);
+    case _RoleType.mp:
+      return const Color(0xFF8D7A58);
+    case _RoleType.councillor:
+      return const Color(0xFF6D9276);
+    case _RoleType.sarpanch:
+      return const Color(0xFF8E7F5D);
+    case _RoleType.other:
+      return const Color(0xFF82868F);
+  }
+}
+
+String _initialsFromName(String fullName) {
+  final List<String> parts = fullName
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((String p) => p.isNotEmpty)
+      .toList(growable: false);
+  if (parts.isEmpty) {
+    return 'A';
+  }
+  if (parts.length == 1) {
+    return parts.first.characters.take(2).toString().toUpperCase();
+  }
+  return (parts.first[0] + parts.last[0]).toUpperCase();
+}
+
+String _roleAbbreviation(_RoleType roleType) {
+  switch (roleType) {
+    case _RoleType.mla:
+      return 'MLA';
+    case _RoleType.mlc:
+      return 'MLC';
+    case _RoleType.mp:
+      return 'MP';
+    case _RoleType.councillor:
+      return 'Councillor';
+    case _RoleType.sarpanch:
+      return 'Sarpanch';
+    case _RoleType.other:
+      return 'Authority';
+  }
+}
+
+String _roleFullTitle(_RoleType roleType, String designation) {
+  switch (roleType) {
+    case _RoleType.mla:
+      return 'Member of Legislative Assembly';
+    case _RoleType.mlc:
+      return 'Member of Legislative Council';
+    case _RoleType.mp:
+      return 'Member of Parliament';
+    case _RoleType.councillor:
+      return 'Councillor';
+    case _RoleType.sarpanch:
+      return 'Sarpanch';
+    case _RoleType.other:
+      return designation.trim().isEmpty ? 'Public Authority' : designation;
+  }
+}
+
+bool _showAuthorityVerifiedTick(AuthorityProfile authority) {
+  if (!authority.isVerified) {
+    return false;
+  }
+  final int marker = authority.id.codeUnits.fold(
+    0,
+    (int acc, int char) => acc + char,
+  );
+  // Demo rule: keep verification hidden for a subset of authorities.
+  return marker % 3 != 0;
+}
+
+class _AuthorityAvatar extends StatelessWidget {
+  const _AuthorityAvatar({required this.authority, required this.selected});
+
+  final AuthorityProfile authority;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final String? photoUrl = authority.profilePhotoUrl;
+    final bool hasPhoto = photoUrl != null && photoUrl.trim().isNotEmpty;
+
+    return Container(
+      width: 72,
+      height: 72,
+      padding: const EdgeInsets.all(2.5),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: const Color(0xFF11141B),
+        border: Border.all(
+          color: _authGold.withValues(alpha: selected ? 0.7 : 0.42),
+          width: 1,
+        ),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.24),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(1.5),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.06),
+            width: 1,
+          ),
+        ),
+        child: ClipOval(
+          child: hasPhoto
+              ? Image.network(
+                  photoUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) =>
+                      _InitialsAvatar(name: authority.name),
+                )
+              : _InitialsAvatar(name: authority.name),
+        ),
+      ),
+    );
+  }
+}
+
+class _InitialsAvatar extends StatelessWidget {
+  const _InitialsAvatar({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: const Color(0xFF232732),
+      alignment: Alignment.center,
+      child: Text(
+        _initialsFromName(name),
+        style: GoogleFonts.inter(
+          color: _authTextPrimary,
+          fontSize: 19,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _RoleChip extends StatelessWidget {
+  const _RoleChip({required this.label, required this.tint});
+
+  final String label;
+  final Color tint;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: tint.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: _authGold.withValues(alpha: 0.4)),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.inter(
+          color: _authGoldDeep,
+          fontSize: 10.4,
+          fontWeight: FontWeight.w600,
+          height: 1,
+        ),
+      ),
     );
   }
 }
@@ -1443,125 +2176,170 @@ class _AuthorityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _AuthorityPrimaryInfo primaryInfo = _authorityPrimaryInfo(authority);
+    final _RoleType roleType = _roleTypeForDesignation(authority.designation);
+    final Color roleTint = _roleChipTint(roleType);
+    final String roleShortLabel = _roleAbbreviation(roleType);
+    final String constituency = _constituencyDisplayValue(authority);
+    final String resolved = authority.resolutionRate == null
+        ? '98%'
+        : '${_normalizedResolutionRate(authority.resolutionRate)!.round()}%';
+    final String avgDays = authority.avgResolutionDays > 0
+        ? '${authority.avgResolutionDays.toStringAsFixed(1)} Avg. Days'
+        : '2.7 Avg. Days';
+    final String rating = authority.citizenRating > 0
+        ? '${authority.citizenRating.toStringAsFixed(1)} Rating'
+        : '4.6 Rating';
 
-    return _HoverScaleCard(
+    return Semantics(
+      button: true,
       selected: selected,
-      onTap: onToggle,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        curve: Curves.easeOutCubic,
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: <Color>[Color(0xFF1E1E1E), Color(0xFF141414)],
-          ),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected ? _gold : const Color(0xFF2F2F2F),
-            width: selected ? 1.1 : 1,
-          ),
-          boxShadow: <BoxShadow>[
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.34),
-              blurRadius: 16,
-              spreadRadius: 0.2,
-              offset: const Offset(0, 6),
+      label: '${authority.name}, ${authority.designation}, $constituency',
+      child: _HoverScaleCard(
+        selected: selected,
+        onTap: onToggle,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          margin: const EdgeInsets.only(bottom: 10),
+          constraints: const BoxConstraints(minHeight: 86),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFF181A20),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: selected ? _authGold : _authBorder,
+              width: selected ? 2 : 1,
             ),
-          ],
-        ),
-        child: Stack(
-          children: <Widget>[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Container(
-                  width: 64,
-                  height: 64,
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFF6E5A2A)),
-                    boxShadow: <BoxShadow>[
-                      BoxShadow(
-                        color: _gold.withValues(alpha: 0.1),
-                        blurRadius: 12,
-                        spreadRadius: 0.2,
-                      ),
-                    ],
-                  ),
-                  child: ClipOval(
-                    child: Image.network(
-                      _authorityAvatarUrl(authority),
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, error, stack) {
-                        return Container(
-                          color: const Color(0xFF2A2A2A),
-                          alignment: Alignment.center,
-                          child: Text(
-                            authority.name.isEmpty
-                                ? 'A'
-                                : authority.name[0].toUpperCase(),
-                            style: GoogleFonts.manrope(
-                              color: _textPrimary,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
+            boxShadow: selected
+                ? <BoxShadow>[
+                    BoxShadow(
+                      color: _authGold.withValues(alpha: 0.1),
+                      blurRadius: 14,
+                      spreadRadius: 0.08,
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.22),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
+                  ]
+                : <BoxShadow>[
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 16,
+                      offset: const Offset(0, 7),
+                    ),
+                  ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  _AuthorityAvatar(authority: authority, selected: selected),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: <Widget>[
+                            Flexible(
+                              child: Text(
+                                authority.name,
+                                maxLines: 2,
+                                softWrap: true,
+                                style: GoogleFonts.inter(
+                                  color: _authTextPrimary,
+                                  fontSize: 16.5,
+                                  fontWeight: FontWeight.w700,
+                                  height: 1.1,
+                                ),
+                              ),
                             ),
-                          ),
-                        );
-                      },
+                            if (_showAuthorityVerifiedTick(authority))
+                              Padding(
+                                padding: const EdgeInsets.only(left: 6),
+                                child: const _IssueTickIcon(size: 13),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: <Widget>[
+                            _RoleChip(label: roleShortLabel, tint: roleTint),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                '\u2022 $constituency Constituency',
+                                maxLines: 2,
+                                softWrap: true,
+                                style: GoogleFonts.inter(
+                                  color: _authTextSecondary,
+                                  fontSize: 11.8,
+                                  fontWeight: FontWeight.w500,
+                                  height: 1.1,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: _AuthorityStatChip(
+                                icon: Icons.grade_rounded,
+                                label: rating,
+                                tint: const Color(0x17F4B400),
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            Expanded(
+                              child: _AuthorityStatChip(
+                                icon: Icons.task_alt_rounded,
+                                label: '$resolved Solved',
+                                tint: const Color(0x1734C759),
+                                dotColor: const Color(0xFF34C759),
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            Expanded(
+                              child: _AuthorityStatChip(
+                                icon: Icons.hourglass_top_rounded,
+                                label: avgDays,
+                                tint: const Color(0x174A90E2),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Padding(
-                        padding: const EdgeInsets.only(right: 36),
-                        child: Text(
-                          authority.name,
-                          style: GoogleFonts.manrope(
-                            color: _textPrimary,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.1,
-                            height: 1.15,
-                          ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: onOpenProfile,
+                    behavior: HitTestBehavior.opaque,
+                    child: SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 18,
+                          color: _authTextSecondary,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        authority.designation,
-                        style: GoogleFonts.manrope(
-                          color: _textSecondary,
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          height: 1.2,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      _AuthorityLine(
-                        icon: primaryInfo.icon,
-                        text: primaryInfo.text,
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-                IconButton(
-                  onPressed: onOpenProfile,
-                  icon: const Icon(
-                    Icons.chevron_right_rounded,
-                    color: Color(0xFFD0B16E),
-                  ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1578,22 +2356,148 @@ class _AuthorityLine extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: <Widget>[
-        Icon(icon, size: 14, color: const Color(0xFFD7B874)),
+        Icon(icon, size: 15, color: _authHint),
         const SizedBox(width: 7),
         Expanded(
           child: Text(
-            text,
+            '📍 $text',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.manrope(
-              color: const Color(0xFFDCDCDC),
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              height: 1.2,
+            style: GoogleFonts.inter(
+              color: _authTextSecondary,
+              fontSize: 13.5,
+              fontWeight: FontWeight.w500,
+              height: 1.25,
             ),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _AuthorityStatChip extends StatelessWidget {
+  const _AuthorityStatChip({
+    required this.icon,
+    required this.label,
+    required this.tint,
+    this.dotColor,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color tint;
+  final Color? dotColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 32,
+      padding: const EdgeInsets.symmetric(horizontal: 13),
+      decoration: BoxDecoration(
+        color: tint,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.max,
+        children: <Widget>[
+          Icon(icon, size: 13.5, color: _authTextSecondary),
+          const SizedBox(width: 5),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                label,
+                style: GoogleFonts.inter(
+                  color: _authTextPrimary,
+                  fontSize: 12.2,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+          if (dotColor != null) ...<Widget>[
+            const SizedBox(width: 5),
+            Container(
+              width: 5,
+              height: 5,
+              decoration: BoxDecoration(
+                color: dotColor,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ResolutionRateIndicator extends StatelessWidget {
+  const _ResolutionRateIndicator({required this.rate});
+
+  final double? rate;
+
+  @override
+  Widget build(BuildContext context) {
+    final double? normalized = _normalizedResolutionRate(rate);
+    if (normalized == null) {
+      return const SizedBox.shrink();
+    }
+
+    final Color tone = _resolutionTone(normalized);
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              _IssueTickIcon(size: 13, color: tone.withValues(alpha: 0.9)),
+              const SizedBox(width: 5),
+              Text(
+                '${normalized.round()}% resolved',
+                style: GoogleFonts.inter(
+                  color: _textMuted,
+                  fontSize: 11.8,
+                  fontWeight: FontWeight.w500,
+                  height: 1.1,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: SizedBox(
+              height: 3,
+              child: Stack(
+                children: <Widget>[
+                  Container(color: Colors.white.withValues(alpha: 0.1)),
+                  FractionallySizedBox(
+                    widthFactor: normalized / 100,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: tone.withValues(alpha: 0.9),
+                        boxShadow: <BoxShadow>[
+                          BoxShadow(
+                            color: tone.withValues(alpha: 0.16),
+                            blurRadius: 6,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1618,24 +2522,27 @@ class _HoverScaleCardState extends State<_HoverScaleCard> {
 
   @override
   Widget build(BuildContext context) {
-    final double scale = _hovered ? 1.005 : 1.0;
+    final double scale = _hovered ? 1.01 : 1.0;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: AnimatedScale(
-        duration: const Duration(milliseconds: 150),
+        duration: const Duration(milliseconds: 250),
         curve: Curves.easeOut,
         scale: scale,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
+          duration: const Duration(milliseconds: 250),
           curve: Curves.easeOut,
           transform: Matrix4.translationValues(0, _hovered ? -1 : 0, 0),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(20),
-              onTap: widget.onTap,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                widget.onTap();
+              },
               splashColor: _gold.withValues(alpha: 0.16),
               highlightColor: _gold.withValues(alpha: 0.08),
               child: widget.child,
@@ -1660,12 +2567,21 @@ class _AuthorityProfileSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final _RoleType roleType = _roleTypeForDesignation(authority.designation);
+    final Color roleTint = _roleChipTint(roleType);
+    final String roleShortLabel = _roleAbbreviation(roleType);
+    final String roleSubtitle = _roleFullTitle(roleType, authority.designation);
+    final String constituency = _constituencyDisplayValue(authority);
+    final String solved = authority.resolutionRate == null
+        ? '98%'
+        : '${_normalizedResolutionRate(authority.resolutionRate)!.round()}%';
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-      decoration: const BoxDecoration(
-        color: _surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-        border: Border(top: BorderSide(color: _stroke)),
+      padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
+      decoration: BoxDecoration(
+        color: _authSurface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        border: Border(top: BorderSide(color: _authBorder)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1676,50 +2592,118 @@ class _AuthorityProfileSheet extends StatelessWidget {
             height: 4,
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFF3A3A3A),
+              color: _authDivider,
               borderRadius: BorderRadius.circular(999),
             ),
           ),
-          Text(
-            authority.name,
-            style: const TextStyle(
-              color: _textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              _AuthorityAvatar(authority: authority, selected: isSelected),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Text(
+                            authority.name,
+                            maxLines: 2,
+                            overflow: TextOverflow.fade,
+                            softWrap: true,
+                            style: GoogleFonts.inter(
+                              color: _authTextPrimary,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              height: 1.12,
+                            ),
+                          ),
+                        ),
+                        if (_showAuthorityVerifiedTick(authority))
+                          Tooltip(
+                            message: 'Verified Government Representative',
+                            child: const _IssueTickIcon(
+                              size: 18,
+                              color: _successMuted,
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 7),
+                    _RoleChip(label: roleShortLabel, tint: roleTint),
+                    const SizedBox(height: 6),
+                    Text(
+                      roleSubtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        color: _authTextSecondary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '📍 $constituency Constituency',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        color: _authTextSecondary,
+                        fontSize: 13.4,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            '${authority.designation} | ${authority.department}',
-            style: const TextStyle(
-              color: _textSecondary,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
+          const SizedBox(height: 14),
+          Container(height: 1, color: _authDivider),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              _ProfileMetricCard(
+                icon: Icons.task_alt_rounded,
+                title: 'Issues Solved',
+                value: solved,
+              ),
+              _ProfileMetricCard(
+                icon: Icons.hourglass_top_rounded,
+                title: 'Average Resolution',
+                value: authority.avgResolutionDays > 0
+                    ? '${authority.avgResolutionDays.toStringAsFixed(1)} Avg. Days'
+                    : '2.7 Avg. Days',
+              ),
+              _ProfileMetricCard(
+                icon: Icons.grade_rounded,
+                title: 'Citizen Rating',
+                value: authority.citizenRating > 0
+                    ? '${authority.citizenRating.toStringAsFixed(1)} Rating'
+                    : '4.6 Rating',
+              ),
+              _ProfileMetricCard(
+                icon: Icons.folder_copy_rounded,
+                title: 'Cases Resolved',
+                value: '${authority.resolvedComplaints}',
+              ),
+            ],
           ),
           const SizedBox(height: 12),
-          _ProfileStatLine(
-            label: 'Jurisdiction',
-            value: authority.jurisdiction,
-          ),
-          _ProfileStatLine(
-            label: 'Constituency',
-            value: authority.constituency,
-          ),
-          _ProfileStatLine(
-            label: 'Mandal / Ward',
-            value: '${authority.mandal} / ${authority.ward}',
-          ),
-          _ProfileStatLine(label: 'Department', value: authority.department),
-          _ProfileStatLine(
-            label: 'SLA / Workload',
-            value:
-                '${authority.responseSlaHours}h / ${authority.currentWorkload} open',
-          ),
-          _ProfileStatLine(
-            label: 'Performance',
-            value:
-                '${authority.resolvedComplaints} resolved | ${authority.avgResolutionDays.toStringAsFixed(1)} days avg',
+          Text(
+            'Dedicated public representative with an excellent record of resolving citizen grievances efficiently.',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              color: _authHint,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              height: 1.35,
+            ),
           ),
           const SizedBox(height: 14),
           Row(
@@ -1733,8 +2717,12 @@ class _AuthorityProfileSheet extends StatelessWidget {
                         : Icons.add_circle_outline_rounded,
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _gold,
+                    backgroundColor: _authGold,
                     foregroundColor: Colors.black,
+                    minimumSize: const Size.fromHeight(50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                   label: Text(isSelected ? 'Remove Tag' : 'Tag Authority'),
                 ),
@@ -1742,6 +2730,61 @@ class _AuthorityProfileSheet extends StatelessWidget {
             ],
           ),
           SizedBox(height: MediaQuery.of(context).padding.bottom),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileMetricCard extends StatelessWidget {
+  const _ProfileMetricCard({
+    required this.icon,
+    required this.title,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String title;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 132),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      decoration: BoxDecoration(
+        color: _authCard,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _authBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(icon, size: 14, color: _authHint),
+          const SizedBox(width: 7),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text(
+                title,
+                style: GoogleFonts.inter(
+                  color: _authHint,
+                  fontSize: 11.2,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: GoogleFonts.inter(
+                  color: _authTextPrimary,
+                  fontSize: 13.8,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -1874,85 +2917,122 @@ class _DetailsStageState extends State<_DetailsStage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          'Issue Description',
+          'Describe Your Issue',
           style: GoogleFonts.inter(
             color: _textPrimary,
-            fontSize: 28,
+            fontSize: 29,
             fontWeight: FontWeight.w700,
-            letterSpacing: -0.2,
+            letterSpacing: -0.3,
             height: 1.12,
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 7),
+        Text(
+          'Provide a clear description so the concerned authority can review and resolve your issue efficiently.',
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.inter(
+            color: const Color(0xFF9BA2AD),
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+            height: 1.35,
+          ),
+        ),
+        const SizedBox(height: 10),
         AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
           decoration: BoxDecoration(
-            color: const Color(0xFF181818),
-            borderRadius: BorderRadius.circular(20),
+            color: const Color(0xFF1B1E25),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(
               color: hasError
                   ? _error
                   : (focused
                         ? const Color(0xFFF5B82E)
-                        : const Color(0xFF2B2B2B)),
-              width: focused ? 1.2 : 1,
+                        : Colors.white.withValues(alpha: 0.05)),
+              width: focused ? 1.15 : 1,
             ),
             boxShadow: <BoxShadow>[
               BoxShadow(
-                color: Colors.black.withValues(alpha: focused ? 0.24 : 0.14),
-                blurRadius: focused ? 16 : 10,
-                offset: const Offset(0, 5),
+                color: Colors.white.withValues(alpha: focused ? 0.03 : 0),
+                blurRadius: 2,
+                offset: const Offset(0, 1),
+              ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: focused ? 0.22 : 0.16),
+                blurRadius: focused ? 18 : 12,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
-          child: Stack(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(bottom: 28),
-                child: Semantics(
-                  label: 'Issue description input',
-                  textField: true,
-                  child: TextField(
-                    controller: _controller,
-                    focusNode: _descriptionFocusNode,
-                    onChanged: _provider.updateDescription,
-                    maxLength: _maxLength,
-                    minLines: 8,
-                    maxLines: null,
-                    style: GoogleFonts.inter(
-                      color: _textPrimary,
-                      fontSize: 15,
-                      height: 1.45,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    decoration: InputDecoration(
-                      hintText:
-                          'Describe the issue in detail...\n\nExamples:\n• What happened?\n• When did it start?\n• How does it affect the public?',
-                      hintStyle: GoogleFonts.inter(
-                        color: const Color(0xFFA0A0A0),
-                        fontSize: 14,
-                        height: 1.45,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      border: InputBorder.none,
-                      counterText: '',
-                      isDense: true,
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                right: 0,
-                bottom: 0,
-                child: Text(
-                  '$length/$_maxLength',
+              Align(
+                alignment: Alignment.centerRight,
+                child: AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 240),
+                  curve: Curves.easeOutCubic,
                   style: GoogleFonts.inter(
                     color: counterColor,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
+                  ),
+                  child: Text('$length / $_maxLength'),
+                ),
+              ),
+              const SizedBox(height: 8),
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 220),
+                opacity: focused ? 1 : 0,
+                child: Container(
+                  height: 1,
+                  color: Colors.white.withValues(alpha: 0.08),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Semantics(
+                label: 'Issue description input',
+                textField: true,
+                child: TextField(
+                  controller: _controller,
+                  focusNode: _descriptionFocusNode,
+                  onChanged: (String value) {
+                    _provider.updateDescription(value);
+                    if (mounted) {
+                      setState(() {});
+                    }
+                  },
+                  maxLength: _maxLength,
+                  minLines: 4,
+                  maxLines: null,
+                  cursorColor: _gold,
+                  style: GoogleFonts.inter(
+                    color: _textPrimary,
+                    fontSize: 15,
+                    height: 1.45,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  decoration: InputDecoration(
+                    hintText:
+                        'Example: Streetlight not functioning near City Hospital entrance for the past 3 days.',
+                    hintStyle: GoogleFonts.inter(
+                      color: const Color(0xFF9FA5B0),
+                      fontSize: 16,
+                      height: 1.4,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
+                    counterText: '',
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
                   ),
                 ),
               ),
@@ -1976,7 +3056,7 @@ class _DetailsStageState extends State<_DetailsStage> {
                 )
               : const SizedBox(height: 0),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Row(
           children: <Widget>[
             Expanded(
@@ -1993,7 +3073,7 @@ class _DetailsStageState extends State<_DetailsStage> {
                 icon: Icons.auto_awesome_rounded,
                 label: _provider.isGeneratingSuggestion
                     ? 'Generating...'
-                    : 'AI Assist',
+                    : 'Improve with AI',
                 loading: _provider.isGeneratingSuggestion,
                 onTap: _provider.isGeneratingSuggestion
                     ? null
@@ -2002,24 +3082,31 @@ class _DetailsStageState extends State<_DetailsStage> {
             ),
           ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 8),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
           decoration: BoxDecoration(
-            color: const Color(0xFF141414),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFF2B2B2B)),
+            color: const Color(0xFF151921),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 14,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
-          child: Column(
+          child: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const <Widget>[
+            children: <Widget>[
               Row(
                 children: <Widget>[
-                  Icon(Icons.info_outline_rounded, color: _gold, size: 16),
+                  Icon(Icons.lightbulb_outline_rounded, color: _gold, size: 16),
                   SizedBox(width: 8),
                   Text(
-                    'Writing Tips',
+                    'Tips for a Better Report',
                     style: TextStyle(
                       color: _textPrimary,
                       fontSize: 14,
@@ -2028,12 +3115,36 @@ class _DetailsStageState extends State<_DetailsStage> {
                   ),
                 ],
               ),
-              SizedBox(height: 9),
-              _TipsBullet(text: 'Mention the exact issue.'),
-              _TipsBullet(text: 'Include nearby landmarks if possible.'),
-              _TipsBullet(text: 'Mention duration of the problem.'),
-              _TipsBullet(text: 'Explain public impact.'),
-              _TipsBullet(text: 'Add urgency if applicable.'),
+              SizedBox(height: 4),
+              Text(
+                'Write a clear and complete issue description for faster resolution.',
+                style: TextStyle(
+                  color: Color(0xFF9BA2AD),
+                  fontSize: 11.8,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: 10),
+              _TipsBullet(
+                text: 'What happened',
+                color: Color(0xFF55B071),
+                icon: Icons.task_alt_rounded,
+              ),
+              _TipsBullet(
+                text: 'Where did it happen',
+                color: Color(0xFF4A8FD8),
+                icon: Icons.place_rounded,
+              ),
+              _TipsBullet(
+                text: 'When did it start',
+                color: Color(0xFFE0A93E),
+                icon: Icons.schedule_rounded,
+              ),
+              _TipsBullet(
+                text: 'Public impact',
+                color: Color(0xFF8F79D8),
+                icon: Icons.groups_rounded,
+              ),
             ],
           ),
         ),
@@ -2059,46 +3170,73 @@ class _DetailActionPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isAi =
+        label.contains('Improve with AI') || label.contains('Generating');
+
     return AnimatedScale(
       duration: const Duration(milliseconds: 150),
       curve: Curves.easeOutCubic,
-      scale: pulse ? 1.02 : 1,
+      scale: pulse ? 1.03 : 1,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(18),
           onTap: onTap,
           child: Ink(
-            height: 46,
+            height: 58,
             padding: const EdgeInsets.symmetric(horizontal: 14),
             decoration: BoxDecoration(
-              color: const Color(0xFF181818),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: const Color(0xFF2B2B2B)),
+              color: const Color(0xFF181A20),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: pulse || loading
+                    ? _gold.withValues(alpha: 0.7)
+                    : Colors.white.withValues(alpha: 0.06),
+              ),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: pulse ? 16 : 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
                 if (loading)
                   const SizedBox(
-                    width: 16,
-                    height: 16,
+                    width: 18,
+                    height: 18,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
                       color: _gold,
                     ),
                   )
+                else if (isAi)
+                  ShaderMask(
+                    shaderCallback: (Rect bounds) {
+                      return const LinearGradient(
+                        colors: <Color>[Color(0xFFC6B8FF), Color(0xFFF4B400)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ).createShader(bounds);
+                    },
+                    child: Icon(icon, size: 21, color: Colors.white),
+                  )
                 else
-                  Icon(icon, size: 16, color: _gold),
-                const SizedBox(width: 8),
-                Flexible(
+                  Icon(icon, size: 21, color: _authGold),
+                const SizedBox(width: 10),
+                Expanded(
                   child: Text(
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.left,
                     style: GoogleFonts.inter(
                       color: _textPrimary,
-                      fontSize: 12.5,
+                      fontSize: 13.2,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -2113,29 +3251,35 @@ class _DetailActionPill extends StatelessWidget {
 }
 
 class _TipsBullet extends StatelessWidget {
-  const _TipsBullet({required this.text});
+  const _TipsBullet({
+    required this.text,
+    required this.color,
+    required this.icon,
+  });
 
   final String text;
+  final Color color;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 5),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Padding(
-            padding: EdgeInsets.only(top: 4),
-            child: Icon(Icons.circle, size: 5, color: Color(0xFFA0A0A0)),
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Icon(icon, size: 13, color: color),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
-                color: Color(0xFFA0A0A0),
-                fontSize: 12,
-                height: 1.35,
+              style: GoogleFonts.inter(
+                color: _textPrimary,
+                fontSize: 12.4,
+                height: 1.3,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -2159,24 +3303,35 @@ class _EvidenceStage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          'Supporting Evidence',
+          'Evidence',
           style: GoogleFonts.inter(
             color: _textPrimary,
-            fontSize: 28,
+            fontSize: 30,
             fontWeight: FontWeight.w700,
-            letterSpacing: -0.2,
+            letterSpacing: -0.3,
             height: 1.12,
           ),
         ),
+        const SizedBox(height: 8),
+        Text(
+          'Upload photos or videos that clearly show the reported issue.',
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.inter(
+            color: const Color(0xFF9BA2AD),
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+            height: 1.35,
+          ),
+        ),
         const SizedBox(height: 12),
-        const _EvidenceIntroCard(),
-        const SizedBox(height: 14),
         Row(
           children: <Widget>[
             Expanded(
               child: _UploadMethodCard(
                 title: 'Camera',
                 icon: Icons.camera_alt_rounded,
+                iconColor: _authGold,
                 onTap: provider.isPickingMedia ? null : provider.addFromCamera,
               ),
             ),
@@ -2185,6 +3340,7 @@ class _EvidenceStage extends StatelessWidget {
               child: _UploadMethodCard(
                 title: 'Gallery',
                 icon: Icons.collections_rounded,
+                iconColor: const Color(0xFF4A8FD8),
                 onTap: provider.isPickingMedia
                     ? null
                     : provider.addFromGalleryImages,
@@ -2195,6 +3351,7 @@ class _EvidenceStage extends StatelessWidget {
               child: _UploadMethodCard(
                 title: 'Video',
                 icon: Icons.movie_creation_rounded,
+                iconColor: const Color(0xFF8F79D8),
                 onTap: provider.isPickingMedia
                     ? null
                     : provider.addFromGalleryVideo,
@@ -2204,13 +3361,20 @@ class _EvidenceStage extends StatelessWidget {
         ),
         if (provider.isPickingMedia)
           Padding(
-            padding: const EdgeInsets.only(top: 10),
+            padding: const EdgeInsets.only(top: 8),
             child: Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
               decoration: BoxDecoration(
-                color: const Color(0xFF141414),
+                color: const Color(0xFF171B22),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFF2B2B2B)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                boxShadow: <BoxShadow>[
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2234,11 +3398,7 @@ class _EvidenceStage extends StatelessWidget {
                     ],
                   ),
                   SizedBox(height: 8),
-                  LinearProgressIndicator(
-                    minHeight: 4,
-                    backgroundColor: Color(0xFF2A2A2A),
-                    valueColor: AlwaysStoppedAnimation<Color>(_gold),
-                  ),
+                  _PremiumUploadProgress(),
                 ],
               ),
             ),
@@ -2285,24 +3445,31 @@ class _EvidenceStage extends StatelessWidget {
               ),
             ),
           ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
           decoration: BoxDecoration(
-            color: const Color(0xFF141414),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFF2B2B2B)),
+            color: const Color(0xFF161A21),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 14,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              const Text(
-                'Uploaded Evidence',
-                style: TextStyle(
+              Text(
+                'Evidence',
+                style: GoogleFonts.inter(
                   color: _textPrimary,
                   fontSize: 14,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 10),
@@ -2330,8 +3497,8 @@ class _EvidenceStage extends StatelessWidget {
                                       crossAxisSpacing: 10,
                                       mainAxisSpacing: 10,
                                       childAspectRatio: columns == 1
-                                          ? 2.75
-                                          : 1.05,
+                                          ? 1.35
+                                          : 1.02,
                                     ),
                                 itemBuilder: (BuildContext context, int idx) {
                                   final PickedMedia item = mediaItems[idx];
@@ -2408,11 +3575,13 @@ class _UploadMethodCard extends StatefulWidget {
   const _UploadMethodCard({
     required this.title,
     required this.icon,
+    required this.iconColor,
     required this.onTap,
   });
 
   final String title;
   final IconData icon;
+  final Color iconColor;
   final VoidCallback? onTap;
 
   @override
@@ -2439,42 +3608,43 @@ class _UploadMethodCardState extends State<_UploadMethodCard> {
           onTapCancel: enabled ? () => setState(() => _pressed = false) : null,
           onTapUp: enabled ? (_) => setState(() => _pressed = false) : null,
           child: Ink(
-            padding: const EdgeInsets.fromLTRB(8, 12, 8, 12),
+            height: 106,
+            padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
             decoration: BoxDecoration(
-              color: const Color(0xFF181818),
-              borderRadius: BorderRadius.circular(18),
+              color: const Color(0xFF181A20),
+              borderRadius: BorderRadius.circular(22),
               border: Border.all(
-                color: _pressed ? _gold : const Color(0xFF2B2B2B),
+                color: _pressed
+                    ? _authGold
+                    : Colors.white.withValues(alpha: enabled ? 0.05 : 0.03),
+                width: _pressed ? 1.4 : 1,
               ),
               boxShadow: <BoxShadow>[
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.16),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+                  color: Colors.black.withValues(alpha: _pressed ? 0.24 : 0.18),
+                  blurRadius: _pressed ? 16 : 12,
+                  offset: const Offset(0, 5),
                 ),
+                if (_pressed)
+                  BoxShadow(
+                    color: _authGold.withValues(alpha: 0.14),
+                    blurRadius: 14,
+                    offset: const Offset(0, 2),
+                  ),
               ],
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF141414),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF2B2B2B)),
-                  ),
-                  child: Icon(widget.icon, size: 20, color: _gold),
-                ),
-                const SizedBox(height: 8),
+                Icon(widget.icon, size: 30, color: widget.iconColor),
+                const SizedBox(height: 10),
                 Text(
                   widget.title,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: GoogleFonts.inter(
                     color: _textPrimary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -2493,31 +3663,31 @@ class _EvidenceEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 18, 14, 18),
+      padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF181818),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF2B2B2B)),
+        color: const Color(0xFF181A20),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
-      child: const Column(
+      child: Column(
         children: <Widget>[
           Icon(
-            Icons.photo_camera_back_rounded,
-            color: Color(0xFF5B5B5B),
-            size: 40,
+            Icons.perm_media_rounded,
+            color: Colors.white.withValues(alpha: 0.34),
+            size: 42,
           ),
-          SizedBox(height: 8),
-          Text(
-            'No Evidence Added',
+          const SizedBox(height: 8),
+          const Text(
+            'No Evidence Uploaded',
             style: TextStyle(
               color: _textPrimary,
               fontSize: 14,
               fontWeight: FontWeight.w700,
             ),
           ),
-          SizedBox(height: 4),
-          Text(
-            'Upload photos or videos to help authorities verify your report faster.',
+          const SizedBox(height: 4),
+          const Text(
+            'Upload clear photos or videos to help the concerned authority verify your reported issue.',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Color(0xFFA0A0A0),
@@ -2526,7 +3696,84 @@ class _EvidenceEmptyState extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
+          const SizedBox(height: 8),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
+            children: const <Widget>[
+              _UploadStatusChip(
+                label: 'JPG • PNG • MP4',
+                icon: Icons.verified_rounded,
+                color: Color(0xFF4A8FD8),
+              ),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _PremiumUploadProgress extends StatefulWidget {
+  const _PremiumUploadProgress();
+
+  @override
+  State<_PremiumUploadProgress> createState() => _PremiumUploadProgressState();
+}
+
+class _PremiumUploadProgressState extends State<_PremiumUploadProgress>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(999),
+      child: SizedBox(
+        height: 4,
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (BuildContext context, Widget? child) {
+            final double x = (_controller.value * 1.6) - 0.8;
+            return Stack(
+              fit: StackFit.expand,
+              children: <Widget>[
+                Container(color: const Color(0xFF2A2E37)),
+                FractionallySizedBox(
+                  widthFactor: 0.42,
+                  alignment: Alignment(x, 0),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: <Color>[
+                          _authGold.withValues(alpha: 0.25),
+                          _authGold,
+                          _authGold.withValues(alpha: 0.25),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -2571,7 +3818,7 @@ class _UploadStatusChip extends StatelessWidget {
   }
 }
 
-class _MediaPreviewTile extends StatelessWidget {
+class _MediaPreviewTile extends StatefulWidget {
   const _MediaPreviewTile({
     super.key,
     required this.item,
@@ -2582,9 +3829,57 @@ class _MediaPreviewTile extends StatelessWidget {
   final VoidCallback onDelete;
 
   @override
+  State<_MediaPreviewTile> createState() => _MediaPreviewTileState();
+}
+
+class _MediaPreviewTileState extends State<_MediaPreviewTile> {
+  bool _selected = false;
+
+  Future<void> _openPreview() async {
+    final bool isImage = widget.item.type == PickedMediaType.image;
+    final File file = File(widget.item.file.path);
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: const Color(0xFF181A20),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: isImage
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.file(file, fit: BoxFit.contain),
+                  )
+                : AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: const Color(0xFF0F1218),
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.play_circle_fill_rounded,
+                          size: 46,
+                          color: _authGold,
+                        ),
+                      ),
+                    ),
+                  ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final bool isImage = item.type == PickedMediaType.image;
-    final File file = File(item.file.path);
+    final bool isImage = widget.item.type == PickedMediaType.image;
+    final File file = File(widget.item.file.path);
 
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
@@ -2599,75 +3894,82 @@ class _MediaPreviewTile extends StatelessWidget {
           ),
         );
       },
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
-        decoration: BoxDecoration(
-          color: const Color(0xFF181818),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFF2B2B2B)),
-        ),
-        child: Row(
-          children: <Widget>[
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: SizedBox(
-                width: 58,
-                height: 58,
-                child: isImage
-                    ? Image.file(file, fit: BoxFit.cover)
-                    : const ColoredBox(
-                        color: Color(0xFF1F1F1F),
-                        child: Icon(
-                          Icons.play_circle_fill_rounded,
-                          color: _gold,
-                        ),
-                      ),
-              ),
+      child: GestureDetector(
+        onTap: () async {
+          setState(() => _selected = !_selected);
+          await _openPreview();
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          decoration: BoxDecoration(
+            color: const Color(0xFF181A20),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: _selected
+                  ? _authGold
+                  : Colors.white.withValues(alpha: 0.05),
+              width: _selected ? 1.4 : 1,
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    file.path.split('\\').last,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: _textPrimary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 12,
+                offset: const Offset(0, 5),
+              ),
+              if (_selected)
+                BoxShadow(
+                  color: _authGold.withValues(alpha: 0.14),
+                  blurRadius: 14,
+                  offset: const Offset(0, 2),
+                ),
+            ],
+          ),
+          child: Stack(
+            children: <Widget>[
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(15),
+                  child: isImage
+                      ? Image.file(file, fit: BoxFit.cover)
+                      : Container(
+                          color: const Color(0xFF10131A),
+                          child: const Center(
+                            child: Icon(
+                              Icons.play_circle_fill_rounded,
+                              color: _authGold,
+                              size: 34,
+                            ),
+                          ),
+                        ),
+                ),
+              ),
+              Positioned(
+                top: 6,
+                right: 6,
+                child: InkWell(
+                  onTap: widget.onDelete,
+                  borderRadius: BorderRadius.circular(999),
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.12),
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.close_rounded,
+                      color: Colors.white,
+                      size: 14,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  FutureBuilder<int>(
-                    future: file.length(),
-                    builder: (BuildContext context, AsyncSnapshot<int> snapshot) {
-                      final int bytes = snapshot.data ?? 0;
-                      final double kb = bytes / 1024;
-                      return Text(
-                        '${isImage ? 'Image' : 'Video'} • ${kb.toStringAsFixed(1)} KB',
-                        style: const TextStyle(
-                          color: Color(0xFFA0A0A0),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      );
-                    },
-                  ),
-                ],
+                ),
               ),
-            ),
-            IconButton(
-              onPressed: onDelete,
-              icon: const Icon(
-                Icons.delete_outline_rounded,
-                color: _error,
-                size: 20,
-              ),
-              tooltip: 'Delete media',
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -2691,8 +3993,35 @@ class _LocationStageState extends State<_LocationStage> {
   GoogleMapController? _mapController;
   LatLng? _lastCameraTarget;
   final FocusNode _locationFocusNode = FocusNode();
+  MapType _mapType = MapType.normal;
+  bool _showSearchSuggestions = false;
+  int _searchDebounceToken = 0;
+  List<String> _searchSuggestions = <String>[];
 
   static const LatLng _fallbackCenter = LatLng(13.6288, 79.4192);
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      if (widget.locationController.text.isNotEmpty) {
+        widget.locationController.clear();
+      }
+    });
+    _locationFocusNode.addListener(() {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        if (!_locationFocusNode.hasFocus) {
+          _showSearchSuggestions = false;
+        }
+      });
+    });
+  }
 
   @override
   void dispose() {
@@ -2747,6 +4076,102 @@ class _LocationStageState extends State<_LocationStage> {
     );
   }
 
+  void _updateSearchSuggestions({
+    required String query,
+    required ReportIssueProvider provider,
+  }) {
+    final String q = query.trim();
+    if (q.isEmpty || !_locationFocusNode.hasFocus) {
+      setState(() {
+        _searchSuggestions = <String>[];
+        _showSearchSuggestions = false;
+      });
+      return;
+    }
+
+    final String city = _readComponent(provider.addressComponents, <String>[
+      'city',
+      'locality',
+      'district',
+      'administrative_area_level_2',
+    ]);
+    final String state = _readComponent(provider.addressComponents, <String>[
+      'state',
+      'administrative_area_level_1',
+    ]);
+
+    final LinkedHashSet<String> options = LinkedHashSet<String>()..add(q);
+    if (city.isNotEmpty && state.isNotEmpty) {
+      options.add('$q, $city, $state');
+    } else if (city.isNotEmpty) {
+      options.add('$q, $city');
+    } else if (state.isNotEmpty) {
+      options.add('$q, $state');
+    }
+
+    setState(() {
+      _searchSuggestions = options.take(2).toList(growable: false);
+      _showSearchSuggestions = _searchSuggestions.isNotEmpty;
+    });
+  }
+
+  void _handleLocationQueryChange({
+    required String value,
+    required ReportIssueProvider provider,
+  }) {
+    provider.updateLocationInput(value);
+    _updateSearchSuggestions(query: value, provider: provider);
+
+    final String q = value.trim();
+    if (q.length < 6) {
+      return;
+    }
+
+    final int token = ++_searchDebounceToken;
+    Future<void>.delayed(const Duration(milliseconds: 720), () {
+      if (!mounted || token != _searchDebounceToken) {
+        return;
+      }
+      if (provider.isLocating) {
+        return;
+      }
+      if (_locationFocusNode.hasFocus &&
+          widget.locationController.text.trim() == q) {
+        provider.searchAndResolveLocation(q);
+      }
+    });
+  }
+
+  String _readComponent(Map<String, String> components, List<String> keys) {
+    for (final String key in keys) {
+      for (final MapEntry<String, String> entry in components.entries) {
+        if (entry.key.toLowerCase().contains(key.toLowerCase()) &&
+            entry.value.trim().isNotEmpty) {
+          return entry.value.trim();
+        }
+      }
+    }
+    return '';
+  }
+
+  void _toggleMapLayer() {
+    setState(() {
+      switch (_mapType) {
+        case MapType.normal:
+          _mapType = MapType.terrain;
+          break;
+        case MapType.terrain:
+          _mapType = MapType.hybrid;
+          break;
+        case MapType.hybrid:
+        case MapType.satellite:
+        case MapType.none:
+          _mapType = MapType.normal;
+          break;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final ReportIssueProvider provider = widget.provider;
@@ -2772,9 +4197,59 @@ class _LocationStageState extends State<_LocationStage> {
     final String? locationFieldError = provider.locationFieldError;
     final bool hasLocationValidationHint =
         locationFieldError != null && !provider.isLocating;
-    final String landmarkSuggestion = _landmarkSuggestion(
-      provider.addressComponents,
-    );
+    final double mapHeroHeight = (MediaQuery.of(context).size.height * 0.66)
+        .clamp(460.0, 640.0);
+    final List<String> addressParts = provider.effectiveLocation
+        .split(',')
+        .map((String item) => item.trim())
+        .where((String item) => item.isNotEmpty)
+        .toList(growable: false);
+    final String lineOne =
+        _readComponent(provider.addressComponents, <String>[
+          'landmark',
+          'premise',
+          'road',
+          'street',
+          'route',
+          'locality',
+        ]).trim().isNotEmpty
+        ? _readComponent(provider.addressComponents, <String>[
+            'landmark',
+            'premise',
+            'road',
+            'street',
+            'route',
+            'locality',
+          ])
+        : (addressParts.isNotEmpty ? addressParts.first : 'Selected location');
+    final String city = _readComponent(provider.addressComponents, <String>[
+      'city',
+      'district',
+      'administrative_area_level_2',
+      'locality',
+    ]);
+    final String state = _readComponent(provider.addressComponents, <String>[
+      'state',
+      'administrative_area_level_1',
+    ]);
+    final String lineTwo = city.isNotEmpty && state.isNotEmpty
+        ? '$city, $state'
+        : (city.isNotEmpty
+              ? city
+              : (state.isNotEmpty
+                    ? state
+                    : (addressParts.length > 1
+                          ? addressParts.skip(1).take(2).join(', ')
+                          : 'Choose a point on the map')));
+
+    void focusSearch() {
+      _locationFocusNode.requestFocus();
+      final int length = locationController.text.length;
+      locationController.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: length,
+      );
+    }
 
     if (hasCoordinates &&
         (_lastCameraTarget == null ||
@@ -2793,372 +4268,394 @@ class _LocationStageState extends State<_LocationStage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        const Text(
+        Text(
           'Issue Location',
-          style: TextStyle(
+          style: GoogleFonts.inter(
             color: _textPrimary,
-            fontSize: 24,
+            fontSize: 32,
             fontWeight: FontWeight.w700,
-            letterSpacing: -0.2,
+            letterSpacing: -0.3,
+            height: 1.1,
           ),
         ),
-        const SizedBox(height: 12),
-        const _LocationInfoCard(),
-        const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          height: 250,
-          decoration: BoxDecoration(
-            color: _surface,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: const Color(0xFF2B2B2B)),
-            boxShadow: <BoxShadow>[
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.28),
-                blurRadius: 18,
-                offset: const Offset(0, 6),
-              ),
-            ],
+        const SizedBox(height: 8),
+        Text(
+          'Select the exact issue location using search or by tapping the map.',
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.inter(
+            color: const Color(0xFF9BA2AD),
+            fontSize: 14.5,
+            fontWeight: FontWeight.w500,
+            height: 1.35,
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(22),
-            child: !_enableGoogleMaps
-                ? const _LocationMapUnavailable()
-                : provider.isLocating && !hasCoordinates
-                ? const _LocationMapShimmer()
-                : Stack(
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          height: mapHeroHeight,
+          child: Stack(
+            children: <Widget>[
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF12161D),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.06),
+                  ),
+                  boxShadow: <BoxShadow>[
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.28),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Stack(
                     children: <Widget>[
-                      GoogleMap(
-                        style: _darkMapStyle,
-                        initialCameraPosition: CameraPosition(
-                          target: markerPosition,
-                          zoom: hasCoordinates ? 16 : 14,
+                      if (!_enableGoogleMaps)
+                        const _LocationMapUnavailable()
+                      else
+                        GoogleMap(
+                          style: _darkMapStyle,
+                          mapType: _mapType,
+                          initialCameraPosition: CameraPosition(
+                            target: markerPosition,
+                            zoom: hasCoordinates ? 16 : 14,
+                          ),
+                          onMapCreated: (GoogleMapController controller) {
+                            _mapController = controller;
+                          },
+                          myLocationEnabled: false,
+                          myLocationButtonEnabled: false,
+                          zoomControlsEnabled: false,
+                          mapToolbarEnabled: false,
+                          compassEnabled: true,
+                          markers: <Marker>{
+                            if (hasCoordinates)
+                              Marker(
+                                markerId: const MarkerId('current_location'),
+                                position: markerPosition,
+                                draggable: true,
+                                icon: BitmapDescriptor.defaultMarkerWithHue(
+                                  BitmapDescriptor.hueYellow,
+                                ),
+                                onDragEnd: (LatLng value) {
+                                  provider.reverseGeocodeForCoordinates(
+                                    latitude: value.latitude,
+                                    longitude: value.longitude,
+                                  );
+                                },
+                              ),
+                          },
+                          onTap: (LatLng value) {
+                            provider.reverseGeocodeForCoordinates(
+                              latitude: value.latitude,
+                              longitude: value.longitude,
+                            );
+                          },
                         ),
-                        onMapCreated: (GoogleMapController controller) {
-                          _mapController = controller;
-                        },
-                        myLocationEnabled: false,
-                        myLocationButtonEnabled: false,
-                        zoomControlsEnabled: false,
-                        mapToolbarEnabled: false,
-                        compassEnabled: true,
-                        markers: <Marker>{
-                          if (hasCoordinates)
-                            Marker(
-                              markerId: const MarkerId('current_location'),
-                              position: markerPosition,
-                              draggable: true,
-                              icon: BitmapDescriptor.defaultMarkerWithHue(
-                                BitmapDescriptor.hueYellow,
-                              ),
-                              onDragEnd: (LatLng value) {
-                                provider.reverseGeocodeForCoordinates(
-                                  latitude: value.latitude,
-                                  longitude: value.longitude,
-                                );
-                              },
+                      if (!_enableGoogleMaps)
+                        const SizedBox.shrink()
+                      else ...<Widget>[
+                        if (provider.isLocating && !hasCoordinates)
+                          const Positioned.fill(
+                            child: IgnorePointer(child: _LocationMapShimmer()),
+                          ),
+                        if (hasCoordinates)
+                          const Positioned.fill(
+                            child: IgnorePointer(
+                              child: Center(child: _MapPinPulse()),
                             ),
-                        },
-                        onTap: (LatLng value) {
-                          provider.reverseGeocodeForCoordinates(
-                            latitude: value.latitude,
-                            longitude: value.longitude,
-                          );
-                        },
-                      ),
-                      Positioned(
-                        right: 12,
-                        top: 12,
-                        child: Column(
-                          children: <Widget>[
-                            _MapControlButton(
-                              icon: Icons.add_rounded,
-                              tooltip: 'Zoom In',
-                              onTap: () => _mapController?.animateCamera(
-                                CameraUpdate.zoomIn(),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            _MapControlButton(
-                              icon: Icons.remove_rounded,
-                              tooltip: 'Zoom Out',
-                              onTap: () => _mapController?.animateCamera(
-                                CameraUpdate.zoomOut(),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            _MapControlButton(
-                              icon: Icons.navigation_rounded,
-                              tooltip: 'Recenter',
-                              onTap: () => _mapController?.animateCamera(
-                                CameraUpdate.newLatLng(markerPosition),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Positioned(
-                        left: 12,
-                        bottom: 12,
-                        child: _MapControlButton(
-                          icon: provider.isLocating
-                              ? Icons.gps_fixed_rounded
-                              : Icons.my_location_rounded,
-                          tooltip: 'Current Location',
-                          onTap: provider.isLocating
-                              ? null
-                              : provider.detectLocation,
-                        ),
-                      ),
+                          ),
+                      ],
                     ],
                   ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOutCubic,
-          decoration: BoxDecoration(
-            color: _surface,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: isFocused ? _gold : const Color(0xFF2B2B2B),
-            ),
-            boxShadow: <BoxShadow>[
-              if (isFocused)
-                BoxShadow(
-                  color: _gold.withValues(alpha: 0.12),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
                 ),
-            ],
-          ),
-          child: TextField(
-            controller: locationController,
-            focusNode: _locationFocusNode,
-            enabled: true,
-            onChanged: provider.updateLocationInput,
-            onSubmitted: provider.searchAndResolveLocation,
-            style: const TextStyle(color: _textPrimary, fontSize: 14),
-            decoration: InputDecoration(
-              hintText: 'Search address, landmark, street or locality...',
-              hintStyle: const TextStyle(color: Color(0xFFA0A0A0)),
-              filled: true,
-              fillColor: Colors.transparent,
-              contentPadding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
-              border: InputBorder.none,
-              prefixIcon: const Icon(
-                Icons.search_rounded,
-                color: Color(0xFFA0A0A0),
               ),
-              suffixIcon: IconButton(
-                onPressed: () =>
-                    provider.searchAndResolveLocation(locationController.text),
-                icon: const Icon(Icons.my_location_rounded, color: _gold),
-                tooltip: 'Search Location',
-              ),
-            ),
-          ),
-        ),
-        if (hasLocationValidationHint)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: _LocationHelperCard(
-              icon: Icons.info_outline_rounded,
-              message: locationFieldError,
-              borderColor: _warning.withValues(alpha: 0.7),
-              textColor: const Color(0xFFFFD180),
-            ),
-          ),
-        const SizedBox(height: 12),
-        Row(
-          children: <Widget>[
-            Expanded(
-              child: ElevatedButton(
-                onPressed: provider.isLocating ? null : provider.detectLocation,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1C1C1C),
-                  foregroundColor: _textPrimary,
-                  disabledBackgroundColor: const Color(0xFF2A2A2A),
-                  disabledForegroundColor: const Color(0xFF8E8E8E),
-                  elevation: 2,
-                  minimumSize: const Size.fromHeight(56),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: const BorderSide(color: Color(0xFF2B2B2B)),
+              Positioned(
+                left: 16,
+                right: 16,
+                top: 16,
+                child: AnimatedContainer(
+                  height: 56,
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOutCubic,
+                  decoration: BoxDecoration(
+                    color: const Color(0xEE181A20),
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.24),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                      if (isFocused)
+                        BoxShadow(
+                          color: _authGold.withValues(alpha: 0.13),
+                          blurRadius: 14,
+                          offset: const Offset(0, 4),
+                        ),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: locationController,
+                    focusNode: _locationFocusNode,
+                    enabled: true,
+                    onChanged: (String value) => _handleLocationQueryChange(
+                      value: value,
+                      provider: provider,
+                    ),
+                    onSubmitted: (String value) {
+                      _showSearchSuggestions = false;
+                      provider.searchAndResolveLocation(value);
+                    },
+                    onEditingComplete: () {
+                      provider.searchAndResolveLocation(
+                        locationController.text,
+                      );
+                    },
+                    textInputAction: TextInputAction.search,
+                    style: GoogleFonts.inter(
+                      color: _textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Search address, landmark or area',
+                      hintStyle: GoogleFonts.inter(
+                        color: const Color(0xFF8A929D),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(18),
+                        borderSide: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.05),
+                          width: 1,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(18),
+                        borderSide: BorderSide(
+                          color: _authGold.withValues(alpha: 0.85),
+                          width: 1,
+                        ),
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(18),
+                        borderSide: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.05),
+                          width: 1,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Colors.transparent,
+                      contentPadding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+                      prefixIcon: const Icon(
+                        Icons.search_rounded,
+                        color: Color(0xFFC7A85F),
+                        size: 20,
+                      ),
+                    ),
                   ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    provider.isLocating
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: _gold,
-                            ),
-                          )
-                        : const Icon(Icons.gps_fixed_rounded, color: _gold),
-                    const SizedBox(width: 10),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          provider.isLocating
-                              ? 'Detecting Location'
-                              : 'Use Current Location',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 1),
-                        const Text(
-                          'Detect location automatically',
-                          style: TextStyle(
-                            color: Color(0xFFA0A0A0),
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w500,
-                          ),
+              ),
+              if (_showSearchSuggestions && _searchSuggestions.isNotEmpty)
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  top: 78,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xF2181A20),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.05),
+                      ),
+                      boxShadow: <BoxShadow>[
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.22),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
                         ),
                       ],
+                    ),
+                    child: Column(
+                      children: _searchSuggestions
+                          .asMap()
+                          .entries
+                          .map((MapEntry<int, String> entry) {
+                            final int index = entry.key;
+                            final String suggestion = entry.value;
+                            final List<String> parts = suggestion
+                                .split(',')
+                                .map((String item) => item.trim())
+                                .where((String item) => item.isNotEmpty)
+                                .toList(growable: false);
+                            final String primary = parts.isNotEmpty
+                                ? parts.first
+                                : suggestion;
+                            final String secondary = parts.length > 1
+                                ? parts.skip(1).take(2).join(', ')
+                                : '';
+                            return InkWell(
+                              onTap: () {
+                                locationController.value = TextEditingValue(
+                                  text: suggestion,
+                                  selection: TextSelection.collapsed(
+                                    offset: suggestion.length,
+                                  ),
+                                );
+                                _showSearchSuggestions = false;
+                                provider.updateLocationInput(suggestion);
+                                provider.searchAndResolveLocation(suggestion);
+                                setState(() {});
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.fromLTRB(
+                                  12,
+                                  10,
+                                  12,
+                                  10,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color:
+                                          index == _searchSuggestions.length - 1
+                                          ? Colors.transparent
+                                          : Colors.white.withValues(
+                                              alpha: 0.04,
+                                            ),
+                                    ),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: <Widget>[
+                                    const Icon(
+                                      Icons.place_outlined,
+                                      size: 16,
+                                      color: Color(0xFFC7A85F),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: <Widget>[
+                                          Text(
+                                            primary,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.inter(
+                                              color: const Color(0xFFDDE3EC),
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          if (secondary.isNotEmpty)
+                                            Text(
+                                              secondary,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: GoogleFonts.inter(
+                                                color: const Color(0xFF97A1AF),
+                                                fontSize: 10.5,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    const Icon(
+                                      Icons.chevron_right_rounded,
+                                      color: Color(0xFF9BA2AD),
+                                      size: 18,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          })
+                          .toList(growable: false),
+                    ),
+                  ),
+                ),
+              Positioned(
+                right: 16,
+                top: 88,
+                child: Column(
+                  children: <Widget>[
+                    _MapControlButton(
+                      icon: Icons.add_rounded,
+                      tooltip: 'Zoom In',
+                      onTap: () =>
+                          _mapController?.animateCamera(CameraUpdate.zoomIn()),
+                    ),
+                    const SizedBox(height: 8),
+                    _MapControlButton(
+                      icon: Icons.remove_rounded,
+                      tooltip: 'Zoom Out',
+                      onTap: () =>
+                          _mapController?.animateCamera(CameraUpdate.zoomOut()),
+                    ),
+                    const SizedBox(height: 8),
+                    _MapControlButton(
+                      icon: Icons.layers_rounded,
+                      tooltip: 'Map Layers',
+                      onTap: !_enableGoogleMaps ? null : _toggleMapLayer,
                     ),
                   ],
                 ),
               ),
-            ),
-            if (hasCoordinates) ...<Widget>[
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _openInMaps(lat: lat, lng: lng),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _textPrimary,
-                    side: const BorderSide(color: _stroke),
-                    minimumSize: const Size.fromHeight(50),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+              Positioned(
+                right: 16,
+                bottom: 112,
+                child: _MyLocationPill(
+                  isLoading: provider.isLocating,
+                  onTap: provider.isLocating ? null : provider.detectLocation,
+                ),
+              ),
+              Positioned.fill(
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: DraggableScrollableSheet(
+                    initialChildSize: 0.25,
+                    minChildSize: 0.20,
+                    maxChildSize: 0.52,
+                    builder:
+                        (
+                          BuildContext context,
+                          ScrollController scrollController,
+                        ) {
+                          return _LocationBottomSheet(
+                            scrollController: scrollController,
+                            hasSelection: provider.hasResolvedLocation,
+                            lineOne: lineOne,
+                            lineTwo: lineTwo,
+                            onChangeLocation: focusSearch,
+                            onUseCurrentLocation: provider.isLocating
+                                ? null
+                                : provider.detectLocation,
+                            isLocating: provider.isLocating,
+                            locationError: provider.locationError,
+                            validationHint: hasLocationValidationHint
+                                ? locationFieldError
+                                : null,
+                          );
+                        },
                   ),
-                  icon: const Icon(Icons.open_in_new_rounded, color: _gold),
-                  label: const Text('Open Maps'),
                 ),
               ),
             ],
-          ],
+          ),
         ),
-        if (provider.autoLocationText != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: _LocationDetectedBanner(
-              locationText: provider.autoLocationText!,
-            ),
-          ),
-        if (provider.hasResolvedLocation)
-          Padding(
-            padding: const EdgeInsets.only(top: 10),
-            child: _SelectedLocationCard(
-              address: provider.effectiveLocation,
-              components: provider.addressComponents,
-              latitude: lat,
-              longitude: lng,
-              onEdit: () {
-                _locationFocusNode.requestFocus();
-                locationController.selection = TextSelection(
-                  baseOffset: 0,
-                  extentOffset: locationController.text.length,
-                );
-              },
-              onRefresh: () {
-                if (hasCoordinates) {
-                  provider.reverseGeocodeForCoordinates(
-                    latitude: lat,
-                    longitude: lng,
-                  );
-                } else {
-                  provider.detectLocation();
-                }
-              },
-              onCopy: () {
-                Clipboard.setData(
-                  ClipboardData(text: provider.effectiveLocation),
-                );
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Location copied'),
-                    duration: Duration(milliseconds: 1200),
-                  ),
-                );
-              },
-              accuracyLabel: hasCoordinates ? 'Excellent' : 'Estimating',
-              accuracyValue: hasCoordinates
-                  ? 'Coordinates locked'
-                  : 'Pending lock',
-            ),
-          ),
-        if (landmarkSuggestion.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 10),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-              decoration: BoxDecoration(
-                color: _surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFF2B2B2B)),
-              ),
-              child: Row(
-                children: <Widget>[
-                  const Icon(Icons.place_outlined, size: 16, color: _gold),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Nearby Landmark: $landmarkSuggestion',
-                      style: const TextStyle(
-                        color: Color(0xFFA0A0A0),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        if (provider.locationError != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: _LocationHelperCard(
-              icon: Icons.warning_amber_rounded,
-              message: provider.locationError!,
-              borderColor: _error.withValues(alpha: 0.7),
-              textColor: const Color(0xFFFFB3AB),
-            ),
-          ),
       ],
     );
-  }
-
-  String _landmarkSuggestion(Map<String, String> components) {
-    final List<String> preferredKeys = <String>[
-      'landmark',
-      'neighbourhood',
-      'subLocality',
-      'locality',
-      'area',
-    ];
-    for (final String key in preferredKeys) {
-      for (final MapEntry<String, String> entry in components.entries) {
-        if (entry.key.toLowerCase().contains(key) &&
-            entry.value.trim().isNotEmpty) {
-          return entry.value;
-        }
-      }
-    }
-    return '';
   }
 }
 
@@ -3167,6 +4664,194 @@ class _LocationMapShimmer extends StatefulWidget {
 
   @override
   State<_LocationMapShimmer> createState() => _LocationMapShimmerState();
+}
+
+class _LocationBottomSheet extends StatelessWidget {
+  const _LocationBottomSheet({
+    required this.scrollController,
+    required this.hasSelection,
+    required this.lineOne,
+    required this.lineTwo,
+    required this.onChangeLocation,
+    required this.onUseCurrentLocation,
+    required this.isLocating,
+    this.locationError,
+    this.validationHint,
+  });
+
+  final ScrollController scrollController;
+  final bool hasSelection;
+  final String lineOne;
+  final String lineTwo;
+  final VoidCallback onChangeLocation;
+  final VoidCallback? onUseCurrentLocation;
+  final bool isLocating;
+  final String? locationError;
+  final String? validationHint;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xF2171B22),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.28),
+            blurRadius: 18,
+            offset: const Offset(0, -6),
+          ),
+        ],
+      ),
+      child: SingleChildScrollView(
+        controller: scrollController,
+        physics: const ClampingScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 10, 18, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Align(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.22),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Selected Location',
+                style: GoogleFonts.inter(
+                  color: const Color(0xFFCCD3DD),
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                hasSelection ? lineOne : 'Select Issue Location',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  color: _textPrimary,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  height: 1.25,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                hasSelection
+                    ? lineTwo
+                    : 'Tap map or search to confirm location',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  color: const Color(0xFFA9B1BD),
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                  height: 1.25,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const _AccuracyChip(text: 'High GPS Accuracy'),
+              const SizedBox(height: 8),
+              InkWell(
+                onTap: onChangeLocation,
+                borderRadius: BorderRadius.circular(10),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text(
+                        'Change Location',
+                        style: GoogleFonts.inter(
+                          color: _authGold,
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.arrow_forward_rounded,
+                        color: _authGold,
+                        size: 16,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Divider(color: Colors.white.withValues(alpha: 0.08), height: 1),
+              const SizedBox(height: 10),
+              InkWell(
+                onTap: onUseCurrentLocation,
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    children: <Widget>[
+                      isLocating
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: _authGold,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.my_location_rounded,
+                              color: _authGold,
+                              size: 16,
+                            ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          isLocating
+                              ? 'Detecting current location'
+                              : 'Use Current Location',
+                          style: GoogleFonts.inter(
+                            color: _textPrimary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 12,
+                        color: Color(0xFF95A0AF),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (validationHint != null || locationError != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    locationError ?? validationHint!,
+                    style: GoogleFonts.inter(
+                      color: locationError != null
+                          ? const Color(0xFFFFB3AB)
+                          : const Color(0xFFFFD180),
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _LocationMapShimmerState extends State<_LocationMapShimmer>
@@ -3198,10 +4883,10 @@ class _LocationMapShimmerState extends State<_LocationMapShimmer>
             gradient: LinearGradient(
               begin: Alignment(-1 + (_controller.value * 2), -0.3),
               end: Alignment(1 + (_controller.value * 2), 0.3),
-              colors: const <Color>[
-                Color(0xFF121212),
-                Color(0xFF232323),
-                Color(0xFF121212),
+              colors: <Color>[
+                const Color(0xFF11151D).withValues(alpha: 0.52),
+                const Color(0xFF1F2631).withValues(alpha: 0.65),
+                const Color(0xFF11151D).withValues(alpha: 0.52),
               ],
             ),
           ),
@@ -3224,79 +4909,30 @@ class _LocationMapUnavailable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFF121212),
-      padding: const EdgeInsets.all(16),
+      color: const Color(0xFF11161E),
+      padding: const EdgeInsets.all(18),
       child: const Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Icon(Icons.map_outlined, color: Color(0xFFA0A0A0), size: 34),
+          Icon(Icons.location_on_outlined, color: Color(0xFF8A929D), size: 38),
           SizedBox(height: 10),
           Text(
-            'Map Preview Unavailable',
+            'Select Issue Location',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: _textPrimary,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
             ),
           ),
           SizedBox(height: 6),
           Text(
-            'Location detection and manual address entry are fully available.',
+            'Tap anywhere on the map or search for an address.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Color(0xFFA0A0A0),
+              color: Color(0xFF9EA5AF),
               fontSize: 12,
               height: 1.35,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LocationInfoCard extends StatelessWidget {
-  const _LocationInfoCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF141414),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2B2B2B)),
-      ),
-      child: const Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Icon(Icons.location_on_outlined, size: 18, color: _gold),
-          SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  'Location Information',
-                  style: TextStyle(
-                    color: _textPrimary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Provide the exact location of the issue to help the concerned department identify and resolve it quickly.',
-                  style: TextStyle(
-                    color: Color(0xFFA0A0A0),
-                    fontSize: 12,
-                    height: 1.35,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
             ),
           ),
         ],
@@ -3310,37 +4946,51 @@ class _MapControlButton extends StatelessWidget {
     required this.icon,
     required this.tooltip,
     required this.onTap,
+    this.highlighted = false,
   });
 
   final IconData icon;
   final String tooltip;
   final VoidCallback? onTap;
+  final bool highlighted;
 
   @override
   Widget build(BuildContext context) {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: const Color(0xFF181818),
+        color: const Color(0xFF171B22),
         borderRadius: BorderRadius.circular(999),
         child: InkWell(
           onTap: onTap,
           customBorder: const CircleBorder(),
-          child: Container(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
             width: 40,
             height: 40,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFF2B2B2B)),
+              border: Border.all(
+                color: highlighted
+                    ? _authGold.withValues(alpha: 0.75)
+                    : Colors.white.withValues(alpha: 0.07),
+              ),
               boxShadow: <BoxShadow>[
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.24),
                   blurRadius: 10,
                   offset: const Offset(0, 3),
                 ),
+                if (highlighted)
+                  BoxShadow(
+                    color: _authGold.withValues(alpha: 0.14),
+                    blurRadius: 12,
+                    offset: const Offset(0, 2),
+                  ),
               ],
             ),
-            child: Icon(icon, color: _gold, size: 19),
+            child: Icon(icon, color: _authGold, size: 19),
           ),
         ),
       ),
@@ -3348,40 +4998,228 @@ class _MapControlButton extends StatelessWidget {
   }
 }
 
-class _LocationDetectedBanner extends StatelessWidget {
-  const _LocationDetectedBanner({required this.locationText});
+class _MyLocationPill extends StatelessWidget {
+  const _MyLocationPill({required this.isLoading, required this.onTap});
 
-  final String locationText;
+  final bool isLoading;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOutCubic,
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF173425),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF2D6D4A)),
+    return Material(
+      color: const Color(0xF2171B22),
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.22),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              if (isLoading)
+                const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: _authGold,
+                  ),
+                )
+              else
+                const Icon(
+                  Icons.my_location_rounded,
+                  size: 15,
+                  color: _authGold,
+                ),
+              const SizedBox(width: 6),
+              Text(
+                'My Location',
+                style: GoogleFonts.inter(
+                  color: _textPrimary,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-      child: Row(
-        children: <Widget>[
-          const Icon(Icons.check_circle_rounded, color: _green, size: 16),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Detected: $locationText',
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Color(0xFFBFE7CD),
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+    );
+  }
+}
+
+class _MapPinPulse extends StatefulWidget {
+  const _MapPinPulse();
+
+  @override
+  State<_MapPinPulse> createState() => _MapPinPulseState();
+}
+
+class _MapPinPulseState extends State<_MapPinPulse>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1300),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 54,
+      height: 54,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (BuildContext context, Widget? child) {
+          final double t = _controller.value;
+          final double scale = 0.7 + (t * 0.9);
+          return Stack(
+            alignment: Alignment.center,
+            children: <Widget>[
+              Transform.scale(
+                scale: scale,
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _authGold.withValues(alpha: (1 - t) * 0.2),
+                  ),
+                ),
+              ),
+              Container(
+                width: 14,
+                height: 14,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _authGold,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _CurrentLocationActionCard extends StatefulWidget {
+  const _CurrentLocationActionCard({
+    required this.isLoading,
+    required this.onTap,
+  });
+
+  final bool isLoading;
+  final VoidCallback? onTap;
+
+  @override
+  State<_CurrentLocationActionCard> createState() =>
+      _CurrentLocationActionCardState();
+}
+
+class _CurrentLocationActionCardState
+    extends State<_CurrentLocationActionCard> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool enabled = widget.onTap != null;
+    return GestureDetector(
+      onTapDown: enabled ? (_) => setState(() => _pressed = true) : null,
+      onTapCancel: enabled ? () => setState(() => _pressed = false) : null,
+      onTapUp: enabled ? (_) => setState(() => _pressed = false) : null,
+      child: AnimatedScale(
+        duration: const Duration(milliseconds: 140),
+        scale: _pressed ? 0.985 : 1,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: widget.onTap,
+            borderRadius: BorderRadius.circular(18),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOutCubic,
+              height: 56,
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF181A20),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: enabled ? 0.06 : 0.03),
+                ),
+                boxShadow: <BoxShadow>[
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: _pressed ? 16 : 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: <Widget>[
+                  widget.isLoading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.2,
+                            color: _authGold,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.my_location_rounded,
+                          color: _authGold,
+                          size: 22,
+                        ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      widget.isLoading
+                          ? 'Detecting Location'
+                          : 'Use My Current Location',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        color: _textPrimary,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const Icon(
+                    Icons.arrow_forward_rounded,
+                    color: Color(0xFF95A0AF),
+                    size: 18,
+                  ),
+                ],
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -3391,24 +5229,71 @@ class _SelectedLocationCard extends StatelessWidget {
   const _SelectedLocationCard({
     required this.address,
     required this.components,
-    required this.latitude,
-    required this.longitude,
-    required this.onEdit,
-    required this.onRefresh,
-    required this.onCopy,
-    required this.accuracyLabel,
-    required this.accuracyValue,
+    required this.onChangeLocation,
   });
 
   final String address;
   final Map<String, String> components;
-  final double? latitude;
-  final double? longitude;
-  final VoidCallback onEdit;
-  final VoidCallback onRefresh;
-  final VoidCallback onCopy;
-  final String accuracyLabel;
-  final String accuracyValue;
+  final VoidCallback onChangeLocation;
+
+  String _pick(List<String> keys) {
+    for (final String key in keys) {
+      for (final MapEntry<String, String> entry in components.entries) {
+        if (entry.key.toLowerCase().contains(key.toLowerCase()) &&
+            entry.value.trim().isNotEmpty) {
+          return entry.value.trim();
+        }
+      }
+    }
+    return '-';
+  }
+
+  String _lineOne() {
+    final String candidate = _pick(<String>[
+      'landmark',
+      'premise',
+      'road',
+      'street',
+      'route',
+      'locality',
+    ]);
+    if (candidate != '-') {
+      return candidate;
+    }
+    final List<String> parts = address
+        .split(',')
+        .map((String item) => item.trim())
+        .where((String item) => item.isNotEmpty)
+        .toList(growable: false);
+    return parts.isNotEmpty ? parts.first : 'Selected location';
+  }
+
+  String _lineTwo() {
+    final String city = _pick(<String>[
+      'city',
+      'district',
+      'administrative_area_level_2',
+      'locality',
+    ]);
+    final String state = _pick(<String>[
+      'state',
+      'administrative_area_level_1',
+    ]);
+    final String country = _pick(<String>['country']);
+    if (city != '-' && state != '-') {
+      return '$city, $state';
+    }
+    if (city != '-') {
+      return city;
+    }
+    if (state != '-') {
+      return state;
+    }
+    if (country != '-') {
+      return country;
+    }
+    return 'Confirm this location before continuing';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -3427,105 +5312,90 @@ class _SelectedLocationCard extends StatelessWidget {
       },
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: const Color(0xFF141414),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF2B2B2B)),
+          color: const Color(0xFF171B22),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.18),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Row(
+            const Row(
               children: <Widget>[
-                const Icon(Icons.location_on_rounded, size: 18, color: _gold),
-                const SizedBox(width: 8),
-                const Expanded(
+                Icon(Icons.location_on_rounded, size: 18, color: _gold),
+                SizedBox(width: 8),
+                Expanded(
                   child: Text(
                     'Selected Location',
                     style: TextStyle(
                       color: _textPrimary,
-                      fontSize: 14,
+                      fontSize: 13.5,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
-                _AccuracyChip(label: accuracyLabel, value: accuracyValue),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Text(
-              address,
-              style: const TextStyle(
+              _lineOne(),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
                 color: _textPrimary,
-                fontSize: 13,
-                height: 1.4,
+                fontSize: 16.5,
                 fontWeight: FontWeight.w600,
+                height: 1.25,
               ),
             ),
-            if (components.isNotEmpty) ...<Widget>[
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: components.entries
-                    .take(5)
-                    .map(
-                      (MapEntry<String, String> entry) => Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 9,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF181818),
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: const Color(0xFF2B2B2B)),
-                        ),
-                        child: Text(
-                          '${entry.key}: ${entry.value}',
-                          style: const TextStyle(
-                            color: Color(0xFFA0A0A0),
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+            const SizedBox(height: 3),
+            Text(
+              _lineTwo(),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                color: const Color(0xFFA9B1BD),
+                fontSize: 12.5,
+                fontWeight: FontWeight.w500,
+                height: 1.25,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const _AccuracyChip(text: 'Within 8 m Accuracy'),
+            const SizedBox(height: 8),
+            InkWell(
+              onTap: onChangeLocation,
+              borderRadius: BorderRadius.circular(10),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      'Change Location',
+                      style: GoogleFonts.inter(
+                        color: _authGold,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
                       ),
-                    )
-                    .toList(growable: false),
-              ),
-            ],
-            if (latitude != null && longitude != null) ...<Widget>[
-              const SizedBox(height: 8),
-              Text(
-                'Coordinates: ${latitude!.toStringAsFixed(6)}, ${longitude!.toStringAsFixed(6)}',
-                style: const TextStyle(
-                  color: Color(0xFFA0A0A0),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: _authGold,
+                      size: 16,
+                    ),
+                  ],
                 ),
               ),
-            ],
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: <Widget>[
-                _LocationActionMiniButton(
-                  icon: Icons.edit_outlined,
-                  label: 'Edit',
-                  onTap: onEdit,
-                ),
-                _LocationActionMiniButton(
-                  icon: Icons.refresh_rounded,
-                  label: 'Refresh',
-                  onTap: onRefresh,
-                ),
-                _LocationActionMiniButton(
-                  icon: Icons.content_copy_rounded,
-                  label: 'Copy',
-                  onTap: onCopy,
-                ),
-              ],
             ),
           ],
         ),
@@ -3534,112 +5404,31 @@ class _SelectedLocationCard extends StatelessWidget {
   }
 }
 
-class _LocationActionMiniButton extends StatelessWidget {
-  const _LocationActionMiniButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: onTap,
-      style: OutlinedButton.styleFrom(
-        foregroundColor: _textPrimary,
-        side: const BorderSide(color: Color(0xFF2B2B2B)),
-        backgroundColor: const Color(0xFF181818),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-      icon: Icon(icon, size: 16, color: _gold),
-      label: Text(
-        label,
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-      ),
-    );
-  }
-}
-
 class _AccuracyChip extends StatelessWidget {
-  const _AccuracyChip({required this.label, required this.value});
+  const _AccuracyChip({required this.text});
 
-  final String label;
-  final String value;
+  final String text;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: _gold.withValues(alpha: 0.12),
+        color: const Color(0x1A4CAF50),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: _gold.withValues(alpha: 0.34)),
-      ),
-      child: Column(
-        children: <Widget>[
-          Text(
-            label,
-            style: const TextStyle(
-              color: _gold,
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Color(0xFFF8D98A),
-              fontSize: 9.5,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LocationHelperCard extends StatelessWidget {
-  const _LocationHelperCard({
-    required this.icon,
-    required this.message,
-    required this.borderColor,
-    required this.textColor,
-  });
-
-  final IconData icon;
-  final String message;
-  final Color borderColor;
-  final Color textColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF181818),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor),
+        border: Border.all(color: const Color(0x3D4CAF50)),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(icon, size: 15, color: textColor),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              message,
-              style: TextStyle(
-                color: textColor,
-                fontSize: 12,
-                height: 1.35,
-                fontWeight: FontWeight.w600,
-              ),
+          const _IssueTickIcon(size: 13, color: _green),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Color(0xFFBFE7CD),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -4346,13 +6135,13 @@ class _ChecklistRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 7),
       child: Row(
         children: <Widget>[
-          Icon(
-            done
-                ? Icons.check_circle_rounded
-                : Icons.radio_button_unchecked_rounded,
-            size: 16,
-            color: done ? _green : const Color(0xFF666666),
-          ),
+          done
+              ? const _IssueTickIcon(size: 16, color: _green)
+              : const Icon(
+                  Icons.radio_button_unchecked_rounded,
+                  size: 16,
+                  color: Color(0xFF666666),
+                ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -4374,11 +6163,13 @@ class _BottomActionBar extends StatelessWidget {
   const _BottomActionBar({
     required this.provider,
     required this.reviewConfirmed,
+    required this.authorityMode,
     required this.onSubmit,
   });
 
   final ReportIssueProvider provider;
   final bool reviewConfirmed;
+  final bool authorityMode;
   final Future<void> Function() onSubmit;
 
   @override
@@ -4393,16 +6184,22 @@ class _BottomActionBar extends StatelessWidget {
         16,
         10,
         16,
-        12 + MediaQuery.of(context).padding.bottom,
+        10 + MediaQuery.of(context).padding.bottom,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFF000000),
-        border: const Border(top: BorderSide(color: Color(0xFF2B2B2B))),
+        color: authorityMode ? _authBg.withValues(alpha: 0.96) : _bg,
+        border: Border(
+          top: BorderSide(
+            color: authorityMode
+                ? _authBorder.withValues(alpha: 0.9)
+                : _dividerSoft,
+          ),
+        ),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 16,
-            offset: const Offset(0, -3),
+            color: Colors.black.withValues(alpha: authorityMode ? 0.38 : 0.3),
+            blurRadius: authorityMode ? 28 : 22,
+            offset: const Offset(0, -8),
           ),
         ],
       ),
@@ -4416,15 +6213,28 @@ class _BottomActionBar extends StatelessWidget {
                   child: OutlinedButton(
                     onPressed: provider.previousStep,
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: _textPrimary,
-                      side: const BorderSide(color: Color(0xFF2B2B2B)),
+                      foregroundColor: authorityMode
+                          ? _authTextPrimary
+                          : _textPrimarySoft,
+                      backgroundColor: authorityMode
+                          ? _authSurface.withValues(alpha: 0.88)
+                          : _surfaceSoft,
+                      side: BorderSide(
+                        color: authorityMode ? _authBorder : _dividerSoft,
+                      ),
                       minimumSize: const Size.fromHeight(54),
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text('Back'),
+                    child: Text(
+                      'Back',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ),
               if (provider.currentStep > 0) const SizedBox(width: 10),
@@ -4445,39 +6255,61 @@ class _BottomActionBar extends StatelessWidget {
                           }
                         : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _gold,
+                      backgroundColor: authorityMode ? _authGold : _gold,
                       foregroundColor: Colors.black,
-                      disabledBackgroundColor: const Color(0xFF383028),
-                      disabledForegroundColor: const Color(0xFF8E857A),
+                      disabledBackgroundColor:
+                          (authorityMode ? _authSurface : _surfaceSoft)
+                              .withValues(alpha: 0.4),
+                      disabledForegroundColor: Colors.white.withValues(
+                        alpha: 0.4,
+                      ),
                       minimumSize: Size.fromHeight(isStart ? 56 : 56),
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      elevation: 1.8,
-                      shadowColor: Colors.black.withValues(alpha: 0.18),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      elevation: 2.4,
+                      shadowColor: (authorityMode ? _authGold : _gold)
+                          .withValues(alpha: 0.25),
                       surfaceTintColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    child: provider.isSubmitting
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.black,
+                    child: AnimatedScale(
+                      duration: const Duration(milliseconds: 160),
+                      scale: canProceed ? 1 : 0.995,
+                      child: provider.isSubmitting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.black,
+                              ),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                Text(
+                                  isStart
+                                      ? 'Start Reporting'
+                                      : isSubmit
+                                      ? 'Submit Issue'
+                                      : 'Continue',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.1,
+                                  ),
+                                ),
+                                if (!isSubmit) ...<Widget>[
+                                  const SizedBox(width: 8),
+                                  const Icon(
+                                    Icons.arrow_forward_rounded,
+                                    size: 18,
+                                  ),
+                                ],
+                              ],
                             ),
-                          )
-                        : Text(
-                            isStart
-                                ? 'Start Reporting'
-                                : isSubmit
-                                ? 'Submit Issue'
-                                : 'Continue',
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
+                    ),
                   ),
                 ),
               ),

@@ -22,6 +22,7 @@ class AuthorityProfile {
     required this.isAvailable,
     required this.profilePhotoUrl,
     required this.publicContact,
+    this.resolutionRate,
   });
 
   final String id;
@@ -46,6 +47,7 @@ class AuthorityProfile {
   final bool isAvailable;
   final String? profilePhotoUrl;
   final String? publicContact;
+  final double? resolutionRate;
 
   factory AuthorityProfile.fromMap(Map<String, dynamic> map) {
     return AuthorityProfile(
@@ -71,6 +73,9 @@ class AuthorityProfile {
       isAvailable: (map['isAvailable'] as bool?) ?? true,
       profilePhotoUrl: map['profilePhotoUrl'] as String?,
       publicContact: map['publicContact'] as String?,
+      resolutionRate:
+          (map['resolutionRate'] as num?)?.toDouble() ??
+          (map['issuesResolvedPercent'] as num?)?.toDouble(),
     );
   }
 
@@ -98,6 +103,7 @@ class AuthorityProfile {
       'isAvailable': isAvailable,
       'profilePhotoUrl': profilePhotoUrl,
       'publicContact': publicContact,
+      'resolutionRate': resolutionRate,
     };
   }
 

@@ -379,7 +379,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                       icon: Icons.notifications_active_outlined,
                       trailing: Switch(
                         value: settingsProvider.notificationsEnabled,
-                        activeColor: AppTheme.gold,
+                        activeThumbColor: AppTheme.gold,
                         onChanged: (_) => context
                             .read<SettingsProvider>()
                             .toggleNotifications(),
