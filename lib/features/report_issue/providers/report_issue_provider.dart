@@ -39,6 +39,7 @@ class ReportIssueProvider extends ChangeNotifier {
 
   int _currentStep = 0;
   String? _selectedCategoryId;
+  String? _selectedPriority;
   String _authoritySearchQuery = '';
   String _description = '';
   String _locationInput = '';
@@ -113,6 +114,7 @@ class ReportIssueProvider extends ChangeNotifier {
   int get selectedAuthoritiesCount => _selectedAuthorities.length;
 
   String? get selectedCategoryId => _selectedCategoryId;
+  String? get selectedPriority => _selectedPriority;
   String get authoritySearchQuery => _authoritySearchQuery;
   String get description => _description;
   String get locationInput => _locationInput;
@@ -204,6 +206,20 @@ class ReportIssueProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updatePriority(String value) {
+    const Set<String> allowed = <String>{'High', 'Medium', 'Low'};
+    if (!allowed.contains(value)) {
+      return;
+    }
+    if (_selectedPriority == value) {
+      return;
+    }
+    _selectedPriority = value;
+    _submissionError = null;
+    _queueDraftSave();
+    notifyListeners();
+  }
+
   Future<void> loadAuthoritiesIfNeeded() async {
     if (_isLoadingAuthorities || _authorities.isNotEmpty) {
       return;
@@ -282,6 +298,11 @@ class ReportIssueProvider extends ChangeNotifier {
     await loadAuthoritiesIfNeeded();
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     _selectedCategoryId = prefs.getString(_draftCategoryKey);
+    final String? draftPriority = prefs.getString(_draftPriorityKey);
+    if (draftPriority != null &&
+        const <String>{'High', 'Medium', 'Low'}.contains(draftPriority)) {
+      _selectedPriority = draftPriority;
+    }
     _description = prefs.getString(_draftDescriptionKey) ?? _description;
     _locationInput = prefs.getString(_draftLocationKey) ?? _locationInput;
     _autoAddressLoaded = _locationInput.trim().isNotEmpty;
@@ -305,6 +326,7 @@ class ReportIssueProvider extends ChangeNotifier {
     await prefs.remove(_draftCategoryKey);
     await prefs.remove(_draftDescriptionKey);
     await prefs.remove(_draftLocationKey);
+    await prefs.remove(_draftPriorityKey);
     await prefs.remove(_draftTaggedAuthoritiesKey);
   }
 
@@ -597,6 +619,9 @@ class ReportIssueProvider extends ChangeNotifier {
           locationComponents: _addressComponents,
           locationPlaceId: _locationPlaceId,
           locationTimestamp: _locationTimestamp,
+          priority: (_selectedPriority == null || _selectedPriority!.isEmpty)
+              ? 'Medium'
+              : _selectedPriority!,
           mediaItems: _mediaItems,
           taggedAuthorities: _selectedAuthorities,
         ),
@@ -616,6 +641,7 @@ class ReportIssueProvider extends ChangeNotifier {
   void resetForm() {
     _currentStep = 0;
     _selectedCategoryId = null;
+    _selectedPriority = null;
     _authoritySearchQuery = '';
     _description = '';
     _locationInput = '';
@@ -693,6 +719,11 @@ class ReportIssueProvider extends ChangeNotifier {
     }
     await prefs.setString(_draftDescriptionKey, _description);
     await prefs.setString(_draftLocationKey, _locationInput);
+    if (_selectedPriority == null || _selectedPriority!.isEmpty) {
+      await prefs.remove(_draftPriorityKey);
+    } else {
+      await prefs.setString(_draftPriorityKey, _selectedPriority!);
+    }
     await prefs.setStringList(
       _draftTaggedAuthoritiesKey,
       _selectedAuthorities.map((AuthorityProfile item) => item.id).toList(),
@@ -744,5 +775,6 @@ class ReportIssueProvider extends ChangeNotifier {
 const String _draftCategoryKey = 'report_issue_draft_category';
 const String _draftDescriptionKey = 'report_issue_draft_description';
 const String _draftLocationKey = 'report_issue_draft_location';
+const String _draftPriorityKey = 'report_issue_draft_priority';
 const String _draftTaggedAuthoritiesKey =
     'report_issue_draft_tagged_authorities';

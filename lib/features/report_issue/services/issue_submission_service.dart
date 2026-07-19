@@ -28,6 +28,7 @@ class IssueSubmissionRequest {
     required this.locationComponents,
     required this.locationPlaceId,
     required this.locationTimestamp,
+    required this.priority,
     required this.mediaItems,
     required this.taggedAuthorities,
   });
@@ -42,6 +43,7 @@ class IssueSubmissionRequest {
   final Map<String, String> locationComponents;
   final String? locationPlaceId;
   final DateTime? locationTimestamp;
+  final String priority;
   final List<PickedMedia> mediaItems;
   final List<AuthorityProfile> taggedAuthorities;
 }
@@ -81,8 +83,8 @@ class IssueSubmissionService {
     final double? latitude = request.latitude ?? coordinate.latitude;
     final double? longitude = request.longitude ?? coordinate.longitude;
     final String formattedAddress = request.formattedAddress.trim().isEmpty
-      ? trimmedLocation
-      : request.formattedAddress.trim();
+        ? trimmedLocation
+        : request.formattedAddress.trim();
 
     final List<Reference> uploadedRefs = <Reference>[];
     try {
@@ -132,7 +134,9 @@ class IssueSubmissionService {
       ];
 
       final AuthorityProfile? primaryAuthority =
-          request.taggedAuthorities.isEmpty ? null : request.taggedAuthorities.first;
+          request.taggedAuthorities.isEmpty
+          ? null
+          : request.taggedAuthorities.first;
       final List<AuthorityProfile> secondaryAuthorities =
           request.taggedAuthorities.length > 1
           ? request.taggedAuthorities.sublist(1)
@@ -147,14 +151,16 @@ class IssueSubmissionService {
         latitude: latitude,
         longitude: longitude,
         address: formattedAddress,
-        locationComponents: Map<String, String>.from(request.locationComponents),
+        locationComponents: Map<String, String>.from(
+          request.locationComponents,
+        ),
         locationPlaceId: request.locationPlaceId,
         locationTimestamp: request.locationTimestamp ?? now,
         imageUrls: uploaded.images,
         videoUrls: uploaded.videos,
         createdAt: now,
         updatedAt: now,
-        priority: 'Medium',
+        priority: request.priority.trim().isEmpty ? 'Medium' : request.priority,
         currentStatus: 'Submitted',
         timeline: timeline,
         assignedOfficer: primaryAuthority?.name ?? 'Unassigned',
@@ -175,38 +181,39 @@ class IssueSubmissionService {
 
       await _retry(
         action: () async {
-          await _firestore
-              .collection('issues')
-              .doc(issueId)
-              .set(<String, dynamic>{
-                ...issue.toMap(),
-                'notificationTargets': request.taggedAuthorities
-                    .map((AuthorityProfile authority) => <String, dynamic>{
-                          'authorityId': authority.id,
-                          'name': authority.name,
-                          'department': authority.department,
-                          'designation': authority.designation,
-                        })
-                    .toList(growable: false),
-                'transferHistory': <Map<String, dynamic>>[],
-                'location': <String, dynamic>{
-                  'latitude': latitude,
-                  'longitude': longitude,
-                  'placeId': request.locationPlaceId,
-                  'timestamp': request.locationTimestamp == null
-                      ? Timestamp.fromDate(now)
-                      : Timestamp.fromDate(request.locationTimestamp!.toUtc()),
-                  'formattedAddress': formattedAddress,
-                  'components': request.locationComponents,
-                },
-                'fingerprint': _fingerprint(
-                  request.userId,
-                  request.category.id,
-                  trimmedDescription,
-                  trimmedLocation,
-                ),
-                'isPotentialDuplicate': duplicate,
-              });
+          await _firestore.collection('issues').doc(issueId).set(
+            <String, dynamic>{
+              ...issue.toMap(),
+              'notificationTargets': request.taggedAuthorities
+                  .map(
+                    (AuthorityProfile authority) => <String, dynamic>{
+                      'authorityId': authority.id,
+                      'name': authority.name,
+                      'department': authority.department,
+                      'designation': authority.designation,
+                    },
+                  )
+                  .toList(growable: false),
+              'transferHistory': <Map<String, dynamic>>[],
+              'location': <String, dynamic>{
+                'latitude': latitude,
+                'longitude': longitude,
+                'placeId': request.locationPlaceId,
+                'timestamp': request.locationTimestamp == null
+                    ? Timestamp.fromDate(now)
+                    : Timestamp.fromDate(request.locationTimestamp!.toUtc()),
+                'formattedAddress': formattedAddress,
+                'components': request.locationComponents,
+              },
+              'fingerprint': _fingerprint(
+                request.userId,
+                request.category.id,
+                trimmedDescription,
+                trimmedLocation,
+              ),
+              'isPotentialDuplicate': duplicate,
+            },
+          );
         },
       );
 
@@ -294,7 +301,8 @@ class IssueSubmissionService {
       throw IssueSubmissionFailure(_mapFirebaseException(error));
     }
 
-    for (final QueryDocumentSnapshot<Map<String, dynamic>> doc in snapshot.docs) {
+    for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+        in snapshot.docs) {
       final Map<String, dynamic> data = doc.data();
       final Timestamp? createdAt = data['createdAt'] as Timestamp?;
       if (createdAt == null) {
